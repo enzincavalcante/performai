@@ -1,0 +1,5 @@
+
+-- Добавляем внешний ключ для связи chat_messages с profiles через user_id
+ALTER TABLE public.chat_messages 
+ADD CONSTRAINT chat_messages_user_id_profiles_fkey 
+FOREIGN KEY (user_id) REFERENCES public.profiles(id) ON DELETE CASCADE;

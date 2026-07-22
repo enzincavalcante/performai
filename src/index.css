@@ -1,0 +1,401 @@
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 220 13% 9%;
+    --foreground: 220 9% 95%;
+
+    --card: 220 13% 9%;
+    --card-foreground: 220 9% 95%;
+
+    --popover: 220 13% 9%;
+    --popover-foreground: 220 9% 95%;
+
+    --primary: 220 9% 95%;
+    --primary-foreground: 220 13% 9%;
+
+    --secondary: 220 13% 14%;
+    --secondary-foreground: 220 9% 95%;
+
+    --muted: 220 13% 14%;
+    --muted-foreground: 220 9% 64%;
+
+    --accent: 220 13% 14%;
+    --accent-foreground: 220 9% 95%;
+
+    --destructive: 0 63% 31%;
+    --destructive-foreground: 220 9% 95%;
+
+    --border: 220 13% 18%;
+    --input: 220 13% 18%;
+    --ring: 220 9% 83%;
+
+    --radius: 0.5rem;
+
+    --sidebar-background: 220 13% 9%;
+    --sidebar-foreground: 220 9% 95%;
+    --sidebar-primary: 220 9% 95%;
+    --sidebar-primary-foreground: 220 13% 9%;
+    --sidebar-accent: 220 13% 14%;
+    --sidebar-accent-foreground: 220 9% 95%;
+    --sidebar-border: 220 13% 18%;
+    --sidebar-ring: 220 9% 83%;
+
+    /* Vice City Variables */
+    --neon-pink: #ff00ff;
+    --neon-cyan: #00ffff;
+    --neon-purple: #8a2be2;
+    --neon-orange: #ff6500;
+    --dark-purple: #0f0f23;
+    --deep-blue: #1a1a3e;
+  }
+}
+
+/* PerformAI brand layer: clean blue/white system over legacy component tokens. */
+@layer base {
+  :root {
+    --background: 220 33% 98%;
+    --foreground: 222 47% 11%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+    --primary: 221 83% 53%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 214 100% 97%;
+    --secondary-foreground: 221 83% 40%;
+    --muted: 215 25% 95%;
+    --muted-foreground: 215 16% 47%;
+    --accent: 214 100% 97%;
+    --accent-foreground: 221 83% 40%;
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 221 83% 53%;
+    --radius: 1rem;
+  }
+
+  body {
+    background: #f6f8fc;
+    color: #0f172a;
+  }
+
+  body::before { display: none; }
+}
+
+@layer components {
+  .vice-card {
+    background: #0b2b68;
+    border: 1px solid rgba(37, 99, 235, 0.18);
+    border-radius: 20px;
+    box-shadow: 0 12px 32px rgba(15, 23, 42, 0.10);
+    backdrop-filter: none;
+  }
+  .vice-card::before { display: none; }
+  .vice-gradient, .vice-gradient-alt { background: linear-gradient(135deg, #2563eb, #60a5fa); }
+  .vice-button {
+    background: #2563eb;
+    border: 1px solid #2563eb;
+    border-radius: 14px;
+    letter-spacing: 0;
+    text-transform: none;
+  }
+  .vice-button::before { display: none; }
+  .vice-button:hover { transform: translateY(-1px); background: #1d4ed8; border-color: #1d4ed8; box-shadow: 0 8px 20px rgba(37, 99, 235, 0.20); }
+  .vice-title, .vice-subtitle, .vice-text, .vice-text-secondary, .vice-text-accent, .vice-nav-text {
+    font-family: Inter, "Segoe UI", system-ui, sans-serif;
+    text-shadow: none;
+    letter-spacing: 0;
+  }
+  .vice-title { color: #fff; text-transform: none; }
+  .vice-subtitle { color: #bfdbfe; text-transform: none; }
+  .vice-text { color: #f8fafc; }
+  .vice-text-secondary { color: #cbd5e1; }
+  .vice-text-accent { color: #93c5fd; }
+  .vice-nav-text { color: #fff; text-transform: none; }
+  .neon-text { text-shadow: none; }
+  .neon-glow { box-shadow: none; }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    background: linear-gradient(145deg, 
+      #0a0a1a 0%, 
+      #1a1a3e 25%, 
+      #2d1b69 50%, 
+      #1a1a3e 75%, 
+      #0a0a1a 100%);
+    min-height: 100vh;
+    font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: 
+      radial-gradient(circle at 20% 30%, rgba(255, 0, 255, 0.1) 0%, transparent 50%),
+      radial-gradient(circle at 80% 70%, rgba(0, 255, 255, 0.1) 0%, transparent 50%),
+      radial-gradient(circle at 40% 80%, rgba(138, 43, 226, 0.05) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: -1;
+  }
+}
+
+@layer components {
+  /* Vice City Card */
+  .vice-card {
+    background: linear-gradient(145deg, 
+      rgba(15, 15, 35, 0.95) 0%, 
+      rgba(26, 26, 62, 0.9) 50%, 
+      rgba(15, 15, 35, 0.95) 100%);
+    border: 1px solid rgba(255, 0, 255, 0.3);
+    border-radius: 12px;
+    box-shadow: 
+      0 8px 32px rgba(0, 0, 0, 0.3),
+      0 0 0 1px rgba(255, 0, 255, 0.1),
+      inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(16px);
+    position: relative;
+  }
+
+  .vice-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(145deg, 
+      rgba(255, 0, 255, 0.03) 0%, 
+      rgba(0, 255, 255, 0.02) 50%, 
+      rgba(138, 43, 226, 0.03) 100%);
+    border-radius: inherit;
+    pointer-events: none;
+  }
+
+  /* Vice City Gradients */
+  .vice-gradient {
+    background: linear-gradient(135deg, 
+      #ff00ff 0%, 
+      #00ffff 50%, 
+      #8a2be2 100%);
+  }
+
+  .vice-gradient-alt {
+    background: linear-gradient(135deg, 
+      #00ffff 0%, 
+      #ff6500 50%, 
+      #ff00ff 100%);
+  }
+
+  /* Buttons */
+  .vice-button {
+    background: linear-gradient(135deg, #ff00ff 0%, #8a2be2 50%, #00ffff 100%);
+    border: 1px solid rgba(255, 0, 255, 0.5);
+    border-radius: 8px;
+    color: white;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .vice-button::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s;
+  }
+
+  .vice-button:hover::before {
+    left: 100%;
+  }
+
+  .vice-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 
+      0 8px 25px rgba(255, 0, 255, 0.4),
+      0 0 20px rgba(0, 255, 255, 0.3);
+    border-color: rgba(0, 255, 255, 0.7);
+  }
+
+  /* Neon Effects */
+  .neon-text {
+    text-shadow: 
+      0 0 5px currentColor,
+      0 0 10px currentColor,
+      0 0 20px currentColor,
+      0 0 40px currentColor;
+  }
+
+  .neon-glow {
+    box-shadow: 
+      0 0 10px currentColor,
+      0 0 20px currentColor,
+      0 0 40px currentColor;
+  }
+
+  .neon-border {
+    border: 1px solid;
+    border-image: linear-gradient(45deg, #ff00ff, #00ffff, #ff6500) 1;
+    animation: border-glow 2s ease-in-out infinite alternate;
+  }
+
+  @keyframes border-glow {
+    0% { filter: drop-shadow(0 0 5px rgba(255, 0, 255, 0.5)); }
+    100% { filter: drop-shadow(0 0 15px rgba(0, 255, 255, 0.8)); }
+  }
+
+  /* Typography */
+  .vice-title {
+    font-family: 'Inter', system-ui, sans-serif;
+    font-weight: 800;
+    font-size: 2.5rem;
+    color: white;
+    text-shadow: 
+      2px 2px 0px rgba(255, 0, 255, 0.3),
+      -1px -1px 0px rgba(0, 255, 255, 0.3),
+      0 0 20px rgba(255, 0, 255, 0.5);
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    line-height: 1.2;
+  }
+
+  .vice-subtitle {
+    font-family: 'Inter', system-ui, sans-serif;
+    font-weight: 600;
+    font-size: 1.1rem;
+    color: #e2e8f0;
+    text-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  .vice-text {
+    font-family: 'Inter', system-ui, sans-serif;
+    font-weight: 500;
+    color: #f8fafc;
+    line-height: 1.6;
+  }
+
+  .vice-text-secondary {
+    font-family: 'Inter', system-ui, sans-serif;
+    font-weight: 400;
+    color: #cbd5e1;
+    line-height: 1.5;
+  }
+
+  .vice-text-accent {
+    font-family: 'Inter', system-ui, sans-serif;
+    font-weight: 500;
+    color: #00ffff;
+    text-shadow: 0 0 10px rgba(0, 255, 255, 0.4);
+    letter-spacing: 0.02em;
+  }
+
+  .vice-nav-text {
+    font-family: 'Inter', system-ui, sans-serif;
+    font-weight: 600;
+    color: #f8fafc;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+  }
+
+  /* Interactive Elements */
+  .vice-interactive {
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .vice-interactive:hover {
+    transform: translateY(-1px);
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: rgba(15, 15, 35, 0.5);
+    border-radius: 10px;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, #ff00ff 0%, #00ffff 100%);
+    border-radius: 10px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(135deg, #ff6500 0%, #8a2be2 100%);
+  }
+
+  /* Animations */
+  @keyframes pulse-neon {
+    0%, 100% {
+      text-shadow: 
+        0 0 5px currentColor,
+        0 0 10px currentColor,
+        0 0 20px currentColor;
+    }
+    50% {
+      text-shadow: 
+        0 0 10px currentColor,
+        0 0 20px currentColor,
+        0 0 40px currentColor,
+        0 0 60px currentColor;
+    }
+  }
+
+  .animate-pulse-neon {
+    animation: pulse-neon 2s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-6px); }
+  }
+
+  .animate-float {
+    animation: float 3s ease-in-out infinite;
+  }
+}
+
+@layer base {
+  body { background: #f6f8fc; color: #0f172a; }
+  body::before { display: none; }
+}
+
+@layer components {
+  .vice-card { background: #0b2b68; border: 1px solid rgba(37, 99, 235, .18); border-radius: 20px; box-shadow: 0 12px 32px rgba(15, 23, 42, .1); backdrop-filter: none; }
+  .vice-card::before, .vice-button::before { display: none; }
+  .vice-gradient, .vice-gradient-alt { background: linear-gradient(135deg, #2563eb, #60a5fa); }
+  .vice-button { background: #2563eb; border: 1px solid #2563eb; border-radius: 14px; letter-spacing: 0; text-transform: none; }
+  .vice-button:hover { transform: translateY(-1px); background: #1d4ed8; border-color: #1d4ed8; box-shadow: 0 8px 20px rgba(37, 99, 235, .2); }
+  .vice-title, .vice-subtitle, .vice-text, .vice-text-secondary, .vice-text-accent, .vice-nav-text { font-family: Inter, "Segoe UI", system-ui, sans-serif; text-shadow: none; letter-spacing: 0; }
+  .vice-title { color: #fff; text-transform: none; }
+  .vice-subtitle { color: #bfdbfe; text-transform: none; }
+  .vice-text { color: #f8fafc; }
+  .vice-text-secondary { color: #cbd5e1; }
+  .vice-text-accent { color: #93c5fd; }
+  .vice-nav-text { color: #fff; text-transform: none; }
+  .neon-text, .animate-pulse-neon { text-shadow: none; animation: none; }
+  .neon-glow { box-shadow: none; }
+}
