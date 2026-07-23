@@ -7,6 +7,7 @@ import { useLiveAudio } from "@/hooks/useLiveAudio";
 
 const DEMO_USER = "Cavalcante";
 const DEMO_PASSWORD = "1234";
+const BRAND_LOGO = `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/brand/performai-logo.png`;
 const PERSONAS = [
   { id: "skeptic", name: "CTO cético", desc: "Interrompe, exige prova e combate buzzwords.", icon: Activity },
   { id: "budget_guardian", name: "CFO guardião do orçamento", desc: "Pressiona por ROI, custo e previsibilidade.", icon: BadgeDollarSign },
@@ -29,12 +30,12 @@ function Login({ onSuccess }: { onSuccess: () => void }) {
   };
   return <main className="auth-shell">
     <div className="auth-visual">
-      <div className="brand-lockup"><img src="/brand/performai-logo.png" alt="" /><span>PerformAI</span></div>
+      <div className="brand-lockup"><img src={BRAND_LOGO} alt="" /><span>PerformAI</span></div>
       <div className="auth-copy"><p className="eyebrow">TREINAMENTO COMERCIAL COM IA</p><h1>Transforme cada conversa em evolução.</h1><p>Pratique vendas com compradores difíceis, receba feedback objetivo e desenvolva o time com consistência.</p></div>
       <div className="auth-proof"><span>Role-plays realistas</span><span>Coaching instantâneo</span><span>Scorecards acionáveis</span></div>
     </div>
     <div className="auth-panel">
-      <div className="mobile-brand brand-lockup"><img src="/brand/performai-logo.png" alt="" /><span>PerformAI</span></div>
+      <div className="mobile-brand brand-lockup"><img src={BRAND_LOGO} alt="" /><span>PerformAI</span></div>
       <p className="eyebrow">SEU WORKSPACE</p><h2>Entre para treinar</h2><p className="muted">Acesse a arena de performance do seu time.</p>
       {error && <div className="form-error">{error}</div>}
       <form onSubmit={submit} className="auth-form">
@@ -53,7 +54,7 @@ function Workspace({ onLogout }: { onLogout: () => void }) {
   const { isConnected, error, scorecard, setScorecard, backendFeedback, mediaStream } = useLiveAudio(selectedPersona, sessionActive);
   const persona = PERSONAS.find((item) => item.id === selectedPersona) ?? PERSONAS[0];
   return <main className="workspace-shell">
-    <header className="topbar"><div className="brand-lockup"><img src="/brand/performai-logo.png" alt="" /><span>PerformAI</span></div><div className="topbar-actions"><span className="status-pill"><i className={sessionActive && isConnected ? "live-dot" : "idle-dot"} />{!sessionActive ? "Pronto para treinar" : isConnected ? "IA ao vivo" : "Conectando..."}</span><button className="ghost-button" onClick={onLogout}>Sair</button></div></header>
+    <header className="topbar"><div className="brand-lockup"><img src={BRAND_LOGO} alt="" /><span>PerformAI</span></div><div className="topbar-actions"><span className="status-pill"><i className={sessionActive && isConnected ? "live-dot" : "idle-dot"} />{!sessionActive ? "Pronto para treinar" : isConnected ? "IA ao vivo" : "Conectando..."}</span><button className="ghost-button" onClick={onLogout}>Sair</button></div></header>
     <section className="workspace-intro"><div><p className="eyebrow">ARENA DE TREINAMENTO</p><h1>Treine como um closer.</h1><p className="muted">Escolha um comprador, faça seu pitch e receba um scorecard para evoluir na próxima conversa.</p></div><div className="intro-badge"><span>Workspace</span><strong>Cavalcante</strong></div></section>
     <div className="workspace-grid">
       <aside className="persona-panel"><div className="section-heading"><div><p className="eyebrow">SIMULAÇÃO</p><h2>Escolha o comprador</h2></div><span className="count-badge">{PERSONAS.length} perfis</span></div><div className="persona-list">{PERSONAS.map((item) => { const Icon = item.icon; const active = item.id === selectedPersona; return <button key={item.id} disabled={sessionActive} onClick={() => setSelectedPersona(item.id)} className={`persona-card ${active ? "selected" : ""}`}><span className="persona-icon"><Icon size={20} /></span><span><strong>{item.name}</strong><small>{item.desc}</small></span></button>; })}</div><div className="coach-tip"><strong>Dica de coaching</strong><p>Responda à objeção antes de voltar para a sua proposta de valor.</p></div></aside>
