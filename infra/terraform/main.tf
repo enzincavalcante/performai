@@ -39,8 +39,8 @@ resource "google_secret_manager_secret_version" "gemini_api_key_data" {
 
 # Dedicated Service Account for Cloud Run
 resource "google_service_account" "cloud_run_sa" {
-  account_id   = "salesarena-run-sa"
-  display_name = "SalesArena Cloud Run Service Account"
+  account_id   = "performai-run-sa"
+  display_name = "PerformAI Cloud Run Service Account"
 }
 
 # Grant the Service Account access to read the Secret

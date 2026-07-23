@@ -81,7 +81,7 @@ export function useLiveAudio(personaId: string, isSessionActive: boolean) {
           }, 1000); // Send 1 frame per second
 
         } catch (err: any) {
-          setError("Microphone access denied or unavailable.");
+          setError("Não foi possível acessar microfone e câmera. Verifique as permissões do navegador.");
           console.error(err);
         }
       };
@@ -128,8 +128,8 @@ export function useLiveAudio(personaId: string, isSessionActive: boolean) {
         cleanup();
       };
       
-      wsRef.current.onerror = () => {
-        setError("WebSocket error occurred.");
+        wsRef.current.onerror = () => {
+        setError("A conexão com o coach de IA falhou. Confira o backend configurado.");
       };
 
     } catch (err: any) {

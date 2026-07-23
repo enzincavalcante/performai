@@ -18,5 +18,5 @@ variable "gemini_api_key" {
 variable "service_name" {
   description = "The name of the Cloud Run service"
   type        = string
-  default     = "salesarena-backend-prod"
+  default     = "performai-backend-prod"
 }

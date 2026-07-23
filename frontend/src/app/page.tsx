@@ -1,209 +1,72 @@
 "use client";
 
-import { useState } from 'react';
-import { useLiveAudio } from '@/hooks/useLiveAudio';
-import { Mic, MicOff, Activity, CheckCircle, ShieldAlert, BadgeDollarSign, FileWarning } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { FormEvent, useEffect, useState } from "react";
+import { Activity, BadgeDollarSign, CheckCircle, Eye, EyeOff, FileWarning, LockKeyhole, Mic, MicOff, ShieldAlert, UserRound } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
+import { useLiveAudio } from "@/hooks/useLiveAudio";
 
+const DEMO_USER = "Cavalcante";
+const DEMO_PASSWORD = "1234";
 const PERSONAS = [
-  { id: 'skeptic', name: 'The Skeptic CTO', icon: Activity, desc: 'Interrupts frequently, demands proof.' },
-  { id: 'budget_guardian', name: 'Budget Guardian CFO', icon: BadgeDollarSign, desc: 'Cares only about ROI and cost.' },
-  { id: 'procurement', name: 'Aggressive Procurement', icon: FileWarning, desc: 'Impatient, aggressive on pricing.' }
+  { id: "skeptic", name: "CTO cético", desc: "Interrompe, exige prova e combate buzzwords.", icon: Activity },
+  { id: "budget_guardian", name: "CFO guardião do orçamento", desc: "Pressiona por ROI, custo e previsibilidade.", icon: BadgeDollarSign },
+  { id: "procurement", name: "Compras agressivo", desc: "Acelera a conversa e negocia cada detalhe.", icon: FileWarning },
 ];
 
+function Login({ onSuccess }: { onSuccess: () => void }) {
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState("");
+  const submit = (event: FormEvent) => {
+    event.preventDefault();
+    if (username.trim().toLowerCase() === DEMO_USER.toLowerCase() && password === DEMO_PASSWORD) {
+      localStorage.setItem("performai_session", "active");
+      onSuccess();
+      return;
+    }
+    setError("Usuário ou senha inválidos.");
+  };
+  return <main className="auth-shell">
+    <div className="auth-visual">
+      <div className="brand-lockup"><img src="/brand/performai-logo.png" alt="" /><span>PerformAI</span></div>
+      <div className="auth-copy"><p className="eyebrow">TREINAMENTO COMERCIAL COM IA</p><h1>Transforme cada conversa em evolução.</h1><p>Pratique vendas com compradores difíceis, receba feedback objetivo e desenvolva o time com consistência.</p></div>
+      <div className="auth-proof"><span>Role-plays realistas</span><span>Coaching instantâneo</span><span>Scorecards acionáveis</span></div>
+    </div>
+    <div className="auth-panel">
+      <div className="mobile-brand brand-lockup"><img src="/brand/performai-logo.png" alt="" /><span>PerformAI</span></div>
+      <p className="eyebrow">SEU WORKSPACE</p><h2>Entre para treinar</h2><p className="muted">Acesse a arena de performance do seu time.</p>
+      {error && <div className="form-error">{error}</div>}
+      <form onSubmit={submit} className="auth-form">
+        <label>Usuário<input value={username} onChange={(e) => setUsername(e.target.value)} placeholder="Seu usuário" autoComplete="username" required /></label>
+        <label>Senha<div className="password-field"><LockKeyhole size={18} /><input type={showPassword ? "text" : "password"} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Sua senha" autoComplete="current-password" required /><button type="button" onClick={() => setShowPassword((value) => !value)} aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}>{showPassword ? <EyeOff size={18} /> : <Eye size={18} />}</button></div></label>
+        <button className="primary-button" type="submit">Entrar na PerformAI</button>
+      </form>
+      <p className="security-note"><ShieldAlert size={15} /> Ambiente de demonstração protegido.</p>
+    </div>
+  </main>;
+}
+
+function Workspace({ onLogout }: { onLogout: () => void }) {
+  const [selectedPersona, setSelectedPersona] = useState("skeptic");
+  const [sessionActive, setSessionActive] = useState(false);
+  const { isConnected, error, scorecard, setScorecard, backendFeedback, mediaStream } = useLiveAudio(selectedPersona, sessionActive);
+  const persona = PERSONAS.find((item) => item.id === selectedPersona) ?? PERSONAS[0];
+  return <main className="workspace-shell">
+    <header className="topbar"><div className="brand-lockup"><img src="/brand/performai-logo.png" alt="" /><span>PerformAI</span></div><div className="topbar-actions"><span className="status-pill"><i className={sessionActive && isConnected ? "live-dot" : "idle-dot"} />{!sessionActive ? "Pronto para treinar" : isConnected ? "IA ao vivo" : "Conectando..."}</span><button className="ghost-button" onClick={onLogout}>Sair</button></div></header>
+    <section className="workspace-intro"><div><p className="eyebrow">ARENA DE TREINAMENTO</p><h1>Treine como um closer.</h1><p className="muted">Escolha um comprador, faça seu pitch e receba um scorecard para evoluir na próxima conversa.</p></div><div className="intro-badge"><span>Workspace</span><strong>Cavalcante</strong></div></section>
+    <div className="workspace-grid">
+      <aside className="persona-panel"><div className="section-heading"><div><p className="eyebrow">SIMULAÇÃO</p><h2>Escolha o comprador</h2></div><span className="count-badge">{PERSONAS.length} perfis</span></div><div className="persona-list">{PERSONAS.map((item) => { const Icon = item.icon; const active = item.id === selectedPersona; return <button key={item.id} disabled={sessionActive} onClick={() => setSelectedPersona(item.id)} className={`persona-card ${active ? "selected" : ""}`}><span className="persona-icon"><Icon size={20} /></span><span><strong>{item.name}</strong><small>{item.desc}</small></span></button>; })}</div><div className="coach-tip"><strong>Dica de coaching</strong><p>Responda à objeção antes de voltar para a sua proposta de valor.</p></div></aside>
+      <section className="arena-panel">
+        <AnimatePresence mode="wait">{scorecard ? <motion.div key="scorecard" initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} className="scorecard"><div className="scorecard-title"><CheckCircle size={24} /><div><p className="eyebrow">SESSÃO CONCLUÍDA</p><h2>Seu feedback de coaching</h2></div></div><div className="metrics">{["confidence", "objection_handling", "clarity", "value_framing", "closing"].map((metric) => <div className="metric" key={metric}><strong>{scorecard[metric] ?? 0}<small>/10</small></strong><span>{metric.replaceAll("_", " ")}</span></div>)}</div><div className="feedback"><p className="eyebrow">FEEDBACK DA IA</p><p>{scorecard.feedback || "Boa conversa. Na próxima rodada, conecte sua resposta a um impacto de negócio mais específico."}</p></div><button className="secondary-button full" onClick={() => { setScorecard(null); setSessionActive(false); }}>Iniciar nova sessão</button></motion.div> : <motion.div key="arena" className="arena-stage"><div className={`ai-orb ${sessionActive ? "active" : ""}`}>{sessionActive ? <Activity size={58} /> : <Mic size={58} />}</div>{mediaStream && <video className="video-pip" autoPlay playsInline muted ref={(element) => { if (element && element.srcObject !== mediaStream) element.srcObject = mediaStream; }} />}{backendFeedback && <div className="feedback-toast"><ShieldAlert size={17} />{backendFeedback}</div>}{error && <div className="form-error">{error}</div>}<p className="arena-label">{sessionActive ? `Você está falando com ${persona.name}` : "Tudo pronto para começar"}</p><button className={`session-button ${sessionActive ? "stop" : ""}`} onClick={() => setSessionActive((value) => !value)}>{sessionActive ? <><MicOff size={21} /> Encerrar sessão</> : <><Mic size={21} /> Começar pitch</>}</button></motion.div>}</AnimatePresence>
+      </section>
+    </div>
+  </main>;
+}
+
 export default function Home() {
-  const [selectedPersona, setSelectedPersona] = useState('skeptic');
-  const [isSessionActive, setIsSessionActive] = useState(false);
-  
-  const { isConnected, error, scorecard, setScorecard, backendFeedback, mediaStream } = useLiveAudio(selectedPersona, isSessionActive);
-
-  return (
-    <main className="min-h-screen bg-slate-950 text-slate-50 flex flex-col items-center py-12 px-4 selection:bg-indigo-500/30">
-      
-      {/* Header */}
-      <div className="max-w-4xl w-full flex justify-between items-center mb-16">
-        <div>
-          <h1 className="text-4xl font-extrabold tracking-tight bg-gradient-to-r from-indigo-400 to-cyan-400 bg-clip-text text-transparent">
-            SalesArena AI
-          </h1>
-          <p className="text-slate-400 mt-2 font-medium">Train like a closer.</p>
-        </div>
-        
-        {/* Connection Status Indicator */}
-        <div className="flex items-center gap-2 bg-slate-900/50 backdrop-blur-md px-4 py-2 rounded-full border border-slate-800">
-           <div className={`w-2.5 h-2.5 rounded-full ${isSessionActive ? (isConnected ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400 animate-pulse') : 'bg-slate-600'}`} />
-           <span className="text-sm font-medium text-slate-300">
-             {!isSessionActive ? 'Ready' : (isConnected ? 'Live Agent Active' : 'Connecting...')}
-           </span>
-        </div>
-      </div>
-
-      <div className="w-full max-w-4xl grid grid-cols-1 lg:grid-cols-3 gap-8">
-        
-        {/* Left Column: Controls & Setup */}
-        <div className="col-span-1 space-y-6">
-          {!scorecard && (
-             <div className="bg-slate-900/50 border border-slate-800 rounded-3xl p-6 backdrop-blur-sm">
-                <h2 className="text-lg font-semibold mb-4 text-slate-200">Select Buyer Persona</h2>
-                <div className="space-y-3">
-                  {PERSONAS.map(p => {
-                    const Icon = p.icon;
-                    const isActive = selectedPersona === p.id;
-                    return (
-                      <button
-                        key={p.id}
-                        onClick={() => !isSessionActive && setSelectedPersona(p.id)}
-                        disabled={isSessionActive}
-                        className={`w-full text-left p-4 rounded-xl transition-all duration-300 border flex items-start gap-4 ${
-                          isActive 
-                            ? 'bg-indigo-500/10 border-indigo-500/50 shadow-[0_0_15px_rgba(99,102,241,0.1)]' 
-                            : 'bg-slate-950 border-slate-800 hover:border-slate-700 opacity-60'
-                        }`}
-                      >
-                        <div className={`p-2 rounded-lg ${isActive ? 'bg-indigo-500/20 text-indigo-400' : 'bg-slate-800 text-slate-400'}`}>
-                           <Icon size={20} />
-                        </div>
-                        <div>
-                          <p className={`font-medium ${isActive ? 'text-indigo-100' : 'text-slate-300'}`}>{p.name}</p>
-                          <p className="text-xs text-slate-500 mt-1 leading-relaxed">{p.desc}</p>
-                        </div>
-                      </button>
-                    )
-                  })}
-                </div>
-             </div>
-          )}
-        </div>
-
-        {/* Right Column: Arena & Results */}
-        <div className="col-span-1 lg:col-span-2 flex flex-col items-center justify-center min-h-[400px]">
-          
-          <AnimatePresence mode="wait">
-             {/* Final Scorecard */}
-             {scorecard ? (
-                <motion.div 
-                   key="scorecard"
-                   initial={{ opacity: 0, y: 20, scale: 0.95 }}
-                   animate={{ opacity: 1, y: 0, scale: 1 }}
-                   className="w-full bg-slate-900 border border-slate-700/50 rounded-3xl p-8 shadow-2xl relative overflow-hidden"
-                >
-                   <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-indigo-500 via-cyan-400 to-indigo-500" />
-                   <h2 className="text-2xl font-bold mb-6 flex items-center gap-3">
-                      <CheckCircle className="text-emerald-400" /> Session Complete
-                   </h2>
-                   
-                   <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-                      {['confidence', 'objection_handling', 'clarity', 'value_framing', 'closing'].map(metric => (
-                        <div key={metric} className="bg-slate-950 p-4 rounded-2xl border border-slate-800 flex flex-col items-center justify-center">
-                           <p className="text-4xl font-black text-white">{scorecard[metric] ?? 0}<span className="text-lg text-slate-500 font-medium">/10</span></p>
-                           <p className="text-[10px] font-medium text-slate-400 uppercase tracking-widest mt-2">{metric.replace('_', ' ')}</p>
-                        </div>
-                      ))}
-                   </div>
-
-                   <div className="bg-indigo-500/10 border border-indigo-500/20 rounded-2xl p-6">
-                      <h3 className="text-indigo-300 font-semibold mb-2 text-sm uppercase tracking-wider">Coach Feedback</h3>
-                      <p className="text-slate-300 leading-relaxed text-lg">{scorecard.feedback || "Good job! Focus on answering specific ROI questions more directly next time."}</p>
-                   </div>
-                   
-                   <button 
-                      onClick={() => { setScorecard(null); setIsSessionActive(false); }}
-                      className="mt-8 w-full py-4 rounded-xl bg-slate-800 hover:bg-slate-700 font-medium transition-colors"
-                   >
-                     Start New Session
-                   </button>
-                </motion.div>
-             ) : (
-                /* Active Arena View */
-                <motion.div 
-                  key="arena"
-                  initial={{ opacity: 1 }}
-                  exit={{ opacity: 0, scale: 0.9 }}
-                  className="w-full flex flex-col items-center justify-center space-y-12"
-                >
-                  
-                  {/* Avatar / Visualizer */}
-                  <div className="relative group">
-                     {/* Pulse animations when active */}
-                     {isSessionActive && isConnected && (
-                       <>
-                         <div className="absolute inset-0 bg-indigo-500/20 rounded-full blur-3xl animate-pulse" />
-                         <div className="absolute -inset-4 bg-cyan-500/10 rounded-full blur-2xl animate-[pulse_3s_ease-in-out_infinite]" />
-                       </>
-                     )}
-                     
-                     <div className={`relative z-10 w-48 h-48 rounded-full flex items-center justify-center border-4 transition-all duration-700 overflow-hidden ${
-                         isSessionActive ? 'bg-slate-900 border-indigo-500/50 shadow-[0_0_40px_rgba(99,102,241,0.2)]' : 'bg-slate-900 border-slate-800'
-                     }`}>
-                        {isSessionActive ? (
-                            <img src={`https://api.dicebear.com/7.x/bottts/svg?seed=${selectedPersona}&backgroundColor=transparent`} alt="AI Avatar" className="w-full h-full object-cover p-4" />
-                        ) : (
-                            <Mic className="w-16 h-16 text-slate-600" />
-                        )}
-                     </div>
-
-                     {/* User Video Pip */}
-                     {isSessionActive && mediaStream && (
-                         <div className="absolute -bottom-4 -right-4 w-24 h-24 rounded-full overflow-hidden border-4 border-slate-900 bg-slate-950 z-20 shadow-2xl">
-                           <video 
-                             autoPlay 
-                             playsInline 
-                             muted 
-                             className="w-full h-full object-cover"
-                             style={{ transform: "scaleX(-1)" }}
-                             ref={videoEl => {
-                                 if (videoEl && videoEl.srcObject !== mediaStream) {
-                                     videoEl.srcObject = mediaStream;
-                                 }
-                             }}
-                           />
-                         </div>
-                     )}
-                  </div>
-
-                  {/* Feedback Overlay */}
-                  <AnimatePresence>
-                     {backendFeedback && (
-                        <motion.div 
-                          key="feedback"
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: -10 }}
-                          className="absolute bottom-32 bg-amber-500/20 text-amber-200 px-6 py-3 rounded-full flex items-center gap-3 backdrop-blur-md border border-amber-500/30"
-                        >
-                           <ShieldAlert size={18} />
-                           {backendFeedback}
-                        </motion.div>
-                     )}
-                  </AnimatePresence>
-                  
-                  {error && (
-                    <div className="text-red-400 bg-red-400/10 px-4 py-2 rounded-lg border border-red-400/20">
-                      {error}
-                    </div>
-                  )}
-
-                  {/* Call Action Button */}
-                  <button
-                     onClick={() => setIsSessionActive(!isSessionActive)}
-                     className={`group relative overflow-hidden rounded-full font-bold text-lg px-12 py-5 transition-all duration-300 border-2 shadow-2xl ${
-                        isSessionActive 
-                          ? 'bg-red-500/10 text-red-500 border-red-500 hover:bg-red-500/20' 
-                          : 'bg-indigo-600 text-white border-indigo-500 hover:bg-indigo-500 hover:scale-105 hover:shadow-indigo-500/25'
-                     }`}
-                  >
-                     <div className="flex items-center gap-3">
-                        {isSessionActive ? <MicOff size={24} /> : <Mic size={24} />}
-                        <span>{isSessionActive ? 'End Session' : 'Start Pitching'}</span>
-                     </div>
-                  </button>
-
-                </motion.div>
-             )}
-          </AnimatePresence>
-        </div>
-      </div>
-      
-    </main>
-  );
+  const [authenticated, setAuthenticated] = useState(false);
+  useEffect(() => setAuthenticated(localStorage.getItem("performai_session") === "active"), []);
+  if (!authenticated) return <Login onSuccess={() => setAuthenticated(true)} />;
+  return <Workspace onLogout={() => { localStorage.removeItem("performai_session"); setAuthenticated(false); }} />;
 }

@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-# SalesArena AI Production Deployment Script
+# PerformAI Production Deployment Script
 echo "=========================================="
 echo "🚀 Preparing Production Deployment"
 echo "=========================================="
@@ -28,7 +28,7 @@ if [ -z "$PROJECT_ID" ]; then
 fi
 
 REGION="us-central1"
-SERVICE_NAME="salesarena-backend-prod"
+SERVICE_NAME="performai-backend-prod"
 
 if [ -z "$GEMINI_API_KEY" ]; then
   echo "Please export your GEMINI_API_KEY environment variable."

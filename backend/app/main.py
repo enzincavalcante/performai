@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import asyncio
 from app.agent import connect_to_gemini_live
 
-app = FastAPI(title="SalesArena AI Backend")
+app = FastAPI(title="PerformAI Backend")
 
 app.add_middleware(
     CORSMiddleware,
@@ -15,7 +15,7 @@ app.add_middleware(
 
 @app.get("/")
 def read_root():
-    return {"status": "SalesArena AI Backend is running"}
+    return {"status": "PerformAI Backend is running"}
 
 @app.websocket("/ws/arena/{persona_id}")
 async def arena_endpoint(websocket: WebSocket, persona_id: str):

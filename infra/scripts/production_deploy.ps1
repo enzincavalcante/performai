@@ -16,7 +16,7 @@ if ([string]::IsNullOrWhiteSpace($PROJECT_ID) -or $PROJECT_ID -match "^\(unset\)
 }
 
 $REGION = "us-central1"
-$SERVICE_NAME = "salesarena-backend-prod"
+$SERVICE_NAME = "performai-backend-prod"
 
 if ([string]::IsNullOrWhiteSpace($env:GEMINI_API_KEY)) {
     Write-Host "Please set your GEMINI_API_KEY environment variable. For example:"

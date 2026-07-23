@@ -6,7 +6,7 @@ gcloud auth print-access-token > /dev/null 2>&1 || { echo "Please run 'gcloud au
 
 PROJECT_ID=$(gcloud config get-value project)
 REGION="us-central1"
-SERVICE_NAME="salesarena-backend"
+SERVICE_NAME="performai-backend"
 
 echo "Deploying to Project: $PROJECT_ID | Region: $REGION"
 
