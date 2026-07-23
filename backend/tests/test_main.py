@@ -39,7 +39,7 @@ class TestHealthEndpoint:
     def test_root_status_indicates_running(self, client):
         response = client.get("/")
         data = response.json()
-        assert "running" in data["status"].lower() or "salesarena" in data["status"].lower()
+        assert "running" in data["status"].lower() or "performai" in data["status"].lower()
 
 
 class TestCORSMiddleware:
