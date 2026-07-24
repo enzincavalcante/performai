@@ -1,9 +1,20 @@
 """Unit tests for personas.py"""
 import pytest
-from app.personas import PERSONAS
+from app.personas import PERSONAS, build_system_instruction
 
 REQUIRED_PERSONA_KEYS = {"name", "prompt"}
-EXPECTED_PERSONA_IDS = {"skeptic", "budget_guardian", "procurement"}
+EXPECTED_PERSONA_IDS = {
+    "skeptic",
+    "budget_guardian",
+    "procurement",
+    "ceo",
+    "aggressive_customer",
+    "rude_customer",
+    "price_sensitive",
+    "sales_director",
+    "operations_manager",
+    "smb_founder",
+}
 
 
 class TestPersonasStructure:
@@ -85,3 +96,71 @@ class TestProcurementPersona:
     def test_prompt_sets_impatient_behavior(self):
         prompt_lower = self.persona["prompt"].lower()
         assert "impatient" in prompt_lower or "hurry" in prompt_lower or "interrupt" in prompt_lower
+
+
+class TestExtendedPersonas:
+    @pytest.mark.parametrize(
+        ("persona_id", "expected_terms"),
+        [
+            ("ceo", ("business impact", "executive", "quantified")),
+            ("aggressive_customer", ("pressure", "interrupt", "aggressive")),
+            ("rude_customer", ("blunt", "dismissive", "challenging")),
+            ("price_sensitive", ("price", "discount", "cheaper")),
+            ("sales_director", ("metas", "conversao", "pipeline")),
+            ("operations_manager", ("operacoes", "implantacao", "rotina")),
+            ("smb_founder", ("fundador", "caixa", "retorno")),
+        ],
+    )
+    def test_prompt_defines_expected_behavior(self, persona_id, expected_terms):
+        prompt_lower = PERSONAS[persona_id]["prompt"].lower()
+        assert any(term in prompt_lower for term in expected_terms)
+
+    def test_rude_customer_has_explicit_safety_boundaries(self):
+        prompt_lower = PERSONAS["rude_customer"]["prompt"].lower()
+        assert "hate speech" in prompt_lower
+        assert "discriminatory" in prompt_lower
+        assert "threats" in prompt_lower
+
+    def test_rude_customer_is_challenging_without_personal_abuse(self):
+        prompt_lower = PERSONAS["rude_customer"]["prompt"].lower()
+        assert "objective questions" in prompt_lower
+        assert "react directly" in prompt_lower
+        assert "do not insult" in prompt_lower
+        assert "interrupt only occasionally" in prompt_lower
+
+
+class TestVoiceConversationRules:
+    @pytest.mark.parametrize("persona_id", EXPECTED_PERSONA_IDS)
+    def test_every_persona_uses_natural_short_pt_br_turns(self, persona_id):
+        prompt_lower = build_system_instruction(persona_id).lower()
+        assert "brazilian portuguese" in prompt_lower
+        assert "one or two short sentences" in prompt_lower
+        assert "one objective question" in prompt_lower
+        assert "never give speeches or long monologues" in prompt_lower
+        assert "interruptions moderately" in prompt_lower
+
+    def test_context_does_not_remove_conversation_rules(self):
+        prompt_lower = build_system_instruction(
+            "rude_customer", {"challenge": "O cliente acha o preco alto."}
+        ).lower()
+        assert "brazilian portuguese" in prompt_lower
+        assert "cenario ou desafio" in prompt_lower
+
+
+class TestNewBuyerRoles:
+    @pytest.mark.parametrize(
+        ("persona_id", "distinct_focus"),
+        [
+            ("sales_director", ("conversao", "ciclo de vendas", "pipeline")),
+            ("operations_manager", ("implantacao", "integracoes", "confiabilidade")),
+            ("smb_founder", ("prova pratica", "retorno rapido", "caixa")),
+        ],
+    )
+    def test_persona_has_distinct_business_focus(self, persona_id, distinct_focus):
+        prompt_lower = PERSONAS[persona_id]["prompt"].lower()
+        assert all(term in prompt_lower for term in distinct_focus)
+
+    @pytest.mark.parametrize("persona_id", ["sales_director", "operations_manager", "smb_founder"])
+    def test_persona_avoids_repeating_resolved_objections(self, persona_id):
+        prompt_lower = PERSONAS[persona_id]["prompt"].lower()
+        assert "nao repita" in prompt_lower or "sem repetir" in prompt_lower

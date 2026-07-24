@@ -1,0 +1,73 @@
+.call-review-page { display:grid; gap:24px; }
+.review-heading { display:flex; align-items:flex-end; justify-content:space-between; gap:24px; padding-bottom:24px; border-bottom:1px solid #1b3964; }
+.review-heading h1 { margin:8px 0 10px; font-size:38px; }
+.review-heading>div>p:last-child { max-width:680px; margin:0; color:#8ea5c7; line-height:1.55; }
+.review-upload-panel,.review-section,.review-overview,.review-list,.review-actions { border:1px solid #1d3c69; border-radius:8px; background:#0b1e3c; }
+.review-upload-panel { padding:26px; }
+.review-metadata { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:18px; }
+.review-metadata label { display:grid; gap:7px; color:#aebfda; font-size:11px; font-weight:800; text-transform:uppercase; }
+.review-metadata select { min-height:46px; padding:0 13px; border:1px solid #29466f; border-radius:7px; outline:0; color:#eef4ff; background:#091a35; text-transform:none; }
+.review-metadata select:focus { border-color:#4f7cff; box-shadow:0 0 0 3px rgba(79,124,255,.14); }
+.review-dropzone { min-height:310px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; padding:34px; border:1px dashed #31578f; border-radius:8px; text-align:center; background:#081a35; transition:border-color .15s,background .15s; }
+.review-dropzone.dragging { border-color:#54d7e8; background:#0d2949; }
+.review-dropzone.has-file { min-height:230px; }
+.review-dropzone input { display:none; }
+.review-file-icon { width:56px; height:56px; display:grid; place-items:center; border:1px solid #315c99; border-radius:8px; color:#81a7ff; background:#122c56; }
+.review-file-icon svg { width:25px; height:25px; }
+.review-dropzone strong { display:block; color:#f6f9ff; font-size:17px; overflow-wrap:anywhere; }
+.review-dropzone p { margin:6px 0 0; color:#8da4c5; font-size:13px; }
+.review-dropzone p i { display:inline-block; width:3px; height:3px; margin:0 7px 3px; border-radius:50%; background:#54749f; }
+.review-dropzone>small { color:#637fa6; font-size:11.5px; }
+.review-progress,.review-error { display:flex; align-items:flex-start; gap:14px; margin-top:16px; padding:16px; border-radius:7px; }
+.review-progress { background:#102a50; }
+.review-progress strong,.review-progress p,.review-error strong,.review-error p { display:block; margin:0; }
+.review-progress p,.review-error p { margin-top:4px; color:#94aac8; font-size:13px; }
+.review-spinner { width:22px; height:22px; flex:0 0 auto; border:2px solid #31517e; border-top-color:#54d7e8; border-radius:50%; animation:review-spin .8s linear infinite; }
+.review-error { border:1px solid #713d52; color:#ff9fba; background:#351a2b; }
+.review-error svg { flex:0 0 auto; }
+.review-error small { display:block; margin-top:8px; color:#dca1b2; line-height:1.45; }
+.review-error code { color:#fff; }
+.review-submit { display:flex; align-items:center; justify-content:space-between; gap:20px; margin-top:22px; }
+.review-submit strong,.review-submit span { display:block; }
+.review-submit span { margin-top:4px; color:#718aac; font-size:12px; }
+.review-overview { display:grid; grid-template-columns:220px 1fr; overflow:hidden; }
+.review-score { display:flex; flex-direction:column; justify-content:center; padding:30px; border-right:1px solid #1d3c69; }
+.review-score>span { color:#89a1c3; font-size:12px; font-weight:700; text-transform:uppercase; }
+.review-score strong { margin-top:12px; color:#54d7e8; font-size:56px; line-height:1; }
+.review-score small { color:#7890b2; font-size:15px; }
+.review-summary { padding:30px; }
+.review-summary h2,.review-section-title h2,.review-list h2,.review-actions h2 { margin:7px 0 12px; font-size:21px; }
+.review-summary>p:last-child { margin:0; color:#b5c5dc; line-height:1.65; }
+.review-section { padding:28px; }
+.review-section-title { display:flex; align-items:flex-start; gap:13px; }
+.review-section-title>svg,.review-list>svg,.review-actions>svg { flex:0 0 auto; color:#7ea4ff; }
+.review-skills { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; margin-top:18px; }
+.review-skills article { padding:16px; border:1px solid #1b3861; border-radius:7px; background:#091a34; }
+.review-skills header { display:flex; justify-content:space-between; gap:12px; text-transform:capitalize; }
+.review-skills header span { color:#7ea4ff; font-weight:700; }
+.review-skills article>div { height:5px; margin-top:12px; overflow:hidden; background:#18345d; }
+.review-skills article>div i { display:block; height:100%; background:#54d7e8; }
+.review-skills article p { margin:11px 0 0; color:#91a7c6; font-size:12.5px; line-height:1.5; }
+.review-excerpts { display:grid; gap:10px; margin-top:18px; }
+.review-excerpts article { display:grid; grid-template-columns:58px 1fr; gap:15px; padding:16px; border-left:2px solid #4f7cff; background:#091a34; }
+.review-excerpts article>span { color:#74a0ec; font:700 12px monospace; }
+.review-excerpts blockquote { margin:0; color:#dbe5f4; line-height:1.55; }
+.review-excerpts p { margin:7px 0 0; color:#8199bb; font-size:12.5px; }
+.review-columns { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+.review-list,.review-actions { display:flex; align-items:flex-start; gap:14px; padding:26px; }
+.review-list ul,.review-actions ol { display:grid; gap:10px; margin:16px 0 0; padding-left:20px; color:#aebfd7; line-height:1.5; }
+.review-list.strengths>svg { color:#5eead4; }
+.review-list.improvements>svg { color:#f3c16b; }
+.review-actions { border-color:#28518b; background:#0d264b; }
+.review-actions>svg { color:#54d7e8; }
+@keyframes review-spin { to { transform:rotate(360deg); } }
+@media(max-width:760px) {
+  .review-metadata { grid-template-columns:1fr; }
+  .review-heading,.review-submit { align-items:stretch; flex-direction:column; }
+  .review-heading h1 { font-size:31px; }
+  .review-upload-panel { padding:16px; }
+  .review-dropzone { min-height:280px; padding:24px 16px; }
+  .review-overview,.review-skills,.review-columns { grid-template-columns:1fr; }
+  .review-score { border-right:0; border-bottom:1px solid #1d3c69; }
+  .review-submit button { width:100%; }
+}

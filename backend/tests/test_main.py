@@ -74,14 +74,16 @@ class TestWebSocketEndpoint:
             # persona_id is the second positional argument
             assert args[1] == "budget_guardian"
 
-    def test_websocket_connects_with_unknown_persona(self):
-        """Unknown persona IDs should still connect (falls back to skeptic)."""
+    def test_websocket_rejects_unknown_persona(self):
+        """Unknown persona IDs are rejected before opening a Gemini session."""
         with patch("app.main.connect_to_gemini_live", new_callable=AsyncMock) as mock_connect:
             mock_connect.return_value = None
             with TestClient(app) as client:
                 with client.websocket_connect("/ws/arena/unknown_persona") as ws:
-                    pass
-            mock_connect.assert_called_once()
+                    message = ws.receive_json()
+                    assert message["type"] == "error"
+                    assert message["code"] == "invalid_persona"
+            mock_connect.assert_not_called()
 
     def test_websocket_handles_disconnect_gracefully(self):
         """WebSocketDisconnect should be caught without propagating."""

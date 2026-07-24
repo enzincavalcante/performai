@@ -89,6 +89,43 @@ cd backend
 pytest tests/ -v
 ```
 
+## Extensoes enterprise
+
+As capacidades enterprise vivem em `backend/app/services/extensions/` e sao
+montadas por routers independentes. O fluxo de voz existente e preservado: CRM,
+stress e RAG sao resolvidos antes da conexao com o Gemini Live.
+
+### APIs adicionadas
+
+- `POST /api/v1/simulations/recreate-lost-deal`: recria um deal perdido e
+  devolve um `simulation_id` para iniciar a Arena no gargalo identificado.
+- `POST /api/v1/extensions/top-sellers/ingest`: extrai e indexa padroes de uma
+  chamada de alta performance.
+- `POST /api/v1/extensions/top-sellers/retrieve`: recupera padroes e pode
+  compor um prompt RAG antes da sessao.
+- `POST /api/v1/analytics/team-risk-matrix`: calcula gaps, risco de conversao e
+  agenda micro-simulacoes quando uma competencia fica abaixo do limite.
+- `POST /api/v1/extensions/weekly-challenges`: cria um desafio semanal.
+- `POST /api/v1/extensions/weekly-challenges/{id}/scores`: registra score com
+  peso de dificuldade.
+- `GET /api/v1/extensions/weekly-challenges/{id}/leaderboard`: retorna ranking.
+- `POST /api/v1/extensions/arenas`: cria desafios assincronos 1v1 ou por time.
+
+Para usar uma recriacao na conexao existente, envie a primeira mensagem do
+WebSocket sem alterar o endpoint:
+
+```json
+{
+  "type": "session_config",
+  "data": { "simulation_id": "id-retornado-pela-api" }
+}
+```
+
+O MVP fornece adapters em memoria para vetores, desafios, filas e simulacoes.
+As interfaces foram separadas para receber adapters persistentes sem mudar os
+contratos HTTP. Em producao, substitua esses adapters antes de escalar para
+multiplas instancias.
+
 ## Estrutura
 
 ```text

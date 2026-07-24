@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "PerformAI | Treinamento comercial com IA",
+  title: "Performa AI | Treinamento comercial com IA",
   description: "Pratique vendas com IA, receba coaching e desenvolva seu time comercial.",
 };
 
