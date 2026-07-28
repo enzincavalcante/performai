@@ -3,11 +3,11 @@
 import Image from "next/image";
 import { useMemo, useState } from "react";
 import {
-  Award, BarChart3, Bell, BookOpen, Bot, Brain, BriefcaseBusiness,
+  ArrowLeft, Award, BarChart3, Bell, BookOpen, Bot, Brain, BriefcaseBusiness,
   CheckCircle2, ChevronRight, ClipboardCheck, Download, FileAudio,
   FileText, FolderOpen, GraduationCap, LayoutDashboard, Library,
   LineChart, ListChecks, Medal, Menu, MessageSquareText, Mic,
-  MoreHorizontal, Play, Search, Settings, ShieldCheck, Sparkles,
+  Lock, MoreHorizontal, Play, Search, Settings, ShieldCheck, Sparkles,
   Star, Target, Trophy, Upload, UserPlus, Users, X, Zap,
 } from "lucide-react";
 import "./enterprise.css";
@@ -25,7 +25,7 @@ const NAVIGATION: { id: EnterpriseView; label: string; icon: typeof LayoutDashbo
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
   { id: "learning", label: "Treinamentos", icon: GraduationCap },
   { id: "simulation", label: "Simulacao por voz", icon: Mic },
-  { id: "ai", label: "IA Comercial", icon: Bot },
+  { id: "ai", label: "Mentor de Vendas IA", icon: Bot },
   { id: "calls", label: "Analise de Calls", icon: FileAudio },
   { id: "paths", label: "Trilhas", icon: Target },
   { id: "assessments", label: "Avaliacoes", icon: ClipboardCheck },
@@ -84,16 +84,27 @@ export function EnterpriseDashboard({ onNavigate }: { onNavigate: Navigate }) {
 }
 
 const COURSE_DATA = [
-  { title: "Descoberta que gera urgencia", category: "Diagnostico", level: "Intermediario", time: "1h 25min", progress: 72, tone: "blue" },
-  { title: "Objecoes sem conceder desconto", category: "Negociacao", level: "Avancado", time: "58min", progress: 35, tone: "purple" },
-  { title: "Cold Call: primeiros 30 segundos", category: "Prospeccao", level: "Essencial", time: "42min", progress: 0, tone: "cyan" },
-  { title: "Fechamento e proximos passos", category: "Closer", level: "Intermediario", time: "1h 10min", progress: 0, tone: "green" },
+  { id: "discovery", title: "Descoberta que gera urgencia", category: "Diagnostico", level: "Intermediario", time: "1h 25min", progress: 72, tone: "blue", videoId: "SE0T0QGD1Oc", videoTitle: "9 perguntas para uma call de descoberta", description: "Aprenda a conduzir o cliente ate impacto, urgencia, decisao e proximo passo.", objectives: ["Identificar a dor por tras do sintoma", "Quantificar impacto e prioridade", "Confirmar o processo de decisao"], checklist: ["Assista ao video", "Baixe o roteiro de descoberta", "Responda ao estudo de caso", "Conclua o quiz"] },
+  { id: "objections", title: "Objecoes sem conceder desconto", category: "Negociacao", level: "Avancado", time: "58min", progress: 35, tone: "purple", videoId: "siKV9kalIBg", videoTitle: "Como superar objecoes de preco", description: "Diagnostique a causa da resistencia antes de defender preco, oferecer desconto ou listar funcionalidades.", objectives: ["Diferenciar preco de falta de valor", "Responder com perguntas de diagnostico", "Proteger margem na negociacao"], checklist: ["Assista ao video", "Estude o framework de resposta", "Pratique tres objecoes", "Conclua o desafio"] },
+  { id: "cold-call", title: "Cold Call: primeiros 30 segundos", category: "Prospeccao", level: "Essencial", time: "42min", progress: 0, tone: "cyan", videoId: "EPgUjZFeVsM", videoTitle: "Abordagem outbound orientada a valor", description: "Construa uma abertura curta, honesta e relevante que conquiste permissao para continuar.", objectives: ["Ganhar os proximos 30 segundos", "Criar relevancia sem pitch longo", "Finalizar com uma pergunta"], checklist: ["Assista ao video", "Escreva sua abertura", "Grave duas versoes", "Passe no quiz"] },
+  { id: "closing", title: "Fechamento e proximos passos", category: "Closer", level: "Intermediario", time: "1h 10min", progress: 0, tone: "green", videoId: "95yqB6iu1Ik", videoTitle: "Fundamentos do fechamento de vendas", description: "Transforme interesse em compromisso claro, com responsavel, data e criterio de decisao.", objectives: ["Reconhecer sinais de avancar", "Evitar encerramentos vagos", "Definir um proximo passo calendarizavel"], checklist: ["Assista ao trecho indicado", "Aplique o checklist", "Resolva o estudo de caso", "Conclua a avaliacao"] },
 ];
 
 function LearningModule({ onNavigate }: { onNavigate: Navigate }) {
   const [category, setCategory] = useState("Todos");
+  const [selectedCourse, setSelectedCourse] = useState<(typeof COURSE_DATA)[number] | null>(null);
   const categories = ["Todos", "Prospeccao", "SDR", "Closer", "Negociacao", "Objecoes", "Lideranca"];
-  return <ModuleFrame eyebrow="APRENDIZAGEM" title="Treinamentos" description="Conteudos personalizados para desenvolver as habilidades que mais impactam o resultado comercial." action={<button><Upload /> Adicionar conteudo</button>}>
+  if (selectedCourse) return <ModuleFrame eyebrow={selectedCourse.category} title={selectedCourse.title} description={selectedCourse.description} action={<button onClick={() => setSelectedCourse(null)}><ArrowLeft /> Voltar aos treinamentos</button>}>
+    <section className="course-player-layout">
+      <article className="course-player-main">
+        <div className="course-video"><iframe src={`https://www.youtube-nocookie.com/embed/${selectedCourse.videoId}`} title={selectedCourse.videoTitle} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen /></div>
+        <div className="course-player-copy"><small>VIDEO SELECIONADO · FONTE ESPECIALIZADA</small><h2>{selectedCourse.videoTitle}</h2><p>{selectedCourse.description}</p></div>
+        <section className="course-objectives"><h3>O que voce vai dominar</h3><div>{selectedCourse.objectives.map((objective) => <span key={objective}><CheckCircle2 /> {objective}</span>)}</div></section>
+      </article>
+      <aside className="course-lesson-panel"><header><div><small>PROGRESSO DO TREINAMENTO</small><strong>{selectedCourse.progress}%</strong></div><div className="enterprise-progress"><i style={{ width: `${selectedCourse.progress}%` }} /></div></header><h3>Etapas desta aula</h3>{selectedCourse.checklist.map((item, index) => <button className={index < Math.ceil(selectedCourse.progress / 25) ? "done" : ""} key={item}><i>{index < Math.ceil(selectedCourse.progress / 25) ? <CheckCircle2 /> : index + 1}</i><span>{item}</span><ChevronRight /></button>)}<button className="course-practice" onClick={() => onNavigate("simulation")}><Mic /> Praticar com cliente IA</button></aside>
+    </section>
+  </ModuleFrame>;
+  return <ModuleFrame eyebrow="APRENDIZAGEM" title="Treinamentos" description="Conteudos personalizados para desenvolver as habilidades que mais impactam o resultado comercial." action={<button onClick={() => setSelectedCourse(COURSE_DATA[0])}><Play /> Abrir treinamento em destaque</button>}>
     <div className="enterprise-search-row"><label><Search /><input placeholder="Pesquisar cursos, tecnicas ou habilidades" /></label><div>{categories.map((item) => <button key={item} className={category === item ? "active" : ""} onClick={() => setCategory(item)}>{item}</button>)}</div></div>
     <section className="course-feature"><div><p>RECOMENDADO PELA IA</p><h2>Fortaleca a descoberta antes do pitch.</h2><span>Uma selecao baseada nas calls e simulacoes mais recentes do seu time.</span><button onClick={() => onNavigate("paths")}><Play /> Iniciar recomendacao</button></div><Brain /></section>
     <section><SectionTitle eyebrow="CONTINUE DE ONDE PAROU" title="Sua aprendizagem" aside="4 treinamentos" /><div className="course-grid">{COURSE_DATA.map((course) => <article className="course-card" key={course.title}><div className={`course-cover ${course.tone}`}><Play /><span>{course.category}</span></div><div className="course-card-body"><small>{course.level} · {course.time}</small><h3>{course.title}</h3><div className="enterprise-progress"><i style={{ width: `${course.progress}%` }} /></div><footer><span>{course.progress ? `${course.progress}% concluido` : "Ainda nao iniciado"}</span><button aria-label={`Abrir ${course.title}`}><ChevronRight /></button></footer></div></article>)}</div></section>
@@ -110,6 +121,38 @@ function PathsModule() {
   </ModuleFrame>;
 }
 
+const FEATURED_PATH = [
+  ["Introducao", "Conheca a metodologia, a plataforma e a rotina de evolucao."],
+  ["Mentalidade comercial", "Desenvolva disciplina, curiosidade e responsabilidade pelo resultado."],
+  ["Prospeccao", "Crie abordagens relevantes e conquiste os primeiros segundos."],
+  ["Qualificacao", "Separe oportunidade real de contato sem prioridade ou aderencia."],
+  ["Rapport", "Construa confianca sem perder objetividade comercial."],
+  ["Descoberta de necessidade", "Investigue dor, impacto, urgencia e processo de decisao."],
+  ["Apresentacao de valor", "Conecte sua solucao ao resultado que o cliente precisa."],
+  ["Quebra de objecoes", "Acolha, investigue e responda sem entrar em confronto."],
+  ["Negociacao", "Proteja margem e troque concessoes por compromissos."],
+  ["Fechamento", "Transforme interesse em um proximo passo claro e calendarizado."],
+  ["Pos-venda", "Garanta adocao, expansao e indicacoes depois do contrato."],
+  ["Exercicios praticos", "Aplique os frameworks em situacoes curtas e objetivas."],
+  ["Simulacoes", "Pratique com compradores de diferentes perfis e niveis de pressao."],
+  ["Estudos de caso", "Decida como conduzir oportunidades inspiradas em calls reais."],
+  ["Avaliacao final", "Comprove conhecimento, diagnostico e execucao comercial."],
+  ["Certificacao", "Emita seu certificado depois de cumprir todos os criterios."],
+] as const;
+
+function FixedPathsModule({ onNavigate }: { onNavigate: Navigate }) {
+  const [completed, setCompleted] = useState(3);
+  const [selected, setSelected] = useState(3);
+  const progress = Math.round((completed / FEATURED_PATH.length) * 100);
+  const current = FEATURED_PATH[selected];
+  return <ModuleFrame eyebrow="JORNADA COMERCIAL COMPLETA" title="Trilha Destaque" description="Uma formacao fixa, organizada do fundamento a certificacao. Cada etapa libera a proxima conforme seu avanco.">
+    <section className="path-layout path-layout-fixed">
+      <article className="enterprise-panel path-main"><header><div><p>TRILHA OFICIAL</p><h2>Vendas de alta performance</h2><span>{completed} de {FEATURED_PATH.length} etapas concluidas</span></div><strong>{progress}%</strong></header><div className="enterprise-progress"><i style={{ width: `${progress}%` }} /></div><div className="path-steps path-steps-complete">{FEATURED_PATH.map(([title], index) => { const done = index < completed; const unlocked = index <= completed; return <button className={done ? "done" : index === selected ? "current" : ""} disabled={!unlocked} onClick={() => setSelected(index)} key={title}><i>{done ? <CheckCircle2 /> : unlocked ? index + 1 : <Lock />}</i><span><strong>{title}</strong><small>{done ? "Concluido" : unlocked ? index === completed ? "Disponivel agora" : "Revisar etapa" : "Conclua a etapa anterior"}</small></span><ChevronRight /></button>; })}</div></article>
+      <aside className="enterprise-panel path-detail-panel"><span className="path-detail-index">{String(selected + 1).padStart(2, "0")}</span><p>ETAPA SELECIONADA</p><h2>{current[0]}</h2><span>{current[1]}</span><div className="path-detail-items"><div><Play /><span><strong>Aula guiada</strong><small>Video, resumo e exemplos</small></span></div><div><ListChecks /><span><strong>Aplicacao pratica</strong><small>Exercicio e checklist</small></span></div><div><ClipboardCheck /><span><strong>Validacao</strong><small>Quiz com correcao imediata</small></span></div></div>{selected === completed ? <button onClick={() => setCompleted((value) => Math.min(value + 1, FEATURED_PATH.length))}>Concluir e liberar proxima etapa <ChevronRight /></button> : selected < completed ? <button onClick={() => onNavigate("learning")}>Revisar conteudo <ChevronRight /></button> : <small className="path-locked-copy"><Lock /> Esta etapa sera liberada automaticamente.</small>}</aside>
+    </section>
+  </ModuleFrame>;
+}
+
 function AssessmentsModule() {
   return <ModuleFrame eyebrow="VALIDACAO DE COMPETENCIAS" title="Avaliacoes" description="Quizzes, provas e desafios praticos para comprovar conhecimento e liberar certificacoes." action={<button><ClipboardCheck /> Criar avaliacao</button>}>
     <section className="module-kpis"><article><span>Pendentes</span><strong>3</strong><small>1 vence esta semana</small></article><article><span>Nota media</span><strong>8,6</strong><small>+0,4 no mes</small></article><article><span>Taxa de aprovacao</span><strong>91%</strong><small>Meta: 90%</small></article></section>
@@ -118,6 +161,26 @@ function AssessmentsModule() {
       ["Simulado de quebra de objecoes", "8 cenarios", "20 min", "Recomendado pela IA"],
       ["Avaliacao pratica de pitch", "Gravacao por voz", "10 min", "Novo"],
     ].map((item, index) => <article key={item[0]}><span className={index === 0 ? "urgent" : ""}><ClipboardCheck /></span><div><small>{item[3]}</small><h3>{item[0]}</h3><p>{item[1]} · {item[2]} · correcao automatica</p></div><button>Comecar <ChevronRight /></button></article>)}</div>
+  </ModuleFrame>;
+}
+
+const QUIZ_QUESTIONS = [
+  { question: "Qual e a melhor primeira resposta para uma objecao de preco?", options: ["Oferecer desconto imediatamente", "Defender todas as funcionalidades", "Acolher e investigar o motivo", "Encerrar a conversa"], answer: 2 },
+  { question: "Um proximo passo de qualidade precisa conter:", options: ["Uma promessa vaga de retorno", "Data, participantes e objetivo", "Somente o envio da proposta", "Apenas o telefone do vendedor"], answer: 1 },
+  { question: "Na descoberta, o vendedor deve priorizar:", options: ["Demonstrar o produto cedo", "Falar mais que o cliente", "Entender impacto, urgencia e decisao", "Evitar perguntas dificeis"], answer: 2 },
+];
+
+function InteractiveAssessmentsModule() {
+  const [active, setActive] = useState(false);
+  const [answers, setAnswers] = useState<number[]>([]);
+  const [finished, setFinished] = useState(false);
+  const score = Math.round((QUIZ_QUESTIONS.filter((question, index) => answers[index] === question.answer).length / QUIZ_QUESTIONS.length) * 10);
+  if (active) return <ModuleFrame eyebrow="AVALIACAO INTERATIVA" title="Dominio comercial essencial" description="Responda as questoes e receba correcao imediata. Nota minima para aprovacao: 7,0." action={<button onClick={() => { setActive(false); setFinished(false); setAnswers([]); }}><ArrowLeft /> Voltar</button>}>
+    <section className="quiz-shell">{finished ? <div className="quiz-result"><Award /><p>RESULTADO DA AVALIACAO</p><h2>{score.toFixed(1)}</h2><strong>{score >= 7 ? "Aprovado. Proxima etapa liberada." : "Revise os pontos abaixo e tente novamente."}</strong><div>{QUIZ_QUESTIONS.map((question, index) => <span className={answers[index] === question.answer ? "correct" : "wrong"} key={question.question}>{answers[index] === question.answer ? <CheckCircle2 /> : <Target />} {question.question}</span>)}</div><button onClick={() => { setFinished(false); setAnswers([]); }}>Refazer avaliacao</button></div> : <>{QUIZ_QUESTIONS.map((question, questionIndex) => <article className="quiz-question" key={question.question}><small>QUESTAO {questionIndex + 1} DE {QUIZ_QUESTIONS.length}</small><h2>{question.question}</h2><div>{question.options.map((option, optionIndex) => <button className={answers[questionIndex] === optionIndex ? "selected" : ""} onClick={() => setAnswers((currentAnswers) => { const next = [...currentAnswers]; next[questionIndex] = optionIndex; return next; })} key={option}><i>{String.fromCharCode(65 + optionIndex)}</i>{option}</button>)}</div></article>)}<button className="quiz-submit" disabled={answers.filter((answer) => answer !== undefined).length !== QUIZ_QUESTIONS.length} onClick={() => setFinished(true)}>Finalizar e corrigir <ChevronRight /></button></>}</section>
+  </ModuleFrame>;
+  return <ModuleFrame eyebrow="VALIDACAO DE COMPETENCIAS" title="Avaliacoes" description="Quizzes, provas e desafios praticos para comprovar conhecimento e liberar certificacoes.">
+    <section className="module-kpis"><article><span>Pendentes</span><strong>3</strong><small>1 vence esta semana</small></article><article><span>Nota media</span><strong>8,6</strong><small>+0,4 no mes</small></article><article><span>Taxa de aprovacao</span><strong>91%</strong><small>Meta: 90%</small></article></section>
+    <div className="assessment-list">{[["Dominio comercial essencial", "3 questoes", "5 min", "Disponivel"], ["Simulado de quebra de objecoes", "8 cenarios", "20 min", "Proximo desafio"], ["Avaliacao pratica de pitch", "Gravacao por voz", "10 min", "Em breve"]].map((item, index) => <article key={item[0]}><span className={index === 0 ? "urgent" : ""}><ClipboardCheck /></span><div><small>{item[3]}</small><h3>{item[0]}</h3><p>{item[1]} · {item[2]} · correcao automatica</p></div><button disabled={index > 0} onClick={() => index === 0 && setActive(true)}>{index === 0 ? "Comecar" : "Bloqueado"} {index === 0 ? <ChevronRight /> : <Lock />}</button></article>)}</div>
   </ModuleFrame>;
 }
 
@@ -206,8 +269,8 @@ function SettingsModule() {
 export function EnterpriseModule({ view, onNavigate }: { view: EnterpriseView; onNavigate: Navigate }) {
   if (view === "dashboard") return <EnterpriseDashboard onNavigate={onNavigate} />;
   if (view === "learning") return <LearningModule onNavigate={onNavigate} />;
-  if (view === "paths") return <PathsModule />;
-  if (view === "assessments") return <AssessmentsModule />;
+  if (view === "paths") return <FixedPathsModule onNavigate={onNavigate} />;
+  if (view === "assessments") return <InteractiveAssessmentsModule />;
   if (view === "gamification") return <GamificationModule />;
   if (view === "performance") return <PerformanceModule />;
   if (view === "reports") return <ReportsModule />;

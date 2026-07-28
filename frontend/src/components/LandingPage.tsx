@@ -1,6 +1,10 @@
 "use client";
 
 import Image from "next/image";
+import {
+  BarChart3, CheckCircle2, ChevronRight, FileAudio, GraduationCap,
+  LayoutDashboard, Mic, Play, Sparkles, Target, Trophy,
+} from "lucide-react";
 import "./landing.css";
 
 const BRAND_LOGO = `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/brand/performai-logo.png`;
@@ -56,6 +60,61 @@ export function LandingPage({ onEnter }: { onEnter: () => void }) {
         <div className="landing-bubble landing-bubble-seller"><span>VENDEDOR</span>Entendo. Posso te mostrar o que esta incluso que reduz seu custo com...?</div>
         <div className="landing-bubble landing-bubble-ai"><span>IA CLIENTE</span>Pode, mas ja vou te avisar: tambem estou olhando o concorrente X.</div>
         <div className="landing-adherence"><span>Aderencia ao script</span><div><i /></div></div>
+      </div>
+    </section>
+
+    <section className="landing-product-preview" aria-labelledby="preview-title">
+      <div className="landing-wrap">
+        <div className="landing-preview-heading">
+          <div>
+            <p className="landing-eyebrow">Veja antes de entrar</p>
+            <h2 id="preview-title">É assim que sua operação fica depois da compra.</h2>
+            <p>Um ambiente único para treinar, analisar ligações, acompanhar evolução e mostrar ao gestor exatamente onde agir.</p>
+          </div>
+          <button className="landing-btn landing-btn-solid" onClick={onEnter}>Explorar o aplicativo <ChevronRight /></button>
+        </div>
+        <div className="landing-app-preview">
+          <aside className="landing-preview-sidebar">
+            <Brand />
+            <div className="landing-preview-workspace"><small>WORKSPACE</small><strong>Equipe Comercial</strong></div>
+            <nav>
+              <span className="active"><LayoutDashboard /> Visão geral</span>
+              <span><GraduationCap /> Treinamentos</span>
+              <span><Mic /> Simulação por voz</span>
+              <span><FileAudio /> Análise de calls</span>
+              <span><Trophy /> Ranking do time</span>
+            </nav>
+            <div className="landing-preview-balance"><b>52 min</b><small>saldo nesta semana</small></div>
+          </aside>
+          <div className="landing-preview-content">
+            <header><div><small>PAINEL DE DESENVOLVIMENTO</small><h3>Bom dia, equipe Cavalcante.</h3><p>Veja o que evoluiu e qual é a próxima ação recomendada.</p></div><button onClick={onEnter}><Mic /> Iniciar treino</button></header>
+            <div className="landing-preview-kpis">
+              <article><Target /><span>Nota média</span><strong>8,4</strong><small>+0,6 neste mês</small></article>
+              <article><FileAudio /><span>Calls analisadas</span><strong>128</strong><small>18 nesta semana</small></article>
+              <article><BarChart3 /><span>Evolução</span><strong>+24%</strong><small>últimos 30 dias</small></article>
+            </div>
+            <div className="landing-preview-grid">
+              <article className="landing-preview-path">
+                <header><div><small>TRILHA EM DESTAQUE</small><h4>Vendas de alta performance</h4></div><b>68%</b></header>
+                <div className="landing-preview-progress"><i /></div>
+                <ul><li><CheckCircle2 /> Prospecção e abordagem</li><li><CheckCircle2 /> Rapport</li><li className="current"><Play /> Descoberta de necessidade</li><li><Target /> Quebra de objeções</li></ul>
+              </article>
+              <article className="landing-preview-insight">
+                <Sparkles />
+                <small>RECOMENDAÇÃO INTELIGENTE</small>
+                <h4>Reforce descoberta antes do pitch.</h4>
+                <p>O time apresenta a solução cedo demais. Treine impacto, urgência e decisão antes de falar da oferta.</p>
+                <button onClick={onEnter}>Abrir treinamento <ChevronRight /></button>
+              </article>
+            </div>
+          </div>
+        </div>
+        <div className="landing-preview-proof">
+          <span><CheckCircle2 /> Treinamento guiado</span>
+          <span><CheckCircle2 /> Feedback após cada call</span>
+          <span><CheckCircle2 /> Gestão de equipe</span>
+          <span><CheckCircle2 /> Trilhas e certificados</span>
+        </div>
       </div>
     </section>
 
