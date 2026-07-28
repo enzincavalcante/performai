@@ -4,6 +4,11 @@ import Image from "next/image";
 import "./landing.css";
 
 const BRAND_LOGO = `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/brand/performai-logo.png`;
+const CHECKOUTS = {
+  monthly: "https://pay.kiwify.com.br/AN6yNFj",
+  quarterly: "https://pay.kiwify.com.br/DeD12Hq",
+  annual: "https://pay.kiwify.com.br/FsHajV6",
+};
 
 function Brand() {
   return <span className="landing-brand">
@@ -121,7 +126,7 @@ export function LandingPage({ onEnter }: { onEnter: () => void }) {
               <li>Cenarios e perfis de comprador</li>
               <li>Feedback ao final da simulacao</li>
             </ul>
-            <button className="landing-btn landing-btn-ghost" onClick={onEnter}>Comecar agora</button>
+            <a className="landing-btn landing-btn-ghost" href={CHECKOUTS.monthly} target="_blank" rel="noopener noreferrer">Comecar agora</a>
           </article>
 
           <article className="landing-price-card landing-price-card-featured">
@@ -140,7 +145,7 @@ export function LandingPage({ onEnter }: { onEnter: () => void }) {
               <li>Cenarios e perfis de comprador</li>
               <li>Feedback ao final da simulacao</li>
             </ul>
-            <button className="landing-btn landing-btn-solid" onClick={onEnter}>Escolher trimestral</button>
+            <a className="landing-btn landing-btn-solid" href={CHECKOUTS.quarterly} target="_blank" rel="noopener noreferrer">Escolher trimestral</a>
           </article>
 
           <article className="landing-price-card">
@@ -158,7 +163,7 @@ export function LandingPage({ onEnter }: { onEnter: () => void }) {
               <li>Cenarios e perfis de comprador</li>
               <li>Feedback ao final da simulacao</li>
             </ul>
-            <button className="landing-btn landing-btn-ghost" onClick={onEnter}>Escolher anual</button>
+            <a className="landing-btn landing-btn-ghost" href={CHECKOUTS.annual} target="_blank" rel="noopener noreferrer">Escolher anual</a>
           </article>
         </div>
         <p className="landing-pricing-note">Os minutos de treino sao renovados a cada 7 dias e nao acumulam para a semana seguinte.</p>
