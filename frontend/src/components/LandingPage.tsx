@@ -41,8 +41,8 @@ export function LandingPage({ onEnter }: { onEnter: () => void }) {
       <h1>A Performa AI transforma inseguranca em confianca e treinamento em faturamento.</h1>
       <p className="landing-lede">Cada vendedor enfrenta clientes simulados por IA, pratica objecoes, negociacao e fechamento quantas vezes forem necessarias ate estar preparado para vender de verdade.</p>
       <div className="landing-hero-ctas">
-        <button className="landing-btn landing-btn-solid" onClick={onEnter}>Quero treinar meu time</button>
         <button className="landing-btn landing-btn-ghost" onClick={() => scrollTo("como-funciona")}>Ver como funciona</button>
+        <button className="landing-btn landing-btn-solid" onClick={() => scrollTo("precos")}>Quero treinar meu time</button>
       </div>
       <div className="landing-hero-stat"><span><b>+80%</b> de melhoria na taxa de conversao<small>*Baseado em clientes da Performa AI apos 7 dias de uso.</small></span></div>
 
