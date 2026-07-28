@@ -1,17 +1,18 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import {
   Activity, ArrowLeft, ArrowRight, BadgeDollarSign, BookOpen,
   Check, CheckCircle, ChevronRight, CircleHelp, Eye, EyeOff, FileAudio, FileWarning,
-  LayoutDashboard, Lightbulb, LockKeyhole, LogOut, Medal, Mic, MicOff, Play, ShieldAlert,
+  Lightbulb, LockKeyhole, LogOut, Medal, Mic, MicOff, Play, Search, ShieldAlert,
   Sparkles, Target, TrendingUp, Trophy, UserRound, Users, X,
 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { type TranscriptMessage, useLiveAudio } from "@/hooks/useLiveAudio";
 import { CallReview } from "@/components/CallReview";
 import { LandingPage } from "@/components/LandingPage";
+import { EnterpriseModule, EnterpriseSidebar, type EnterpriseView } from "@/components/EnterprisePlatform";
 
 const DEMO_USER = "Cavalcante";
 const DEMO_PASSWORD = "1234";
@@ -103,7 +104,7 @@ const CONVERSATION_SCENARIOS = [
   },
 ];
 
-type View = "overview" | "training" | "review" | "team" | "focus";
+type View = EnterpriseView;
 type CompanyProfile = {
   segment: string;
   offer: string;
@@ -180,7 +181,7 @@ function Tutorial({ onClose }: { onClose: () => void }) {
   return <div className="modal-backdrop"><motion.section className="tutorial-modal" initial={{ scale: .98, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}><button className="icon-button close" onClick={onClose} aria-label="Fechar"><X /></button><span className="tutorial-visual"><Icon /></span><p className="eyebrow">COMO FUNCIONA · {step + 1} DE 3</p><h2>{item.title}</h2><p>{item.text}</p><div className="tutorial-dots">{items.map((_, index) => <i key={index} className={index === step ? "active" : ""} />)}</div><footer>{step > 0 && <button className="text-button" onClick={() => setStep(step - 1)}>Voltar</button>}<button className="primary-button compact" onClick={() => step === 2 ? onClose() : setStep(step + 1)}>{step === 2 ? "Comecar" : "Proximo"}<ArrowRight size={17} /></button></footer></motion.section></div>;
 }
 
-function Overview({ profile, onTrain, onTeam, onFocus, onEdit, onReview, onTutorial }: { profile: CompanyProfile; onTrain: () => void; onTeam: () => void; onFocus: () => void; onEdit: () => void; onReview: () => void; onTutorial: () => void }) {
+export function Overview({ profile, onTrain, onTeam, onFocus, onEdit, onReview, onTutorial }: { profile: CompanyProfile; onTrain: () => void; onTeam: () => void; onFocus: () => void; onEdit: () => void; onReview: () => void; onTutorial: () => void }) {
   const [weeklyUsage, setWeeklyUsage] = useState(0);
   useEffect(() => { queueMicrotask(() => setWeeklyUsage(readWeeklyUsage())); }, []);
   const weeklyMinutes = Math.floor(weeklyUsage / 60000);
@@ -198,7 +199,7 @@ function Overview({ profile, onTrain, onTeam, onFocus, onEdit, onReview, onTutor
   </div>;
 }
 
-function TeamDashboard() {
+export function TeamDashboard() {
   const members = [
     { name: "Ana Lima", score: 9.1, training: 9.3, calls: 8.9, activity: "6 treinos · 4 calls", trend: "+12%" },
     { name: "Rafael Costa", score: 8.4, training: 8.7, calls: 8.1, activity: "5 treinos · 3 calls", trend: "+7%" },
@@ -328,7 +329,7 @@ function Training({ profile }: { profile: CompanyProfile }) {
 }
 
 function Workspace({ onLogout }: { onLogout: () => void }) {
-  const [view, setView] = useState<View>("overview");
+  const [view, setView] = useState<View>("dashboard");
   const [profile, setProfile] = useState<CompanyProfile | null>(null);
   const [editingProfile, setEditingProfile] = useState(false);
   const [showTutorial, setShowTutorial] = useState(false);
@@ -341,8 +342,26 @@ function Workspace({ onLogout }: { onLogout: () => void }) {
   }, []);
   const saveProfile = (next: CompanyProfile) => { localStorage.setItem("performai_company_profile", JSON.stringify(next)); setProfile(next); setEditingProfile(false); if (!localStorage.getItem("performai_tutorial_seen")) setShowTutorial(true); };
   const closeTutorial = () => { localStorage.setItem("performai_tutorial_seen", "true"); setShowTutorial(false); };
-  const navigation = useMemo(() => [{ id: "overview" as View, label: "Visao geral", icon: LayoutDashboard }, { id: "training" as View, label: "Treinar", icon: Mic }, { id: "team" as View, label: "Time", icon: Users }], []);
-  return <main className={`app-shell view-${view}`}><header className="topbar"><div className="brand-lockup"><Image src={BRAND_LOGO} alt="" width={38} height={38} /><span>PerformAI</span></div><nav>{navigation.map((item) => { const Icon = item.icon; return <button key={item.id} className={view === item.id ? "active" : ""} onClick={() => setView(item.id)}><Icon />{item.label}</button>; })}</nav><div className="topbar-actions"><button className="icon-button" onClick={() => setShowTutorial(true)} aria-label="Abrir tutorial" title="Tutorial"><BookOpen /></button><span className="avatar"><UserRound /></span><button className="ghost-button logout-button" onClick={onLogout} aria-label="Sair da conta" title="Sair da conta"><LogOut /><span>Sair</span></button></div></header><section className="workspace-content">{profile && view === "overview" && <Overview profile={profile} onTrain={() => setView("training")} onTeam={() => setView("team")} onFocus={() => setView("focus")} onEdit={() => setEditingProfile(true)} onReview={() => setView("review")} onTutorial={() => setShowTutorial(true)} />}{profile && view === "training" && <Training profile={profile} />}{profile && view === "focus" && <FocusCoach profile={profile} />}{profile && view === "review" && <CallReview />}{profile && view === "team" && <TeamDashboard />}</section>{(!profile || editingProfile) && <Onboarding initial={profile ?? EMPTY_PROFILE} onComplete={saveProfile} />}{showTutorial && profile && <Tutorial onClose={closeTutorial} />}</main>;
+  const navigate = (next: EnterpriseView) => setView(next);
+  return <main className={`app-shell enterprise-shell view-${view}`}>
+    <EnterpriseSidebar active={view} onNavigate={navigate} />
+    <header className="topbar enterprise-topbar">
+      <label className="enterprise-top-search"><Search /><input placeholder="Pesquisar na plataforma" aria-label="Pesquisar na plataforma" /></label>
+      <div className="topbar-actions">
+        <button className="icon-button" onClick={() => setShowTutorial(true)} aria-label="Abrir tutorial" title="Tutorial"><BookOpen /></button>
+        <button className="avatar" onClick={() => setEditingProfile(true)} aria-label="Editar perfil da empresa" title="Perfil da empresa"><UserRound /></button>
+        <button className="ghost-button logout-button" onClick={onLogout} aria-label="Sair da conta" title="Sair da conta"><LogOut /><span>Sair</span></button>
+      </div>
+    </header>
+    <section className="workspace-content">
+      {profile && view === "simulation" && <Training profile={profile} />}
+      {profile && view === "ai" && <FocusCoach profile={profile} />}
+      {profile && view === "calls" && <CallReview />}
+      {profile && !["simulation", "ai", "calls"].includes(view) && <EnterpriseModule view={view} onNavigate={navigate} />}
+    </section>
+    {(!profile || editingProfile) && <Onboarding initial={profile ?? EMPTY_PROFILE} onComplete={saveProfile} />}
+    {showTutorial && profile && <Tutorial onClose={closeTutorial} />}
+  </main>;
 }
 
 export default function Home() {
