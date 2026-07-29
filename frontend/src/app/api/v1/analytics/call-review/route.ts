@@ -116,14 +116,15 @@ function buildRubricReport(transcript: string) {
 export async function POST(request: Request) {
   const formData = await request.formData();
   const audio = formData.get("audio");
+  const suppliedTranscript = String(formData.get("transcript") ?? "").trim();
   const metadata = String(formData.get("metadata") ?? "{}");
 
-  if (!(audio instanceof File) || audio.size === 0) {
+  if ((!audio || !(audio instanceof File) || audio.size === 0) && !suppliedTranscript) {
     return NextResponse.json({ detail: "Selecione uma gravacao valida." }, { status: 422 });
   }
 
   const backendUrl = process.env.BACKEND_API_URL?.replace(/\/$/, "");
-  if (backendUrl) {
+  if (backendUrl && audio instanceof File) {
     const proxyBody = new FormData();
     proxyBody.append("audio", audio);
     proxyBody.append("metadata", metadata);
@@ -146,18 +147,18 @@ export async function POST(request: Request) {
     }, { status: 503 });
   }
 
-  if (audio.size > DIRECT_UPLOAD_LIMIT) {
+  if (audio instanceof File && audio.size > DIRECT_UPLOAD_LIMIT) {
     return NextResponse.json({
       detail: "Para gravacoes acima de 4 MB, configure BACKEND_API_URL com o servico de processamento privado.",
       code: "private_backend_required",
     }, { status: 413 });
   }
 
-  const bytes = Buffer.from(await audio.arrayBuffer());
+  const bytes = audio instanceof File ? Buffer.from(await audio.arrayBuffer()) : Buffer.alloc(0);
   const deepgramKey = process.env.DEEPGRAM_API_KEY;
-  let transcript = "";
+  let transcript = suppliedTranscript;
 
-  if (deepgramKey) {
+  if (deepgramKey && audio instanceof File && !transcript) {
     const deepgramResponse = await fetch(
       "https://api.deepgram.com/v1/listen?model=nova-3&language=pt-BR&smart_format=true&punctuate=true&diarize=true&utterances=true",
       {
@@ -227,7 +228,7 @@ ${transcript || "A gravacao esta anexada nesta solicitacao."}`;
           parts: transcript
             ? [{ text: prompt }]
             : [
-                { inlineData: { mimeType: audio.type || "audio/mpeg", data: bytes.toString("base64") } },
+                { inlineData: { mimeType: audio instanceof File ? audio.type || "audio/mpeg" : "audio/mpeg", data: bytes.toString("base64") } },
                 { text: prompt },
               ],
         }],

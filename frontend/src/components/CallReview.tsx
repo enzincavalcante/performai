@@ -9,6 +9,7 @@ import "./call-review.css";
 
 const ACCEPTED_AUDIO = ".mp3,.wav,.m4a,.mp4,.webm,.ogg,.aac";
 const MAX_FILE_SIZE = 100 * 1024 * 1024;
+const VERCEL_DIRECT_LIMIT = 3.8 * 1024 * 1024;
 
 type ReviewReport = {
   score?: number;
@@ -80,6 +81,43 @@ function durationLabel(seconds: number | null) {
   return `${minutes}:${String(Math.floor(seconds % 60)).padStart(2, "0")}`;
 }
 
+async function transcribeLargeFile(file: File) {
+  const tokenResponse = await fetch("/api/v1/transcription-token", { method: "POST" });
+  const tokenPayload = await tokenResponse.json().catch(() => null);
+  if (!tokenResponse.ok || !tokenPayload?.token) {
+    throw new Error(tokenPayload?.detail ?? "Nao foi possivel preparar o upload seguro.");
+  }
+
+  const transcriptionResponse = await fetch(
+    "https://api.deepgram.com/v1/listen?model=nova-3&language=pt-BR&smart_format=true&punctuate=true&diarize=true&utterances=true",
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${tokenPayload.token}`,
+        "Content-Type": file.type || "audio/mpeg",
+      },
+      body: file,
+    },
+  );
+  const transcription = await transcriptionResponse.json();
+  if (!transcriptionResponse.ok) {
+    throw new Error("A transcricao direta falhou. Tente novamente em alguns instantes.");
+  }
+
+  const utterances = transcription?.results?.utterances;
+  if (Array.isArray(utterances) && utterances.length) {
+    return utterances
+      .filter((item: { transcript?: string }) => item.transcript?.trim())
+      .map((item: { speaker?: number; transcript?: string; start?: number }) => {
+        const total = Math.floor(item.start ?? 0);
+        const timestamp = `${String(Math.floor(total / 60)).padStart(2, "0")}:${String(total % 60).padStart(2, "0")}`;
+        return `[${timestamp}] Pessoa ${(item.speaker ?? 0) + 1}: ${item.transcript?.trim()}`;
+      })
+      .join("\n");
+  }
+  return String(transcription?.results?.channels?.[0]?.alternatives?.[0]?.transcript ?? "").trim();
+}
+
 export function CallReview() {
   const inputRef = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
@@ -130,7 +168,13 @@ export function CallReview() {
     const processingTimer = window.setTimeout(() => setStatus("processing"), 500);
     try {
       const body = new FormData();
-      body.append("audio", file);
+      if (file.size > VERCEL_DIRECT_LIMIT && !baseUrl) {
+        const transcript = await transcribeLargeFile(file);
+        if (!transcript) throw new Error("Nao foi possivel identificar falas nesta gravacao.");
+        body.append("transcript", transcript);
+      } else {
+        body.append("audio", file);
+      }
       body.append("metadata", JSON.stringify({
         source: "seller_upload",
         filename: file.name,
