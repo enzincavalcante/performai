@@ -96,10 +96,41 @@ const COURSE_DATA = [
   { id: "case-study", title: "Estudo de caso B2B", category: "Estrategia", level: "Avancado", time: "48min", progress: 0, tone: "blue", videoId: "tYNk3pyyfVM", videoTitle: "Como vender servicos B2B: estudo de caso", description: "Analise contexto, lacunas e proximo passo em uma venda complexa.", objectives: ["Separar fatos de suposicoes", "Identificar informacao ausente", "Escolher o proximo passo"], checklist: ["Assista ao caso", "Responda as perguntas", "Compare a estrategia", "Conclua a avaliacao"] },
 ];
 
+const COURSE_EXPANSIONS = [
+  ["Fundamentos", "4XpoIWWaja4", "blue", ["Papel do vendedor consultivo", "Disciplina e rotina comercial", "Escuta ativa na pratica"]],
+  ["Prospeccao", "w-zDbEIuuQk", "cyan", ["Definindo o cliente ideal", "Pesquisa e gatilhos de abordagem", "Cadencia multicanal eficiente"]],
+  ["SDR", "OfzUsYZoDGE", "green", ["BANT sem interrogatorio", "Mapeamento de decisores", "Passagem de bastao para o closer", "Pipeline limpo e previsivel"]],
+  ["Closer", "PUGK8KLgx0w", "green", ["Demonstracao orientada a valor", "Construcao do caso de negocio", "Proposta comercial que facilita a decisao"]],
+  ["Negociacao", "3h-s_xGZG6U", "purple", ["Preparacao e limites da negociacao", "Concessoes com contrapartidas", "Negociacao com compras e financeiro"]],
+  ["Relacionamento", "HCtZ55hL0Bc", "green", ["Onboarding e primeiro valor", "Reuniao de acompanhamento", "Renovacao e prevencao de churn", "Expansao e indicacoes"]],
+  ["Pratica", "40tgo5_1_LI", "cyan", ["Como preparar um role play", "Feedback que muda comportamento", "Simulacao com cliente agressivo", "Simulacao sob pressao de preco"]],
+  ["Estrategia", "tYNk3pyyfVM", "blue", ["Planejamento de contas B2B", "Estrategia para vendas complexas", "Analise de oportunidade parada", "Plano de acao comercial"]],
+  ["Diagnostico", "03K40pFJ3Iw", "blue", ["Perguntas de situacao e contexto", "Do problema ao impacto financeiro", "Urgencia sem pressionar", "Processo e criterios de decisao"]],
+] as const;
+
+const EXPANDED_COURSES = COURSE_EXPANSIONS.flatMap(([category, videoId, tone, titles]) =>
+  titles.map((title, index) => ({
+    id: `${category.toLowerCase()}-${index + 1}`,
+    title,
+    category,
+    level: index < 1 ? "Essencial" : index < 3 ? "Intermediario" : "Avancado",
+    time: `${32 + index * 7}min`,
+    progress: 0,
+    tone,
+    videoId,
+    videoTitle: `${title}: aula aplicada`,
+    description: `Aprofunde ${title.toLowerCase()} com exemplos comerciais, aplicacao orientada e pratica dentro da Performa AI.`,
+    objectives: ["Compreender o metodo", "Aplicar em uma conversa real", "Reconhecer erros comuns"],
+    checklist: ["Assista ao video", "Leia o resumo pratico", "Resolva o exercicio", "Valide no quiz"],
+  })),
+);
+
+const ALL_COURSES = [...COURSE_DATA, ...EXPANDED_COURSES];
+
 function LearningModule({ onNavigate }: { onNavigate: Navigate }) {
   const [category, setCategory] = useState("Todos");
-  const [selectedCourse, setSelectedCourse] = useState<(typeof COURSE_DATA)[number] | null>(null);
-  const categories = ["Todos", "Fundamentos", "Prospeccao", "SDR", "Closer", "Negociacao", "Relacionamento", "Pratica", "Estrategia"];
+  const [selectedCourse, setSelectedCourse] = useState<(typeof ALL_COURSES)[number] | null>(null);
+  const categories = ["Todos", "Fundamentos", "Prospeccao", "SDR", "Diagnostico", "Closer", "Negociacao", "Relacionamento", "Pratica", "Estrategia"];
   if (selectedCourse) return <ModuleFrame eyebrow={selectedCourse.category} title={selectedCourse.title} description={selectedCourse.description} action={<button onClick={() => setSelectedCourse(null)}><ArrowLeft /> Voltar aos treinamentos</button>}>
     <section className="course-player-layout">
       <article className="course-player-main">
@@ -112,8 +143,8 @@ function LearningModule({ onNavigate }: { onNavigate: Navigate }) {
   </ModuleFrame>;
   return <ModuleFrame eyebrow="CENTRAL DE APRENDIZAGEM" title="Aprenda, pratique e valide." description="Cursos, videos, avaliacoes e materiais comerciais organizados em um unico lugar." action={<div className="hub-actions"><button onClick={() => onNavigate("assessments")}><ClipboardCheck /> Avaliacoes</button><button onClick={() => onNavigate("library")}><Library /> Biblioteca</button></div>}>
     <div className="enterprise-search-row"><label><Search /><input placeholder="Pesquisar cursos, tecnicas ou habilidades" /></label><div>{categories.map((item) => <button key={item} className={category === item ? "active" : ""} onClick={() => setCategory(item)}>{item}</button>)}</div></div>
-    <section className="course-feature academy-feature"><Image src={ACADEMY_COVER} alt="Equipe comercial em treinamento profissional" fill sizes="(max-width: 900px) 100vw, 900px" /><div><p>RECOMENDADO PELA IA</p><h2>Fortaleca a descoberta antes do pitch.</h2><span>Uma selecao baseada nas calls e simulacoes mais recentes do seu time.</span><button onClick={() => setSelectedCourse(COURSE_DATA[0])}><Play /> Iniciar recomendacao</button></div></section>
-    <section><SectionTitle eyebrow="CONTEUDO SELECIONADO" title={category === "Todos" ? "Sua aprendizagem" : category} aside={`${COURSE_DATA.filter((course) => category === "Todos" || course.category === category).length} treinamentos`} /><div className="course-grid">{COURSE_DATA.filter((course) => category === "Todos" || course.category === category).map((course) => <article className="course-card" key={course.title} onClick={() => setSelectedCourse(course)}><div className={`course-cover ${course.tone}`}><Image src={ACADEMY_COVER} alt="" fill sizes="360px" /><span>{course.category}</span><i><Play /></i></div><div className="course-card-body"><small>{course.level} · {course.time}</small><h3>{course.title}</h3><div className="enterprise-progress"><i style={{ width: `${course.progress}%` }} /></div><footer><span>{course.progress ? `${course.progress}% concluido` : "Ainda nao iniciado"}</span><button onClick={() => setSelectedCourse(course)} aria-label={`Abrir ${course.title}`}><ChevronRight /></button></footer></div></article>)}</div></section>
+    <section className="course-feature academy-feature"><Image src={ACADEMY_COVER} alt="Equipe comercial em treinamento profissional" fill sizes="(max-width: 900px) 100vw, 900px" /><div><p>RECOMENDADO PELA IA</p><h2>Fortaleca a descoberta antes do pitch.</h2><span>Uma selecao baseada nas calls e simulacoes mais recentes do seu time.</span><button onClick={() => setSelectedCourse(ALL_COURSES[0])}><Play /> Iniciar recomendacao</button></div></section>
+    <section><SectionTitle eyebrow="CONTEUDO SELECIONADO" title={category === "Todos" ? "Sua aprendizagem" : category} aside={`${ALL_COURSES.filter((course) => category === "Todos" || course.category === category).length} treinamentos`} /><div className="course-grid">{ALL_COURSES.filter((course) => category === "Todos" || course.category === category).map((course) => <article className="course-card" key={`${course.category}-${course.title}`} onClick={() => setSelectedCourse(course)}><div className={`course-cover ${course.tone}`}><Image src={ACADEMY_COVER} alt="" fill sizes="360px" /><span>{course.category}</span><i><Play /></i></div><div className="course-card-body"><small>{course.level} · {course.time}</small><h3>{course.title}</h3><div className="enterprise-progress"><i style={{ width: `${course.progress}%` }} /></div><footer><span>{course.progress ? `${course.progress}% concluido` : "Ainda nao iniciado"}</span><button onClick={() => setSelectedCourse(course)} aria-label={`Abrir ${course.title}`}><ChevronRight /></button></footer></div></article>)}</div></section>
   </ModuleFrame>;
 }
 
