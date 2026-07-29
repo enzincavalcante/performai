@@ -165,9 +165,16 @@ function AssessmentsModule() {
 }
 
 const QUIZ_QUESTIONS = [
-  { question: "Qual e a melhor primeira resposta para uma objecao de preco?", options: ["Oferecer desconto imediatamente", "Defender todas as funcionalidades", "Acolher e investigar o motivo", "Encerrar a conversa"], answer: 2 },
-  { question: "Um proximo passo de qualidade precisa conter:", options: ["Uma promessa vaga de retorno", "Data, participantes e objetivo", "Somente o envio da proposta", "Apenas o telefone do vendedor"], answer: 1 },
-  { question: "Na descoberta, o vendedor deve priorizar:", options: ["Demonstrar o produto cedo", "Falar mais que o cliente", "Entender impacto, urgencia e decisao", "Evitar perguntas dificeis"], answer: 2 },
+  { question: "O cliente diz que a proposta esta cara. Qual e a melhor primeira resposta?", options: ["Oferecer desconto", "Defender funcionalidades", "Acolher e investigar a causa", "Cobrar uma decisao"], answer: 2, explanation: "Investigar separa falta de valor, restricao de caixa e comparacao com concorrentes antes de qualquer concessao." },
+  { question: "Um proximo passo comercial de qualidade precisa conter:", options: ["Uma promessa de retorno", "Data, participantes e objetivo", "Somente a proposta", "Apenas o telefone"], answer: 1, explanation: "Um compromisso verificavel define quando, quem participa e qual decisao ou entrega deve acontecer." },
+  { question: "Na descoberta, qual sequencia produz um diagnostico melhor?", options: ["Produto, preco e demo", "Situacao, problema, impacto e prioridade", "Pitch, prova e desconto", "Prazo, contrato e pagamento"], answer: 1, explanation: "A sequencia conecta contexto a consequencia e ajuda o cliente a justificar por que precisa mudar." },
+  { question: "O decisor nao participou da call. O que fazer antes de enviar a proposta?", options: ["Enviar mesmo assim", "Pedir ao contato que venda internamente", "Mapear criterios e envolver o decisor", "Dar validade de 24 horas"], answer: 2, explanation: "Sem decisor e criterios claros, a proposta vira material de comparacao e perde controle comercial." },
+  { question: "Qual pergunta quantifica melhor o impacto de um gargalo?", options: ["Voce gostou da solucao?", "Isso e importante?", "Quantas oportunidades voces perdem por mes?", "Posso mostrar uma tela?"], answer: 2, explanation: "Uma pergunta mensuravel transforma dor abstrata em impacto financeiro ou operacional." },
+  { question: "O cliente pede desconto antes de entender a entrega. Qual conduta protege margem?", options: ["Conceder 10%", "Trocar desconto por contrapartida apos reforcar valor", "Ignorar a pergunta", "Retirar suporte"], answer: 1, explanation: "Concessoes devem vir depois de valor claro e sempre ligadas a prazo, volume ou condicao que preserve a negociacao." },
+  { question: "Em uma cold call, qual abertura tende a gerar mais permissao?", options: ["Um pitch de dois minutos", "Contexto relevante, motivo curto e pergunta", "Lista de clientes", "Pedido imediato de reuniao"], answer: 1, explanation: "Relevancia e brevidade reduzem resistencia e convidam o prospect a participar da conversa." },
+  { question: "Qual comportamento demonstra escuta ativa?", options: ["Preparar a resposta enquanto o cliente fala", "Repetir o pitch", "Resumir o que ouviu e confirmar", "Fazer varias perguntas juntas"], answer: 2, explanation: "Resumir e validar evita suposicoes e mostra que a resposta seguinte nasce do contexto do cliente." },
+  { question: "Uma oportunidade esta parada sem urgencia. Qual e a melhor acao?", options: ["Enviar follow-ups diarios", "Criar urgencia artificial", "Revisitar impacto e consequencia de nao agir", "Dar desconto final"], answer: 2, explanation: "Urgencia sustentavel nasce da consequencia do problema, nao da pressao do vendedor." },
+  { question: "Qual fechamento indica maior qualidade de pipeline?", options: ["O cliente vai pensar", "Enviei a proposta", "Reuniao decisoria agendada com criterios definidos", "Contato visualizou o e-mail"], answer: 2, explanation: "Uma reuniao decisoria com criterios e participantes confirma avanco real, nao apenas atividade." },
 ];
 
 function InteractiveAssessmentsModule() {
@@ -176,7 +183,7 @@ function InteractiveAssessmentsModule() {
   const [finished, setFinished] = useState(false);
   const score = Math.round((QUIZ_QUESTIONS.filter((question, index) => answers[index] === question.answer).length / QUIZ_QUESTIONS.length) * 10);
   if (active) return <ModuleFrame eyebrow="AVALIACAO INTERATIVA" title="Dominio comercial essencial" description="Responda as questoes e receba correcao imediata. Nota minima para aprovacao: 7,0." action={<button onClick={() => { setActive(false); setFinished(false); setAnswers([]); }}><ArrowLeft /> Voltar</button>}>
-    <section className="quiz-shell">{finished ? <div className="quiz-result"><Award /><p>RESULTADO DA AVALIACAO</p><h2>{score.toFixed(1)}</h2><strong>{score >= 7 ? "Aprovado. Proxima etapa liberada." : "Revise os pontos abaixo e tente novamente."}</strong><div>{QUIZ_QUESTIONS.map((question, index) => <span className={answers[index] === question.answer ? "correct" : "wrong"} key={question.question}>{answers[index] === question.answer ? <CheckCircle2 /> : <Target />} {question.question}</span>)}</div><button onClick={() => { setFinished(false); setAnswers([]); }}>Refazer avaliacao</button></div> : <>{QUIZ_QUESTIONS.map((question, questionIndex) => <article className="quiz-question" key={question.question}><small>QUESTAO {questionIndex + 1} DE {QUIZ_QUESTIONS.length}</small><h2>{question.question}</h2><div>{question.options.map((option, optionIndex) => <button className={answers[questionIndex] === optionIndex ? "selected" : ""} onClick={() => setAnswers((currentAnswers) => { const next = [...currentAnswers]; next[questionIndex] = optionIndex; return next; })} key={option}><i>{String.fromCharCode(65 + optionIndex)}</i>{option}</button>)}</div></article>)}<button className="quiz-submit" disabled={answers.filter((answer) => answer !== undefined).length !== QUIZ_QUESTIONS.length} onClick={() => setFinished(true)}>Finalizar e corrigir <ChevronRight /></button></>}</section>
+    <section className="quiz-shell">{finished ? <div className="quiz-result"><Award /><p>RESULTADO DA AVALIACAO</p><h2>{score.toFixed(1)}</h2><strong>{score >= 9 ? "Nivel avancado. Excelente dominio comercial." : score >= 7 ? "Nivel intermediario. Proxima etapa liberada." : "Nivel em desenvolvimento. Revise os pontos abaixo."}</strong><div>{QUIZ_QUESTIONS.map((question, index) => <span className={answers[index] === question.answer ? "correct" : "wrong"} key={question.question}>{answers[index] === question.answer ? <CheckCircle2 /> : <Target />} <span><b>{question.question}</b><small>{question.explanation} Resposta correta: {question.options[question.answer]}.</small></span></span>)}</div><button onClick={() => { setFinished(false); setAnswers([]); }}>Refazer avaliacao</button></div> : <>{QUIZ_QUESTIONS.map((question, questionIndex) => <article className="quiz-question" key={question.question}><small>QUESTAO {questionIndex + 1} DE {QUIZ_QUESTIONS.length}</small><h2>{question.question}</h2><div>{question.options.map((option, optionIndex) => <button className={answers[questionIndex] === optionIndex ? "selected" : ""} onClick={() => setAnswers((currentAnswers) => { const next = [...currentAnswers]; next[questionIndex] = optionIndex; return next; })} key={option}><i>{String.fromCharCode(65 + optionIndex)}</i>{option}</button>)}</div></article>)}<button className="quiz-submit" disabled={answers.filter((answer) => answer !== undefined).length !== QUIZ_QUESTIONS.length} onClick={() => setFinished(true)}>Finalizar e corrigir <ChevronRight /></button></>}</section>
   </ModuleFrame>;
   return <ModuleFrame eyebrow="VALIDACAO DE COMPETENCIAS" title="Avaliacoes" description="Quizzes, provas e desafios praticos para comprovar conhecimento e liberar certificacoes.">
     <section className="module-kpis"><article><span>Pendentes</span><strong>3</strong><small>1 vence esta semana</small></article><article><span>Nota media</span><strong>8,6</strong><small>+0,4 no mes</small></article><article><span>Taxa de aprovacao</span><strong>91%</strong><small>Meta: 90%</small></article></section>
@@ -207,7 +214,21 @@ function ReportsModule() {
 }
 
 function TeamsModule() {
-  return <ModuleFrame eyebrow="GESTAO DE PESSOAS" title="Equipes" description="Organize liderancas, metas, treinamentos e desempenho por estrutura comercial." action={<button><UserPlus /> Convidar vendedor</button>}>
+  const [invite, setInvite] = useState<{ code: string; link: string } | null>(null);
+  const [joinCode, setJoinCode] = useState("");
+  const [message, setMessage] = useState("");
+  const createInvite = () => {
+    const code = crypto.randomUUID().replaceAll("-", "").slice(0, 9).toUpperCase();
+    const link = `${window.location.origin}/?equipe=${code}`;
+    setInvite({ code, link });
+    setMessage("Convite criado e pronto para compartilhar.");
+  };
+  const joinTeam = () => {
+    const code = joinCode.trim().split("/").pop()?.toUpperCase() ?? "";
+    setMessage(code.length >= 6 ? `Convite ${code} validado. Voce entrou na Equipe Cavalcante.` : "Informe um codigo ou link de convite valido.");
+  };
+  return <ModuleFrame eyebrow="GESTAO DE PESSOAS" title="Equipes" description="Organize liderancas, metas, treinamentos e desempenho por estrutura comercial." action={<div className="team-actions"><button onClick={createInvite}><UserPlus /> Convidar membro</button><button onClick={() => document.querySelector<HTMLInputElement>("#team-code")?.focus()}><Users /> Entrar em uma equipe</button></div>}>
+    <section className="team-invite-panel"><div><p>CONVITE SEGURO</p><h2>Traga sua equipe para evoluir junto.</h2><span>Gere um codigo exclusivo ou entre com o convite recebido.</span></div>{invite && <div className="invite-created"><label>Codigo da equipe<strong>{invite.code}</strong></label><label>Link exclusivo<input readOnly value={invite.link} /></label><button onClick={() => navigator.clipboard.writeText(invite.link)}><CheckCircle2 /> Copiar link</button></div>}<div className="join-team"><input id="team-code" value={joinCode} onChange={(event) => setJoinCode(event.target.value)} placeholder="Cole o codigo ou link do convite" /><button onClick={joinTeam}>Validar e entrar <ChevronRight /></button></div>{message && <small className="team-feedback">{message}</small>}</section>
     <section className="teams-summary"><article><Users /><span><strong>62</strong> colaboradores</span></article><article><BriefcaseBusiness /><span><strong>4</strong> equipes</span></article><article><Target /><span><strong>78%</strong> das metas</span></article></section>
     <div className="team-cards">{[
       ["Inside Sales", "Ana Martins", "18 vendedores", "8,7", "92%"],
@@ -220,15 +241,18 @@ function TeamsModule() {
 
 function LibraryModule() {
   const [query, setQuery] = useState("");
+  const [notice, setNotice] = useState("");
+  const [category, setCategory] = useState("Todos");
   const items = useMemo(() => [
     ["Playbook de descoberta", "PDF", "12 paginas"], ["Script de Cold Call", "Template", "Atualizado hoje"],
     ["Matriz de objecoes", "Planilha", "28 respostas"], ["Pitch institucional", "Slides", "16 slides"],
     ["Checklist de fechamento", "Checklist", "9 etapas"], ["Guia de SPIN Selling", "E-book", "24 min"],
-  ].filter((item) => item[0].toLowerCase().includes(query.toLowerCase())), [query]);
-  return <ModuleFrame eyebrow="CONHECIMENTO COMERCIAL" title="Biblioteca" description="Playbooks, scripts, videos e materiais organizados e pesquisaveis pela IA." action={<button><Upload /> Adicionar material</button>}>
-    <div className="library-search"><Search /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Busque por material, tema ou pergunta" /><button><Sparkles /> Pesquisar com IA</button></div>
-    <div className="library-categories">{[["Videos", Play], ["PDFs", FileText], ["Scripts", MessageSquareText], ["Playbooks", BookOpen], ["Templates", ListChecks], ["Apresentacoes", FolderOpen]].map(([label, Icon]) => { const Component = Icon as typeof Play; return <button key={label as string}><Component /><span>{label as string}</span></button>; })}</div>
-    <section><SectionTitle eyebrow="MATERIAIS EM DESTAQUE" title="Conteudo da empresa" aside={`${items.length} resultados`} /><div className="library-grid">{items.map((item) => <article key={item[0]}><span><FileText /></span><div><small>{item[1]}</small><h3>{item[0]}</h3><p>{item[2]}</p></div><button aria-label={`Abrir ${item[0]}`}><ChevronRight /></button></article>)}</div></section>
+  ].filter((item) => item[0].toLowerCase().includes(query.toLowerCase()) && (category === "Todos" || item[1].toLowerCase().includes(category.toLowerCase().replace("s", "")))), [query, category]);
+  return <ModuleFrame eyebrow="CONHECIMENTO COMERCIAL" title="Biblioteca IA" description="Playbooks, scripts, guias, videos e materiais praticos organizados para vender melhor." action={<button onClick={() => setNotice("Material adicionado a fila de revisao da biblioteca.")}><Upload /> Adicionar material</button>}>
+    <div className="library-search"><Search /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Busque por material, tema ou pergunta" /><button onClick={() => setNotice(query ? `A IA organizou os melhores materiais para: ${query}` : "Digite um tema para receber uma selecao personalizada.")}><Sparkles /> Pesquisar com IA</button></div>
+    <div className="library-categories">{[["Videos", Play], ["PDFs", FileText], ["Scripts", MessageSquareText], ["Playbooks", BookOpen], ["Templates", ListChecks], ["Apresentacoes", FolderOpen]].map(([label, Icon]) => { const Component = Icon as typeof Play; return <button className={category === label ? "active" : ""} onClick={() => setCategory(category === label ? "Todos" : label as string)} key={label as string}><Component /><span>{label as string}</span></button>; })}</div>
+    {notice && <div className="library-notice"><Sparkles /> {notice}</div>}
+    <section><SectionTitle eyebrow="MATERIAIS EM DESTAQUE" title="Conteudo da empresa" aside={`${items.length} resultados`} /><div className="library-grid">{items.map((item) => <article key={item[0]}><span><FileText /></span><div><small>{item[1]}</small><h3>{item[0]}</h3><p>{item[2]}</p></div><button onClick={() => setNotice(`${item[0]} aberto. O material foi salvo no seu historico.`)} aria-label={`Abrir ${item[0]}`}><ChevronRight /></button></article>)}</div></section>
   </ModuleFrame>;
 }
 

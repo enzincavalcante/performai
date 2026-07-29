@@ -8,7 +8,7 @@ import {
 import "./call-review.css";
 
 const ACCEPTED_AUDIO = ".mp3,.wav,.m4a,.mp4,.webm,.ogg,.aac";
-const MAX_FILE_SIZE = 25 * 1024 * 1024;
+const MAX_FILE_SIZE = 100 * 1024 * 1024;
 
 type ReviewReport = {
   score?: number;
@@ -100,7 +100,7 @@ export function CallReview() {
       return;
     }
     if (next.size > MAX_FILE_SIZE) {
-      setError("O arquivo excede 25 MB. Comprima o audio ou envie uma gravacao menor.");
+      setError("O arquivo excede 100 MB. Exporte apenas o audio da chamada e tente novamente.");
       setStatus("error");
       return;
     }
@@ -137,7 +137,7 @@ export function CallReview() {
         seller_role: sellerRole,
         call_type: callType,
       }));
-      const response = await fetch(endpoint, { method: "POST", body });
+      const response = await fetch(endpoint, { method: "POST", body, signal: AbortSignal.timeout(120_000) });
       const payload = await response.json().catch(() => null);
       if (!response.ok) {
         const detail = payload && typeof payload === "object" && "detail" in payload ? String(payload.detail) : `HTTP ${response.status}`;
@@ -202,7 +202,7 @@ export function CallReview() {
         {file ? <><span className="review-file-icon"><FileAudio /></span><div><strong>{file.name}</strong><p>{fileSize(file.size)} <i /> {durationLabel(duration)}</p></div><button type="button" className="text-button" onClick={() => inputRef.current?.click()}>Trocar arquivo</button></> : <><span className="review-file-icon"><UploadCloud /></span><div><strong>Arraste a gravacao para ca</strong><p>ou selecione um arquivo do computador</p></div><button type="button" className="secondary-button" onClick={() => inputRef.current?.click()}>Selecionar audio</button><small>MP3, WAV, M4A, MP4, WEBM, OGG ou AAC, ate 25 MB</small></>}
       </div>
       {(status === "uploading" || status === "processing") && <div className="review-progress" aria-live="polite"><span className="review-spinner" /><div><strong>{status === "uploading" ? "Enviando gravacao" : "Analisando a conversa"}</strong><p>{status === "uploading" ? "Preparando o audio para analise..." : "A IA esta avaliando competencias e momentos-chave."}</p></div></div>}
-      {status === "error" && <div className="review-error" role="alert"><AlertCircle /><div><strong>Nao foi possivel gerar o relatorio</strong><p>{error}</p><small>Confirme se o backend esta online e se <code>NEXT_PUBLIC_API_URL</code> aponta para a API correta. Nenhuma nota foi gerada.</small></div></div>}
+      {status === "error" && <div className="review-error" role="alert"><AlertCircle /><div><strong>Nao foi possivel gerar o relatorio</strong><p>{error}</p><small>A gravacao nao foi pontuada. Tente novamente; para arquivos muito grandes, exporte em MP3 sem cortar a conversa.</small></div></div>}
       <div className="review-submit"><div><strong>Analise baseada na gravacao</strong><span>Nenhuma avaliacao e exibida antes da resposta do backend.</span></div><button className="primary-button compact" disabled={!file || status === "uploading" || status === "processing"} onClick={analyze}>Analisar ligacao <ArrowRight size={17} /></button></div>
     </section>
   </div>;

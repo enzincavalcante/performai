@@ -237,6 +237,12 @@ input::placeholder,textarea::placeholder { color:#8197b8; opacity:1; }
 .focus-form textarea { min-height:135px; resize:vertical; padding:15px; border:1px solid #29466f; border-radius:7px; outline:0; color:#fff; background:#081a36; font:inherit; font-size:13px; line-height:1.55; }
 .focus-form textarea:focus { border-color:#5a82e7; box-shadow:0 0 0 3px rgba(90,130,231,.12); }
 .focus-submit { width:100%; min-height:50px; justify-content:center; margin-top:14px; }
+.mentor-audio { display:grid; grid-template-columns:auto 1fr; gap:8px 12px; align-items:center; margin-top:12px; padding:13px; border:1px solid #29466f; border-radius:7px; background:#081a36; }
+.mentor-audio button { display:flex; align-items:center; gap:8px; min-height:38px; padding:0 13px; border:1px solid #42639a; border-radius:6px; color:#dce8fb; background:#173761; font-weight:800; }
+.mentor-audio button svg { width:16px; }
+.mentor-audio span { color:#7f96b9; font-size:10px; line-height:1.4; }
+.mentor-audio span.done { color:#5eead4; }
+.mentor-audio span.error { color:#fda4af; }
 .focus-context { position:sticky; top:105px; }
 .focus-context h2 { margin:9px 0 20px; font-size:21px; }
 .focus-context dl { margin:0; }

@@ -224,8 +224,27 @@ const FOCUS_OPTIONS = [
 function FocusCoach({ profile }: { profile: CompanyProfile }) {
   const [difficulty, setDifficulty] = useState("objections");
   const [situation, setSituation] = useState("");
+  const [audioStatus, setAudioStatus] = useState<"idle" | "processing" | "done" | "error">("idle");
+  const audioInput = useRef<HTMLInputElement>(null);
   const [result, setResult] = useState<{ title: string; diagnosis: string; actions: string[]; example: string } | null>(null);
   const selected = FOCUS_OPTIONS.find((item) => item.id === difficulty) ?? FOCUS_OPTIONS[0];
+  const analyzeAudio = async (file?: File) => {
+    if (!file) return;
+    setAudioStatus("processing");
+    try {
+      const body = new FormData();
+      body.append("audio", file);
+      body.append("metadata", JSON.stringify({ source: "mentor_audio", seller_role: "seller", call_type: difficulty }));
+      const response = await fetch("/api/v1/analytics/call-review", { method: "POST", body, signal: AbortSignal.timeout(120_000) });
+      const payload = await response.json();
+      if (!response.ok) throw new Error("audio");
+      const report = payload?.report ?? payload;
+      setSituation(typeof report?.transcript === "string" ? report.transcript : typeof report?.summary === "string" ? report.summary : `Contexto enviado por audio: ${file.name}`);
+      setAudioStatus("done");
+    } catch {
+      setAudioStatus("error");
+    }
+  };
   const generateGuidance = (event: FormEvent) => {
     event.preventDefault();
     const details = situation.trim() || `Tenho dificuldade em ${selected.title.toLowerCase()} ao vender ${profile.offer}.`;
@@ -238,7 +257,7 @@ function FocusCoach({ profile }: { profile: CompanyProfile }) {
     setResult({ ...guidance, diagnosis: `${guidance.diagnosis} Contexto informado: ${details}` });
   };
   return <div className="content-stack focus-coach-page"><header className="focus-heading"><p className="eyebrow">COACH COMERCIAL</p><h1>Qual dificuldade voce quer resolver?</h1><p>Conte onde esta travando. Voce recebe um diagnostico direto, orientacao pratica e uma frase pronta para usar na proxima conversa.</p></header>
-    <div className="focus-layout"><form className="focus-form" onSubmit={generateGuidance}><div><p className="eyebrow">1 · ESCOLHA SUA DIFICULDADE</p><div className="focus-options">{FOCUS_OPTIONS.map((option) => <button type="button" key={option.id} className={difficulty === option.id ? "selected" : ""} onClick={() => { setDifficulty(option.id); setResult(null); }}><span>{option.title}</span><small>{option.text}</small>{difficulty === option.id && <CheckCircle />}</button>)}</div></div><label><span>2 · O QUE ESTA ACONTECENDO NA PRATICA?</span><textarea value={situation} onChange={(event) => setSituation(event.target.value)} placeholder={`Ex.: Quando apresento ${profile.offer}, o cliente diz que esta caro e eu nao sei como continuar.`} /></label><button className="primary-button focus-submit" type="submit"><Lightbulb /> Analisar minha dificuldade</button></form>
+    <div className="focus-layout"><form className="focus-form" onSubmit={generateGuidance}><div><p className="eyebrow">1 · ESCOLHA SUA DIFICULDADE</p><div className="focus-options">{FOCUS_OPTIONS.map((option) => <button type="button" key={option.id} className={difficulty === option.id ? "selected" : ""} onClick={() => { setDifficulty(option.id); setResult(null); }}><span>{option.title}</span><small>{option.text}</small>{difficulty === option.id && <CheckCircle />}</button>)}</div></div><label><span>2 · O QUE ESTA ACONTECENDO NA PRATICA?</span><textarea value={situation} onChange={(event) => setSituation(event.target.value)} placeholder={`Ex.: Quando apresento ${profile.offer}, o cliente diz que esta caro e eu nao sei como continuar.`} /></label><div className="mentor-audio"><input ref={audioInput} hidden type="file" accept="audio/*,.mp4" onChange={(event) => analyzeAudio(event.target.files?.[0])} /><button type="button" disabled={audioStatus === "processing"} onClick={() => audioInput.current?.click()}><Mic /> {audioStatus === "processing" ? "Transcrevendo audio..." : "Enviar audio da situacao"}</button><span className={audioStatus}>{audioStatus === "done" ? "Audio transcrito. Revise o texto acima." : audioStatus === "error" ? "Nao foi possivel processar. Tente outro arquivo." : "A IA transforma sua explicacao em contexto."}</span></div><button className="primary-button focus-submit" type="submit"><Lightbulb /> Analisar minha dificuldade</button></form>
       <aside className="focus-context"><p className="eyebrow">CONTEXTO CONSIDERADO</p><h2>Orientacao ligada ao seu negocio</h2><dl><div><dt>Oferta</dt><dd>{profile.offer}</dd></div><div><dt>Publico</dt><dd>{profile.audience}</dd></div><div><dt>Objetivo</dt><dd>{profile.goal}</dd></div></dl></aside></div>
     {result && <motion.section className="focus-result" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}><header><span><Sparkles /></span><div><p className="eyebrow">SEU DIAGNOSTICO</p><h2>{result.title}</h2><p>{result.diagnosis}</p></div></header><div className="focus-plan"><div><p className="eyebrow">O QUE FAZER AGORA</p><ol>{result.actions.map((action, index) => <li key={action}><span>{index + 1}</span>{action}</li>)}</ol></div><blockquote><p className="eyebrow">EXEMPLO PARA USAR</p><strong>{result.example}</strong></blockquote></div></motion.section>}
   </div>;
