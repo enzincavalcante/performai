@@ -81,41 +81,58 @@ function durationLabel(seconds: number | null) {
   return `${minutes}:${String(Math.floor(seconds % 60)).padStart(2, "0")}`;
 }
 
+function encodeWav(samples: Float32Array, sampleRate: number) {
+  const buffer = new ArrayBuffer(44 + samples.length * 2);
+  const view = new DataView(buffer);
+  const write = (offset: number, text: string) => [...text].forEach((char, index) => view.setUint8(offset + index, char.charCodeAt(0)));
+  write(0, "RIFF");
+  view.setUint32(4, 36 + samples.length * 2, true);
+  write(8, "WAVE");
+  write(12, "fmt ");
+  view.setUint32(16, 16, true);
+  view.setUint16(20, 1, true);
+  view.setUint16(22, 1, true);
+  view.setUint32(24, sampleRate, true);
+  view.setUint32(28, sampleRate * 2, true);
+  view.setUint16(32, 2, true);
+  view.setUint16(34, 16, true);
+  write(36, "data");
+  view.setUint32(40, samples.length * 2, true);
+  samples.forEach((sample, index) => view.setInt16(44 + index * 2, Math.max(-1, Math.min(1, sample)) * 0x7fff, true));
+  return new Blob([buffer], { type: "audio/wav" });
+}
+
 async function transcribeLargeFile(file: File) {
-  const tokenResponse = await fetch("/api/v1/transcription-token", { method: "POST" });
-  const tokenPayload = await tokenResponse.json().catch(() => null);
-  if (!tokenResponse.ok || !tokenPayload?.token) {
-    throw new Error(tokenPayload?.detail ?? "Nao foi possivel preparar o upload seguro.");
-  }
+  const AudioContextClass = window.AudioContext;
+  const context = new AudioContextClass();
+  try {
+    const decoded = await context.decodeAudioData(await file.arrayBuffer());
+    const targetRate = 16_000;
+    const outputLength = Math.ceil(decoded.duration * targetRate);
+    const mono = new Float32Array(outputLength);
+    for (let channel = 0; channel < decoded.numberOfChannels; channel += 1) {
+      const input = decoded.getChannelData(channel);
+      for (let index = 0; index < outputLength; index += 1) {
+        mono[index] += input[Math.min(input.length - 1, Math.floor(index * decoded.sampleRate / targetRate))] / decoded.numberOfChannels;
+      }
+    }
 
-  const transcriptionResponse = await fetch(
-    "https://api.deepgram.com/v1/listen?model=nova-3&language=pt-BR&smart_format=true&punctuate=true&diarize=true&utterances=true",
-    {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${tokenPayload.token}`,
-        "Content-Type": file.type || "audio/mpeg",
-      },
-      body: file,
-    },
-  );
-  const transcription = await transcriptionResponse.json();
-  if (!transcriptionResponse.ok) {
-    throw new Error("A transcricao direta falhou. Tente novamente em alguns instantes.");
+    const chunkSamples = targetRate * 75;
+    const transcripts: string[] = [];
+    for (let start = 0, part = 1; start < mono.length; start += chunkSamples, part += 1) {
+      const wav = encodeWav(mono.slice(start, Math.min(start + chunkSamples, mono.length)), targetRate);
+      const body = new FormData();
+      body.append("audio", wav, `parte-${part}.wav`);
+      body.append("metadata", JSON.stringify({ transcribe_only: true, part }));
+      const response = await fetch("/api/v1/analytics/call-review", { method: "POST", body, signal: AbortSignal.timeout(120_000) });
+      const payload = await response.json().catch(() => null);
+      if (!response.ok || !payload?.transcript) throw new Error(payload?.detail ?? `Falha ao transcrever a parte ${part}.`);
+      transcripts.push(String(payload.transcript));
+    }
+    return transcripts.join("\n");
+  } finally {
+    await context.close();
   }
-
-  const utterances = transcription?.results?.utterances;
-  if (Array.isArray(utterances) && utterances.length) {
-    return utterances
-      .filter((item: { transcript?: string }) => item.transcript?.trim())
-      .map((item: { speaker?: number; transcript?: string; start?: number }) => {
-        const total = Math.floor(item.start ?? 0);
-        const timestamp = `${String(Math.floor(total / 60)).padStart(2, "0")}:${String(total % 60).padStart(2, "0")}`;
-        return `[${timestamp}] Pessoa ${(item.speaker ?? 0) + 1}: ${item.transcript?.trim()}`;
-      })
-      .join("\n");
-  }
-  return String(transcription?.results?.channels?.[0]?.alternatives?.[0]?.transcript ?? "").trim();
 }
 
 export function CallReview() {

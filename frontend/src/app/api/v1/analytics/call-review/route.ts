@@ -191,6 +191,15 @@ export async function POST(request: Request) {
     }
   }
 
+  try {
+    const parsedMetadata = JSON.parse(metadata) as { transcribe_only?: boolean };
+    if (parsedMetadata.transcribe_only) {
+      return NextResponse.json({ status: "transcribed", transcript });
+    }
+  } catch {
+    // Invalid optional metadata does not block the analysis.
+  }
+
   const prompt = `Analise integralmente esta call de vendas em portugues brasileiro.
 Considere os metadados: ${metadata.slice(0, 4000)}.
 Retorne somente JSON com: overall_score de 0 a 100, summary, strengths,
