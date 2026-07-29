@@ -20,20 +20,16 @@ export type EnterpriseView =
 type Navigate = (view: EnterpriseView) => void;
 
 const BRAND_LOGO = `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/brand/performai-logo.png`;
+const ACADEMY_COVER = `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/brand/sales-academy-cover.png`;
 
 const NAVIGATION: { id: EnterpriseView; label: string; icon: typeof LayoutDashboard }[] = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { id: "learning", label: "Treinamentos", icon: GraduationCap },
+  { id: "learning", label: "Central de Aprendizagem", icon: GraduationCap },
   { id: "simulation", label: "Simulacao por voz", icon: Mic },
   { id: "ai", label: "Mentor de Vendas IA", icon: Bot },
-  { id: "calls", label: "Analise de Calls", icon: FileAudio },
-  { id: "paths", label: "Trilhas", icon: Target },
-  { id: "assessments", label: "Avaliacoes", icon: ClipboardCheck },
-  { id: "gamification", label: "Gamificacao", icon: Trophy },
-  { id: "performance", label: "Desempenho", icon: BarChart3 },
-  { id: "reports", label: "Relatorios", icon: LineChart },
-  { id: "teams", label: "Equipes", icon: Users },
-  { id: "library", label: "Biblioteca", icon: Library },
+  { id: "calls", label: "Inteligencia de Calls", icon: FileAudio },
+  { id: "paths", label: "Jornada de Aprendizagem", icon: Target },
+  { id: "teams", label: "Equipes e Performance", icon: Users },
   { id: "certificates", label: "Certificados", icon: Award },
   { id: "notifications", label: "Notificacoes", icon: Bell },
   { id: "settings", label: "Configuracoes", icon: Settings },
@@ -113,10 +109,10 @@ function LearningModule({ onNavigate }: { onNavigate: Navigate }) {
       <aside className="course-lesson-panel"><header><div><small>PROGRESSO DO TREINAMENTO</small><strong>{selectedCourse.progress}%</strong></div><div className="enterprise-progress"><i style={{ width: `${selectedCourse.progress}%` }} /></div></header><h3>Etapas desta aula</h3>{selectedCourse.checklist.map((item, index) => <button className={index < Math.ceil(selectedCourse.progress / 25) ? "done" : ""} key={item}><i>{index < Math.ceil(selectedCourse.progress / 25) ? <CheckCircle2 /> : index + 1}</i><span>{item}</span><ChevronRight /></button>)}<button className="course-practice" onClick={() => onNavigate("simulation")}><Mic /> Praticar com cliente IA</button></aside>
     </section>
   </ModuleFrame>;
-  return <ModuleFrame eyebrow="APRENDIZAGEM" title="Treinamentos" description="Conteudos personalizados para desenvolver as habilidades que mais impactam o resultado comercial." action={<button onClick={() => setSelectedCourse(COURSE_DATA[0])}><Play /> Abrir treinamento em destaque</button>}>
+  return <ModuleFrame eyebrow="CENTRAL DE APRENDIZAGEM" title="Aprenda, pratique e valide." description="Cursos, videos, avaliacoes e materiais comerciais organizados em um unico lugar." action={<div className="hub-actions"><button onClick={() => onNavigate("assessments")}><ClipboardCheck /> Avaliacoes</button><button onClick={() => onNavigate("library")}><Library /> Biblioteca</button></div>}>
     <div className="enterprise-search-row"><label><Search /><input placeholder="Pesquisar cursos, tecnicas ou habilidades" /></label><div>{categories.map((item) => <button key={item} className={category === item ? "active" : ""} onClick={() => setCategory(item)}>{item}</button>)}</div></div>
-    <section className="course-feature"><div><p>RECOMENDADO PELA IA</p><h2>Fortaleca a descoberta antes do pitch.</h2><span>Uma selecao baseada nas calls e simulacoes mais recentes do seu time.</span><button onClick={() => onNavigate("paths")}><Play /> Iniciar recomendacao</button></div><Brain /></section>
-    <section><SectionTitle eyebrow="CONTINUE DE ONDE PAROU" title="Sua aprendizagem" aside={`${COURSE_DATA.length} treinamentos`} /><div className="course-grid">{COURSE_DATA.map((course) => <article className="course-card" key={course.title} onClick={() => setSelectedCourse(course)}><div className={`course-cover ${course.tone}`}><Play /><span>{course.category}</span></div><div className="course-card-body"><small>{course.level} · {course.time}</small><h3>{course.title}</h3><div className="enterprise-progress"><i style={{ width: `${course.progress}%` }} /></div><footer><span>{course.progress ? `${course.progress}% concluido` : "Ainda nao iniciado"}</span><button onClick={() => setSelectedCourse(course)} aria-label={`Abrir ${course.title}`}><ChevronRight /></button></footer></div></article>)}</div></section>
+    <section className="course-feature academy-feature"><Image src={ACADEMY_COVER} alt="Equipe comercial em treinamento profissional" fill sizes="(max-width: 900px) 100vw, 900px" /><div><p>RECOMENDADO PELA IA</p><h2>Fortaleca a descoberta antes do pitch.</h2><span>Uma selecao baseada nas calls e simulacoes mais recentes do seu time.</span><button onClick={() => setSelectedCourse(COURSE_DATA[0])}><Play /> Iniciar recomendacao</button></div></section>
+    <section><SectionTitle eyebrow="CONTINUE DE ONDE PAROU" title="Sua aprendizagem" aside={`${COURSE_DATA.length} treinamentos`} /><div className="course-grid">{COURSE_DATA.map((course) => <article className="course-card" key={course.title} onClick={() => setSelectedCourse(course)}><div className={`course-cover ${course.tone}`}><Image src={ACADEMY_COVER} alt="" fill sizes="360px" /><span>{course.category}</span><i><Play /></i></div><div className="course-card-body"><small>{course.level} · {course.time}</small><h3>{course.title}</h3><div className="enterprise-progress"><i style={{ width: `${course.progress}%` }} /></div><footer><span>{course.progress ? `${course.progress}% concluido` : "Ainda nao iniciado"}</span><button onClick={() => setSelectedCourse(course)} aria-label={`Abrir ${course.title}`}><ChevronRight /></button></footer></div></article>)}</div></section>
   </ModuleFrame>;
 }
 
@@ -154,7 +150,7 @@ function FixedPathsModule({ onNavigate }: { onNavigate: Navigate }) {
   const [selected, setSelected] = useState(3);
   const progress = Math.round((completed / FEATURED_PATH.length) * 100);
   const current = FEATURED_PATH[selected];
-  return <ModuleFrame eyebrow="JORNADA COMERCIAL COMPLETA" title="Trilha Destaque" description="Uma formacao fixa, organizada do fundamento a certificacao. Cada etapa libera a proxima conforme seu avanco.">
+  return <ModuleFrame eyebrow="JORNADA DE APRENDIZAGEM" title="Seu progresso tem um caminho claro." description="Trilha, XP, conquistas e consistencia conectados ao seu desenvolvimento." action={<div className="hub-actions"><button onClick={() => onNavigate("gamification")}><Trophy /> XP e conquistas</button><button onClick={() => onNavigate("certificates")}><Award /> Certificacao</button></div>}>
     <section className="path-layout path-layout-fixed">
       <article className="enterprise-panel path-main"><header><div><p>TRILHA OFICIAL</p><h2>Vendas de alta performance</h2><span>{completed} de {FEATURED_PATH.length} etapas concluidas</span></div><strong>{progress}%</strong></header><div className="enterprise-progress"><i style={{ width: `${progress}%` }} /></div><div className="path-steps path-steps-complete">{FEATURED_PATH.map(([title], index) => { const done = index < completed; const unlocked = index <= completed; return <button className={done ? "done" : index === selected ? "current" : ""} disabled={!unlocked} onClick={() => setSelected(index)} key={title}><i>{done ? <CheckCircle2 /> : unlocked ? index + 1 : <Lock />}</i><span><strong>{title}</strong><small>{done ? "Concluido" : unlocked ? index === completed ? "Disponivel agora" : "Revisar etapa" : "Conclua a etapa anterior"}</small></span><ChevronRight /></button>; })}</div></article>
       <aside className="enterprise-panel path-detail-panel"><span className="path-detail-index">{String(selected + 1).padStart(2, "0")}</span><p>ETAPA SELECIONADA</p><h2>{current[0]}</h2><span>{current[1]}</span><div className="path-detail-items"><div><Play /><span><strong>Aula guiada</strong><small>Video, resumo e exemplos</small></span></div><div><ListChecks /><span><strong>Aplicacao pratica</strong><small>Exercicio e checklist</small></span></div><div><ClipboardCheck /><span><strong>Validacao</strong><small>Quiz com correcao imediata</small></span></div></div>{selected === completed ? <button onClick={() => setCompleted((value) => Math.min(value + 1, FEATURED_PATH.length))}>Concluir e liberar proxima etapa <ChevronRight /></button> : selected < completed ? <button onClick={() => onNavigate("learning")}>Revisar conteudo <ChevronRight /></button> : <small className="path-locked-copy"><Lock /> Esta etapa sera liberada automaticamente.</small>}</aside>
@@ -222,7 +218,7 @@ function ReportsModule() {
   </ModuleFrame>;
 }
 
-function TeamsModule() {
+function TeamsModule({ onNavigate }: { onNavigate: Navigate }) {
   const [invite, setInvite] = useState<{ code: string; link: string } | null>(null);
   const [joinCode, setJoinCode] = useState("");
   const [message, setMessage] = useState("");
@@ -236,7 +232,7 @@ function TeamsModule() {
     const code = joinCode.trim().split("/").pop()?.toUpperCase() ?? "";
     setMessage(code.length >= 6 ? `Convite ${code} validado. Voce entrou na Equipe Cavalcante.` : "Informe um codigo ou link de convite valido.");
   };
-  return <ModuleFrame eyebrow="GESTAO DE PESSOAS" title="Equipes" description="Organize liderancas, metas, treinamentos e desempenho por estrutura comercial." action={<div className="team-actions"><button onClick={createInvite}><UserPlus /> Convidar membro</button><button onClick={() => document.querySelector<HTMLInputElement>("#team-code")?.focus()}><Users /> Entrar em uma equipe</button></div>}>
+  return <ModuleFrame eyebrow="EQUIPES E PERFORMANCE" title="Pessoas, evolucao e resultado." description="Acompanhe vendedores, rankings, conversao, volume e orientacoes da IA." action={<div className="team-actions"><button onClick={() => onNavigate("performance")}><BarChart3 /> Ver estatisticas</button><button onClick={createInvite}><UserPlus /> Convidar membro</button></div>}>
     <section className="team-invite-panel"><div><p>CONVITE SEGURO</p><h2>Traga sua equipe para evoluir junto.</h2><span>Gere um codigo exclusivo ou entre com o convite recebido.</span></div>{invite && <div className="invite-created"><label>Codigo da equipe<strong>{invite.code}</strong></label><label>Link exclusivo<input readOnly value={invite.link} /></label><button onClick={() => navigator.clipboard.writeText(invite.link)}><CheckCircle2 /> Copiar link</button></div>}<div className="join-team"><input id="team-code" value={joinCode} onChange={(event) => setJoinCode(event.target.value)} placeholder="Cole o codigo ou link do convite" /><button onClick={joinTeam}>Validar e entrar <ChevronRight /></button></div>{message && <small className="team-feedback">{message}</small>}</section>
     <section className="teams-summary"><article><Users /><span><strong>62</strong> colaboradores</span></article><article><BriefcaseBusiness /><span><strong>4</strong> equipes</span></article><article><Target /><span><strong>78%</strong> das metas</span></article></section>
     <div className="team-cards">{[
@@ -266,9 +262,11 @@ function LibraryModule() {
 }
 
 function CertificatesModule() {
-  return <ModuleFrame eyebrow="CERTIFICACOES" title="Meus certificados" description="Comprove habilidades e compartilhe conquistas profissionais.">
-    <section className="certificate-highlight"><div><Award /><p>CERTIFICACAO MAIS RECENTE</p><h2>Especialista em Vendas Consultivas</h2><span>Concluido em 24 de julho de 2026 · 12 horas</span><div><button><Download /> Baixar certificado</button><button>Compartilhar</button></div></div><ShieldCheck /></section>
-    <div className="certificate-grid">{[["Formacao SDR", "10 horas", "18/07/2026"], ["Dominio de Objecoes", "6 horas", "04/07/2026"], ["Cold Call Essencial", "4 horas", "21/06/2026"]].map((item) => <article key={item[0]}><Medal /><small>PERFORMA AI</small><h3>{item[0]}</h3><p>{item[1]} · {item[2]}</p><footer><span>Certificado validado</span><button><Download /></button></footer></article>)}</div>
+  const requirements = [["Modulos concluidos", "4 de 13", 31], ["Videos obrigatorios", "4 de 13", 31], ["Avaliacoes aprovadas", "1 de 3", 33], ["Desafios praticos", "2 de 6", 33], ["Analises de call", "1 de 3", 33], ["Tempo de estudo", "6 de 20 horas", 30], ["Sequencia de aprendizagem", "4 de 7 dias", 57], ["Nota minima", "8,1 de 8,0", 100]] as const;
+  const readiness = Math.round(requirements.reduce((total, item) => total + item[2], 0) / requirements.length);
+  return <ModuleFrame eyebrow="CERTIFICACAO PROFISSIONAL" title="Seu certificado esta em construcao." description="Conclua toda a jornada e comprove dominio pratico antes da emissao.">
+    <section className="certificate-lock"><div className="certificate-lock-visual"><span><Lock /></span><p>CERTIFICADO BLOQUEADO</p><h2>Especialista em Vendas Consultivas</h2><small>A emissao sera liberada automaticamente quando todos os criterios chegarem a 100%.</small><div className="enterprise-progress"><i style={{ width: `${readiness}%` }} /></div><strong>{readiness}% pronto para certificacao</strong></div><div className="certificate-requirements">{requirements.map(([label, value, progress]) => <article key={label}><header><span>{label}</span><strong>{value}</strong></header><div className="enterprise-progress"><i style={{ width: `${progress}%` }} /></div></article>)}</div></section>
+    <aside className="certificate-next"><Sparkles /><div><strong>Proxima acao recomendada</strong><span>Conclua o treinamento de qualificacao e faca a avaliacao para aumentar sua prontidao.</span></div><button>Continuar jornada <ChevronRight /></button></aside>
   </ModuleFrame>;
 }
 
@@ -307,7 +305,7 @@ export function EnterpriseModule({ view, onNavigate }: { view: EnterpriseView; o
   if (view === "gamification") return <GamificationModule />;
   if (view === "performance") return <PerformanceModule />;
   if (view === "reports") return <ReportsModule />;
-  if (view === "teams") return <TeamsModule />;
+  if (view === "teams") return <TeamsModule onNavigate={onNavigate} />;
   if (view === "library") return <LibraryModule />;
   if (view === "certificates") return <CertificatesModule />;
   if (view === "notifications") return <NotificationsModule />;
