@@ -325,3 +325,43 @@
 .enterprise-page .course-player-copy h2,.enterprise-page .course-objectives h3,.enterprise-page .course-lesson-panel h3{color:#12213d}.course-lesson-panel>header strong{color:#174bf3}
 .team-actions{display:flex;gap:8px}.team-invite-panel{display:grid;grid-template-columns:1.1fr 1.2fr;gap:18px;padding:22px;border:1px solid #2c4e82;border-radius:7px;background:linear-gradient(135deg,#102d59,#0b2142)}.team-invite-panel p{margin:0;color:#64dce5;font-size:9px;font-weight:900}.team-invite-panel h2{margin:7px 0;font-size:21px}.team-invite-panel span{color:#8ea4c3;font-size:11px}.invite-created{display:grid;grid-template-columns:auto 1fr auto;gap:9px;grid-column:1/-1}.invite-created label{display:grid;gap:5px;color:#7890b2;font-size:8px;text-transform:uppercase}.invite-created strong,.invite-created input,.join-team input{min-height:38px;padding:10px 12px;border:1px solid #31578d;border-radius:6px;color:#edf4ff;background:#071a35;font-size:11px}.invite-created button,.join-team button{display:flex;align-items:center;justify-content:center;gap:6px;padding:0 14px;border:0;border-radius:6px;color:#fff;background:#315fea;font-weight:800}.join-team{display:flex;gap:8px;align-self:end}.join-team input{flex:1}.team-feedback{grid-column:1/-1;color:#63e6be}.library-categories button.active{border-color:#5f86ee;color:#fff;background:#193b73}.library-notice{display:flex;align-items:center;gap:9px;padding:12px 15px;border:1px solid #285c68;border-radius:6px;color:#9cebf0;background:#0c303f;font-size:10px}.library-notice svg{width:16px}.quiz-result>div span>span{display:grid;gap:4px;padding:0;background:transparent}.quiz-result>div span b{color:#dce8f8;font-size:10px}.quiz-result>div span small{color:#8299bb;line-height:1.45}
 @media(max-width:900px){.team-invite-panel{grid-template-columns:1fr}.team-actions,.invite-created{display:grid;grid-template-columns:1fr}.join-team{align-items:stretch;flex-direction:column}}
+
+/* High-contrast assessment surface */
+.enterprise-page .quiz-question {
+  border:1px solid #31598f;
+  background:#0b2346;
+  box-shadow:0 12px 30px rgba(2,10,25,.2);
+}
+.enterprise-page .quiz-question>small {
+  color:#58e2eb;
+  font-size:11px;
+  letter-spacing:.08em;
+}
+.enterprise-page .quiz-question h2 {
+  color:#fff;
+  font-size:22px;
+  line-height:1.4;
+  font-weight:850;
+}
+.enterprise-page .quiz-question button {
+  border-color:#35557f;
+  color:#dce9fb;
+  background:#102f59;
+  font-size:13px;
+  line-height:1.4;
+}
+.enterprise-page .quiz-question button:hover {
+  border-color:#6e97ff;
+  color:#fff;
+  background:#173c70;
+}
+.enterprise-page .quiz-question button i {
+  color:#c9daf8;
+  background:#244b7e;
+}
+.enterprise-page .quiz-question button.selected {
+  border-color:#66e4eb;
+  color:#fff;
+  background:#18517a;
+  box-shadow:0 0 0 2px rgba(102,228,235,.14);
+}
