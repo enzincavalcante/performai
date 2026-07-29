@@ -28,6 +28,56 @@ import {
 import "./next-gen-coach.css";
 
 type HubTab = "coach" | "battle" | "replay" | "twin" | "doctor" | "career";
+type ConversationMessage = { speaker: "coach" | "seller"; text: string };
+
+const normalizeText = (value: string) =>
+  value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+
+function createMentorReply(question: string, level: string, goal: string) {
+  const text = normalizeText(question);
+  const prefix = `Pensando no seu nivel ${level.toLowerCase()} e no objetivo de ${goal.toLowerCase()}:`;
+
+  if (text.includes("preco") || text.includes("caro") || text.includes("desconto")) {
+    return `${prefix} nao defenda o preco imediatamente. Acolha e investigue: "Quando voce diz que esta caro, esta comparando com outra proposta, com o orcamento disponivel ou com o retorno esperado?" Depois conecte o investimento ao impacto citado pelo cliente. Qual dessas tres comparacoes apareceu na conversa?`;
+  }
+  if (text.includes("pitch") || text.includes("apresent")) {
+    return `${prefix} reduza seu pitch a problema, impacto e evidencia. Experimente: "Ajudamos [perfil] a reduzir [problema mensuravel] por meio de [diferencial], sem [risco comum]." Escreva agora quem e o cliente e qual resultado voce consegue provar; eu ajusto a frase com voce.`;
+  }
+  if (text.includes("objec") || text.includes("concorrent")) {
+    return `${prefix} use a sequencia acolher, esclarecer e confirmar. Primeiro: "Faz sentido comparar antes de decidir. O que mais pesa para voce nessa escolha?" A resposta revela se a resistencia e valor, risco ou processo. Qual foi a frase exata do cliente?`;
+  }
+  if (text.includes("fech") || text.includes("proximo passo")) {
+    return `${prefix} teste compromisso sem pressionar: "Se resolvermos os pontos que discutimos, faz sentido envolver [decisor] em uma conversa de 30 minutos na quinta?" Antes disso, confirme o criterio de decisao e quem participa. O que ainda impede um proximo passo com data?`;
+  }
+  if (text.includes("descob") || text.includes("pergunta")) {
+    return `${prefix} aprofunde em tres camadas: como funciona hoje, qual impacto isso causa e por que mudar agora. Comece com "Onde esse processo mais atrasa o resultado do time?" e use a resposta para a proxima pergunta. Que problema o cliente ja reconheceu?`;
+  }
+  return `${prefix} vejo contexto, mas ainda falta um dado para orientar uma acao precisa. Resuma em uma frase: o que voce vende, para quem, em qual etapa a conversa travou e o que o cliente disse literalmente. Com isso eu monto uma resposta e explico a tecnica por tras dela.`;
+}
+
+function createBuyerReply(message: string, turn: number, scenario: string, objection: string) {
+  const text = normalizeText(message);
+  const askedQuestion = message.includes("?");
+  if (text.includes("desconto") || text.includes("%")) {
+    return "Desconto ajuda, mas nao resolve minha duvida. Que resultado concreto justifica esse investimento e como voce mede isso?";
+  }
+  if (text.includes("roi") || text.includes("resultado") || text.includes("impacto")) {
+    return askedQuestion
+      ? "Hoje perdemos tempo com retrabalho e pouca previsibilidade. Mas preciso entender em quanto tempo eu veria mudanca e quem teria de participar."
+      : "Resultado e importante, mas isso ainda esta abstrato. Pode ligar essa promessa a um problema especifico da minha operacao?";
+  }
+  if (askedQuestion) {
+    return turn < 2
+      ? `O maior problema e a equipe perder oportunidades no acompanhamento. Ainda assim, no cenario de ${scenario.toLowerCase()}, eu nao posso assumir um projeto sem reduzir o risco.`
+      : `Isso faz sentido. Minha principal resistencia agora e ${objection.toLowerCase()}. Como voce sugere validar isso sem alongar o processo?`;
+  }
+  if (text.includes("reuniao") || text.includes("agenda") || text.includes("quinta") || text.includes("proximo passo")) {
+    return "Posso considerar uma proxima conversa, desde que ela tenha uma pauta objetiva, duracao definida e envolva a pessoa certa. O que voce propoe?";
+  }
+  return turn < 2
+    ? "Voce apresentou a solucao, mas ainda nao mostrou que entendeu meu contexto. Que pergunta faria para descobrir onde isso realmente afeta o negocio?"
+    : "Entendi a proposta. Ainda preciso enxergar prioridade e seguranca para mudar. Por que eu deveria tratar disso agora?";
+}
 
 const tabs: Array<{ id: HubTab; label: string; icon: typeof Bot }> = [
   { id: "coach", label: "Mentor IA de Vendas", icon: Bot },
@@ -102,9 +152,7 @@ export function NextGenCoach() {
   const [tab, setTab] = useState<HubTab>("coach");
   const [step, setStep] = useState<"setup" | "session" | "result">("setup");
   const [message, setMessage] = useState("");
-  const [conversation, setConversation] = useState<
-    Array<{ speaker: "coach" | "seller"; text: string }>
-  >([]);
+  const [conversation, setConversation] = useState<ConversationMessage[]>([]);
   const [seed, setSeed] = useState(1);
   const [meeting, setMeeting] = useState({
     company: "",
@@ -116,6 +164,16 @@ export function NextGenCoach() {
   const [selectedMission, setSelectedMission] = useState<number | null>(null);
   const [replayFile, setReplayFile] = useState("");
   const [mentorQuestion, setMentorQuestion] = useState("");
+  const [mentorLevel, setMentorLevel] = useState("Intermediario");
+  const [mentorGoal, setMentorGoal] = useState("Resolver uma dificuldade");
+  const [trainingConfig, setTrainingConfig] = useState({
+    segment: "Tecnologia B2B",
+    size: "51 a 200 funcionarios",
+    scenario: "Descoberta com decisor cetico",
+    difficulty: "Avancado",
+    offer: "",
+    objection: "Preco",
+  });
   const [mentorMessages, setMentorMessages] = useState<
     Array<{ speaker: "mentor" | "seller"; text: string }>
   >([
@@ -144,23 +202,67 @@ export function NextGenCoach() {
     setConversation([
       {
         speaker: "coach",
-        text: `Sou ${customer.name}, ${customer.role} da ${customer.company}. Tenho poucos minutos. Por que esta conversa merece minha atencao?`,
+        text: `Sou ${customer.name}, ${customer.role} da ${customer.company}. Tenho poucos minutos. Voce quer conversar sobre ${trainingConfig.offer}. Por que isso merece minha atencao agora?`,
       },
     ]);
     setStep("session");
   };
   const sendMessage = () => {
     if (!message.trim()) return;
+    const sellerMessage = message.trim();
+    const turn = conversation.filter((item) => item.speaker === "seller").length;
     setConversation((items) => [
       ...items,
-      { speaker: "seller", text: message.trim() },
+      { speaker: "seller", text: sellerMessage },
       {
         speaker: "coach",
-        text: "Entendi, mas isso ainda parece generico. Qual impacto concreto voce acredita que existe no meu negocio?",
+        text: createBuyerReply(
+          sellerMessage,
+          turn,
+          trainingConfig.scenario,
+          trainingConfig.objection,
+        ),
       },
     ]);
     setMessage("");
   };
+  const evaluation = useMemo(() => {
+    const sellerMessages = conversation.filter((item) => item.speaker === "seller");
+    const combined = normalizeText(sellerMessages.map((item) => item.text).join(" "));
+    const questions = sellerMessages.filter((item) => item.text.includes("?")).length;
+    const hasValue = /(impacto|resultado|roi|econom|reduz|aument)/.test(combined);
+    const hasNextStep = /(proximo passo|reuniao|agenda|quinta|sexta|data)/.test(combined);
+    const base = Math.min(70, 48 + sellerMessages.length * 6);
+    const discovery = Math.min(96, base + questions * 8);
+    const value = Math.min(96, base + (hasValue ? 18 : 0));
+    const closing = Math.min(96, base + (hasNextStep ? 20 : 0));
+    const overall = Math.round((discovery + value + closing) / 3);
+    return {
+      overall,
+      scores: [
+        ["Comunicacao", Math.min(94, base + 12)],
+        ["Confianca", Math.min(92, base + 8)],
+        ["Descoberta", discovery],
+        ["Rapport", Math.min(90, base + questions * 5)],
+        ["Objecoes", Math.min(92, value + 2)],
+        ["Fechamento", closing],
+        ["Escuta", Math.min(94, discovery + 3)],
+        ["Estrutura", Math.min(92, base + (hasValue ? 10 : 2))],
+        ["Inteligencia emocional", Math.min(91, base + 7)],
+      ] as Array<[string, number]>,
+      headline: hasNextStep
+        ? "Voce conduziu a conversa para um compromisso claro."
+        : questions
+          ? "Boa investigacao; falta transformar valor em um proximo passo."
+          : "Sua proposta precisa partir de mais descoberta antes de avancar.",
+      error: questions
+        ? "Voce investigou o contexto, mas encerrou sem combinar responsavel, data e objetivo da proxima conversa."
+        : "Voce apresentou a solucao antes de investigar o impacto e o criterio de decisao do cliente.",
+      next: hasNextStep
+        ? "Repita com dificuldade maior e valide o compromisso sem oferecer desconto."
+        : "Repita o treino e termine com um proximo passo que tenha data, participantes e pauta.",
+    };
+  }, [conversation]);
 
   return (
     <div className="coach-hub">
@@ -245,7 +347,7 @@ export function NextGenCoach() {
               <h3>Contexto desta sessao</h3>
               <label>
                 Nivel do vendedor
-                <select>
+                <select value={mentorLevel} onChange={(event) => setMentorLevel(event.target.value)}>
                   <option>Intermediario</option>
                   <option>Iniciante</option>
                   <option>Avancado</option>
@@ -253,7 +355,7 @@ export function NextGenCoach() {
               </label>
               <label>
                 Objetivo
-                <select>
+                <select value={mentorGoal} onChange={(event) => setMentorGoal(event.target.value)}>
                   <option>Resolver uma dificuldade</option>
                   <option>Aprender uma tecnica</option>
                   <option>Preparar uma call</option>
@@ -261,29 +363,29 @@ export function NextGenCoach() {
                 </select>
               </label>
             </aside>
-            <footer>
+            <form
+              onSubmit={(event) => {
+                event.preventDefault();
+                const question = mentorQuestion.trim();
+                if (!question) return;
+                setMentorMessages((items) => [
+                  ...items,
+                  { speaker: "seller", text: question },
+                  { speaker: "mentor", text: createMentorReply(question, mentorLevel, mentorGoal) },
+                ]);
+                setMentorQuestion("");
+              }}
+            >
               <textarea
                 value={mentorQuestion}
                 onChange={(event) => setMentorQuestion(event.target.value)}
                 placeholder="Explique sua situacao comercial..."
+                aria-label="Situacao comercial para o mentor"
               />
-              <button
-                onClick={() => {
-                  if (!mentorQuestion.trim()) return;
-                  setMentorMessages((items) => [
-                    ...items,
-                    { speaker: "seller", text: mentorQuestion },
-                    {
-                      speaker: "mentor",
-                      text: "Entendi o contexto. Antes de sugerir uma resposta, preciso confirmar: qual foi a reacao exata do cliente e qual proximo passo voce queria conquistar? Isso define se devemos aprofundar valor, risco ou processo de decisao.",
-                    },
-                  ]);
-                  setMentorQuestion("");
-                }}
-              >
+              <button type="submit" disabled={!mentorQuestion.trim()}>
                 <Send /> Enviar ao mentor
               </button>
-            </footer>
+            </form>
           </div>
           <div className="coach-separator">
             <span>OU PRATIQUE COM UM CLIENTE GERADO PELA IA</span>
@@ -331,7 +433,7 @@ export function NextGenCoach() {
                 <div className="coach-config">
                   <label>
                     Segmento
-                    <select>
+                    <select value={trainingConfig.segment} onChange={(event) => setTrainingConfig((current) => ({ ...current, segment: event.target.value }))}>
                       <option>Tecnologia B2B</option>
                       <option>Servicos</option>
                       <option>Varejo</option>
@@ -341,7 +443,7 @@ export function NextGenCoach() {
                   </label>
                   <label>
                     Porte da empresa
-                    <select>
+                    <select value={trainingConfig.size} onChange={(event) => setTrainingConfig((current) => ({ ...current, size: event.target.value }))}>
                       <option>51 a 200 funcionarios</option>
                       <option>Pequena empresa</option>
                       <option>Enterprise</option>
@@ -349,7 +451,7 @@ export function NextGenCoach() {
                   </label>
                   <label>
                     Cenario
-                    <select>
+                    <select value={trainingConfig.scenario} onChange={(event) => setTrainingConfig((current) => ({ ...current, scenario: event.target.value }))}>
                       <option>Descoberta com decisor cetico</option>
                       <option>Negociacao de preco</option>
                       <option>Concorrente ja contratado</option>
@@ -358,7 +460,7 @@ export function NextGenCoach() {
                   </label>
                   <label>
                     Dificuldade
-                    <select>
+                    <select value={trainingConfig.difficulty} onChange={(event) => setTrainingConfig((current) => ({ ...current, difficulty: event.target.value }))}>
                       <option>Avancado</option>
                       <option>Intermediario</option>
                       <option>Elite</option>
@@ -366,7 +468,11 @@ export function NextGenCoach() {
                   </label>
                   <label className="wide">
                     O que voce vende?
-                    <input placeholder="Ex.: plataforma de gestao comercial B2B" />
+                    <input
+                      value={trainingConfig.offer}
+                      onChange={(event) => setTrainingConfig((current) => ({ ...current, offer: event.target.value }))}
+                      placeholder="Ex.: plataforma de gestao comercial B2B"
+                    />
                   </label>
                   <div className="coach-objections">
                     <span>Objecoes ativas</span>
@@ -376,10 +482,18 @@ export function NextGenCoach() {
                       "Sem urgencia",
                       "Sem autoridade",
                     ].map((item) => (
-                      <button key={item}>{item}</button>
+                      <button
+                        type="button"
+                        className={trainingConfig.objection === item ? "selected" : ""}
+                        aria-pressed={trainingConfig.objection === item}
+                        onClick={() => setTrainingConfig((current) => ({ ...current, objection: item }))}
+                        key={item}
+                      >
+                        {item}
+                      </button>
                     ))}
                   </div>
-                  <button className="start-coaching" onClick={startSession}>
+                  <button className="start-coaching" onClick={startSession} disabled={!trainingConfig.offer.trim()}>
                     <Play /> Iniciar coaching <ArrowRight />
                   </button>
                 </div>
@@ -424,25 +538,25 @@ export function NextGenCoach() {
                     apresentar funcionalidades.
                   </span>
                 </div>
-                <div className="coach-composer">
-                  <button aria-label="Falar por voz">
+                <form className="coach-composer" onSubmit={(event) => { event.preventDefault(); sendMessage(); }}>
+                  <button type="button" aria-label="Entrada por voz indisponivel nesta demonstracao" title="Entrada por voz em breve" disabled>
                     <Mic />
                   </button>
                   <input
                     value={message}
                     onChange={(event) => setMessage(event.target.value)}
-                    onKeyDown={(event) =>
-                      event.key === "Enter" && sendMessage()
-                    }
                     placeholder="Responda por texto ou use o microfone"
+                    aria-label="Sua resposta ao cliente"
                   />
-                  <button onClick={sendMessage} aria-label="Enviar">
+                  <button type="submit" disabled={!message.trim()} aria-label="Enviar">
                     <Send />
                   </button>
-                </div>
+                </form>
                 <button
                   className="finish-session"
                   onClick={() => setStep("result")}
+                  disabled={conversation.filter((item) => item.speaker === "seller").length < 2}
+                  title={conversation.filter((item) => item.speaker === "seller").length < 2 ? "Responda ao cliente pelo menos duas vezes" : undefined}
                 >
                   Finalizar e receber coaching
                 </button>
@@ -455,27 +569,16 @@ export function NextGenCoach() {
                 <div>
                   <p>COACHING CONCLUIDO</p>
                   <h2>
-                    Voce criou uma boa base, mas perdeu valor antes do
-                    fechamento.
+                    {evaluation.headline}
                   </h2>
                 </div>
                 <strong>
-                  78<small>/100</small>
+                  {evaluation.overall}<small>/100</small>
                 </strong>
               </header>
               <div className="coach-score-grid">
-                {[
-                  ["Comunicacao", 86],
-                  ["Confianca", 81],
-                  ["Descoberta", 74],
-                  ["Rapport", 84],
-                  ["Objecoes", 68],
-                  ["Fechamento", 65],
-                  ["Escuta", 79],
-                  ["Estrutura", 76],
-                  ["Inteligencia emocional", 83],
-                ].map(([label, score]) => (
-                  <article key={label as string}>
+                {evaluation.scores.map(([label, score]) => (
+                  <article key={label}>
                     <span>{label}</span>
                     <strong>{score}</strong>
                     <div>
@@ -489,8 +592,7 @@ export function NextGenCoach() {
                   <ShieldAlert />
                   <h3>Maior erro</h3>
                   <p>
-                    Voce respondeu a objecao de preco antes de investigar o
-                    criterio usado pelo cliente.
+                    {evaluation.error}
                   </p>
                 </article>
                 <article>
@@ -505,8 +607,7 @@ export function NextGenCoach() {
                   <Target />
                   <h3>Proxima acao</h3>
                   <p>
-                    Complete a aula de objecoes e repita esta missao sem
-                    oferecer desconto.
+                    {evaluation.next}
                   </p>
                 </article>
               </div>
