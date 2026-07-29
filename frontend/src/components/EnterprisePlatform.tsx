@@ -128,7 +128,7 @@ const EXPANDED_COURSES = COURSE_EXPANSIONS.flatMap(([category, videoId, tone, ti
 const ALL_COURSES = [...COURSE_DATA, ...EXPANDED_COURSES];
 
 function LearningModule({ onNavigate }: { onNavigate: Navigate }) {
-  const [category, setCategory] = useState("Todos");
+  const [category, setCategory] = useState(() => typeof window === "undefined" ? "Todos" : window.sessionStorage.getItem("performai_learning_category") || "Todos");
   const [selectedCourse, setSelectedCourse] = useState<(typeof ALL_COURSES)[number] | null>(null);
   const categories = ["Todos", "Fundamentos", "Prospeccao", "SDR", "Diagnostico", "Closer", "Negociacao", "Relacionamento", "Pratica", "Estrategia"];
   if (selectedCourse) return <ModuleFrame eyebrow={selectedCourse.category} title={selectedCourse.title} description={selectedCourse.description} action={<button onClick={() => setSelectedCourse(null)}><ArrowLeft /> Voltar aos treinamentos</button>}>
@@ -185,7 +185,7 @@ function FixedPathsModule({ onNavigate }: { onNavigate: Navigate }) {
   return <ModuleFrame eyebrow="JORNADA DE APRENDIZAGEM" title="Seu progresso tem um caminho claro." description="Trilha, XP, conquistas e consistencia conectados ao seu desenvolvimento." action={<div className="hub-actions"><button onClick={() => onNavigate("gamification")}><Trophy /> XP e conquistas</button><button onClick={() => onNavigate("certificates")}><Award /> Certificacao</button></div>}>
     <section className="path-layout path-layout-fixed">
       <article className="enterprise-panel path-main"><header><div><p>TRILHA OFICIAL</p><h2>Vendas de alta performance</h2><span>{completed} de {FEATURED_PATH.length} etapas concluidas</span></div><strong>{progress}%</strong></header><div className="enterprise-progress"><i style={{ width: `${progress}%` }} /></div><div className="path-steps path-steps-complete">{FEATURED_PATH.map(([title], index) => { const done = index < completed; const unlocked = index <= completed; return <button className={done ? "done" : index === selected ? "current" : ""} disabled={!unlocked} onClick={() => setSelected(index)} key={title}><i>{done ? <CheckCircle2 /> : unlocked ? index + 1 : <Lock />}</i><span><strong>{title}</strong><small>{done ? "Concluido" : unlocked ? index === completed ? "Disponivel agora" : "Revisar etapa" : "Conclua a etapa anterior"}</small></span><ChevronRight /></button>; })}</div></article>
-      <aside className="enterprise-panel path-detail-panel"><span className="path-detail-index">{String(selected + 1).padStart(2, "0")}</span><p>ETAPA SELECIONADA</p><h2>{current[0]}</h2><span>{current[1]}</span><div className="path-detail-items"><div><Play /><span><strong>Aula guiada</strong><small>Video, resumo e exemplos</small></span></div><div><ListChecks /><span><strong>Aplicacao pratica</strong><small>Exercicio e checklist</small></span></div><div><ClipboardCheck /><span><strong>Validacao</strong><small>Quiz com correcao imediata</small></span></div></div>{selected === completed ? <button onClick={() => setCompleted((value) => Math.min(value + 1, FEATURED_PATH.length))}>Concluir e liberar proxima etapa <ChevronRight /></button> : selected < completed ? <button onClick={() => onNavigate("learning")}>Revisar conteudo <ChevronRight /></button> : <small className="path-locked-copy"><Lock /> Esta etapa sera liberada automaticamente.</small>}</aside>
+      <aside className="enterprise-panel path-detail-panel"><span className="path-detail-index">{String(selected + 1).padStart(2, "0")}</span><p>ETAPA SELECIONADA</p><h2>{current[0]}</h2><span>{current[1]}</span><div className="path-workload"><strong>5 dias de desenvolvimento</strong><small>3h30 de estudo e pratica · nota minima 8,0</small></div><div className="path-detail-items"><div><Play /><span><strong>2 aulas guiadas</strong><small>Video, resumo tecnico e estudo de caso</small></span></div><div><BookOpen /><span><strong>Leitura e fichamento</strong><small>Registre aprendizados e exemplos aplicaveis</small></span></div><div><ListChecks /><span><strong>2 exercicios praticos</strong><small>Checklist, roteiro e entrega obrigatoria</small></span></div><div><ClipboardCheck /><span><strong>Avaliacao de dominio</strong><small>10 questoes · aprovacao com nota 8,0</small></span></div><div><Mic /><span><strong>Simulacao avaliada</strong><small>Complete o cenario com nota minima 8,0</small></span></div><div><FileAudio /><span><strong>Evidencia em call real</strong><small>Envie uma ligacao e aplique o feedback recebido</small></span></div></div>{selected === completed ? <button onClick={() => setCompleted((value) => Math.min(value + 1, FEATURED_PATH.length))}>Validar entregas e liberar etapa <ChevronRight /></button> : selected < completed ? <button onClick={() => { window.sessionStorage.setItem("performai_learning_category", current[0] === "Qualificacao" ? "SDR" : "Fundamentos"); onNavigate("learning"); }}>Revisar conteudo <ChevronRight /></button> : <small className="path-locked-copy"><Lock /> Esta etapa sera liberada ao concluir todas as entregas anteriores.</small>}</aside>
     </section>
   </ModuleFrame>;
 }
@@ -293,30 +293,37 @@ function LibraryModule() {
   </ModuleFrame>;
 }
 
-function CertificatesModule() {
+function CertificatesModule({ onNavigate }: { onNavigate: Navigate }) {
+  const [showPreview, setShowPreview] = useState(false);
   const requirements = [["Modulos concluidos", "4 de 13", 31], ["Videos obrigatorios", "4 de 13", 31], ["Avaliacoes aprovadas", "1 de 3", 33], ["Desafios praticos", "2 de 6", 33], ["Analises de call", "1 de 3", 33], ["Tempo de estudo", "6 de 20 horas", 30], ["Sequencia de aprendizagem", "4 de 7 dias", 57], ["Nota minima", "8,1 de 8,0", 100]] as const;
   const readiness = Math.round(requirements.reduce((total, item) => total + item[2], 0) / requirements.length);
-  return <ModuleFrame eyebrow="CERTIFICACAO PROFISSIONAL" title="Seu certificado esta em construcao." description="Conclua toda a jornada e comprove dominio pratico antes da emissao.">
-    <section className="certificate-lock"><div className="certificate-lock-visual"><span><Lock /></span><p>CERTIFICADO BLOQUEADO</p><h2>Especialista em Vendas Consultivas</h2><small>A emissao sera liberada automaticamente quando todos os criterios chegarem a 100%.</small><div className="enterprise-progress"><i style={{ width: `${readiness}%` }} /></div><strong>{readiness}% pronto para certificacao</strong></div><div className="certificate-paper"><header><Image src={BRAND_LOGO} alt="Performa AI" width={42} height={42} /><strong>Performa <b>AI</b></strong><small>CERTIFICADO DE CONCLUSAO</small></header><p>Certificamos que</p><h2>Nome do participante</h2><p>concluiu a formacao <b>Especialista em Vendas Consultivas</b>, demonstrando dominio teorico e pratico das competencias comerciais avaliadas.</p><footer><div><Image src={FOUNDER_SIGNATURE} alt="Assinatura do fundador" width={180} height={75} /><i /><strong>Enzo Cavalcante</strong><small>Fundador, Performa AI</small></div><span><ShieldCheck /><b>VALIDACAO DIGITAL</b><small>PERFORMA-2026-0001</small></span></footer><em><Lock /> Previa protegida ate a conclusao</em></div><div className="certificate-requirements">{requirements.map(([label, value, progress]) => <article key={label}><header><span>{label}</span><strong>{value}</strong></header><div className="enterprise-progress"><i style={{ width: `${progress}%` }} /></div></article>)}</div></section>
-    <aside className="certificate-next"><Sparkles /><div><strong>Proxima acao recomendada</strong><span>Conclua o treinamento de qualificacao e faca a avaliacao para aumentar sua prontidao.</span></div><button>Continuar jornada <ChevronRight /></button></aside>
+  const continueJourney = () => {
+    window.sessionStorage.setItem("performai_learning_category", "SDR");
+    onNavigate("learning");
+  };
+  return <ModuleFrame eyebrow="CERTIFICACAO PROFISSIONAL" title="Uma carreira comprovada, nao apenas um curso." description="A primeira certificacao exige 6 semanas de formacao. Depois, novos niveis validam sua evolucao a cada 3 meses." action={<button onClick={() => setShowPreview((value) => !value)}><Award /> {showPreview ? "Proteger previa" : "Visualizar certificado"}</button>}>
+    <section className="certificate-levels">{[["6 SEMANAS","Especialista em Vendas Consultivas","Formacao inicial · fundamentos, pratica e avaliacao"],["3 MESES","Sales Professional","Consistencia comprovada em treino e calls reais"],["6 MESES","Sales Advanced","Dominio de diagnostico, objecoes e negociacao"],["9 MESES","Sales Expert","Alta performance, previsibilidade e influencia no time"],["12 MESES","Performa AI Master","Nivel maximo · excelencia sustentada e lideranca"]].map((level,index)=><article className={index===0?"current":""} key={level[0]}><small>{level[0]}</small><strong>{level[1]}</strong><span>{level[2]}</span>{index===0?<b>EM ANDAMENTO</b>:<Lock />}</article>)}</section>
+    <section className="certificate-lock"><div className="certificate-lock-visual"><span><Lock /></span><p>CICLO INICIAL · 6 SEMANAS</p><h2>Especialista em Vendas Consultivas</h2><small>A emissao sera liberada quando todos os criterios teoricos e praticos chegarem a 100%.</small><div className="enterprise-progress"><i style={{ width: `${readiness}%` }} /></div><strong>{readiness}% pronto para certificacao</strong></div><div className="certificate-paper"><header><Image src={BRAND_LOGO} alt="Performa AI" width={42} height={42} /><strong>Performa <b>AI</b></strong><small>CERTIFICADO DE CONCLUSAO</small></header><p>Certificamos que</p><h2>Nome do participante</h2><p>concluiu a formacao <b>Especialista em Vendas Consultivas</b>, demonstrando dominio teorico e pratico das competencias comerciais avaliadas.</p><footer><div><Image src={FOUNDER_SIGNATURE} alt="Assinatura do fundador" width={180} height={75} /><i /><strong>Enzo Cavalcante</strong><small>Fundador, Performa AI</small></div><span><ShieldCheck /><b>VALIDACAO DIGITAL</b><small>PERFORMA-2026-0001</small></span></footer>{!showPreview && <em><Lock /> Previa protegida ate a conclusao</em>}</div><div className="certificate-requirements">{requirements.map(([label, value, progress]) => <article key={label}><header><span>{label}</span><strong>{value}</strong></header><div className="enterprise-progress"><i style={{ width: `${progress}%` }} /></div></article>)}</div></section>
+    <aside className="certificate-next"><Sparkles /><div><strong>Proxima acao: Qualificacao de oportunidades</strong><span>Conclua as aulas de SDR, entregue o exercicio e alcance nota 8,0 para avancar.</span></div><button onClick={continueJourney}>Ir para o tema certo <ChevronRight /></button></aside>
   </ModuleFrame>;
 }
 
-function NotificationsModule() {
-  return <ModuleFrame eyebrow="CENTRAL DE ATUALIZACOES" title="Notificacoes" description="Prioridades, conquistas e movimentacoes importantes da sua jornada.">
-    <div className="notification-list">{[
-      ["Nova call analisada", "Seu relatorio esta pronto. A nota geral foi 8,7.", "Agora", FileAudio, true],
-      ["Treinamento recomendado", "A IA adicionou Descoberta que gera urgencia a sua trilha.", "18 min", Sparkles, true],
-      ["Ranking atualizado", "Voce subiu duas posicoes no ranking semanal.", "1 hora", Trophy, true],
-      ["Certificado emitido", "Seu certificado de Vendas Consultivas esta disponivel.", "Ontem", Award, false],
-      ["Missao quase concluida", "Falta uma simulacao para ganhar 300 XP.", "Ontem", Target, false],
-    ].map(([title, text, time, Icon, unread]) => { const Component = Icon as typeof Bell; return <article className={unread ? "unread" : ""} key={title as string}><span><Component /></span><div><header><strong>{title as string}</strong><small>{time as string}</small></header><p>{text as string}</p></div><button aria-label="Mais opcoes"><MoreHorizontal /></button></article>; })}</div>
+function NotificationsModule({ onNavigate }: { onNavigate: Navigate }) {
+  const initial = [
+    { title:"Nova call analisada", text:"Seu relatorio esta pronto. A nota geral foi 8,7.", time:"Agora", Icon:FileAudio, unread:true, target:"calls" as EnterpriseView },
+    { title:"Treinamento recomendado", text:"A IA adicionou Descoberta que gera urgencia a sua trilha.", time:"18 min", Icon:Sparkles, unread:true, target:"learning" as EnterpriseView },
+    { title:"Ranking atualizado", text:"Voce subiu duas posicoes no ranking semanal.", time:"1 hora", Icon:Trophy, unread:true, target:"gamification" as EnterpriseView },
+    { title:"Certificado em progresso", text:"Voce concluiu 31% dos requisitos da certificacao inicial.", time:"Ontem", Icon:Award, unread:false, target:"certificates" as EnterpriseView },
+    { title:"Missao quase concluida", text:"Falta uma simulacao para ganhar 300 XP.", time:"Ontem", Icon:Target, unread:false, target:"simulation" as EnterpriseView },
+  ];
+  const [items, setItems] = useState(initial);
+  return <ModuleFrame eyebrow="CENTRAL DE ATUALIZACOES" title="Notificacoes" description="Prioridades, conquistas e movimentacoes importantes da sua jornada." action={<button onClick={() => setItems((current) => current.map((item) => ({...item, unread:false})))}><CheckCircle2 /> Marcar todas como lidas</button>}>
+    <div className="notification-list">{items.map((item, index) => { const Component = item.Icon; return <article className={item.unread ? "unread" : ""} key={item.title}><span><Component /></span><button className="notification-open" onClick={() => { setItems((current) => current.map((entry, itemIndex) => itemIndex === index ? {...entry, unread:false} : entry)); onNavigate(item.target); }}><header><strong>{item.title}</strong><small>{item.time}</small></header><p>{item.text}</p><b>Abrir agora <ChevronRight /></b></button><button onClick={() => setItems((current) => current.filter((_, itemIndex) => itemIndex !== index))} aria-label={`Remover ${item.title}`}><MoreHorizontal /></button></article>; })}</div>
   </ModuleFrame>;
 }
 
 function SettingsModule() {
-  return <ModuleFrame eyebrow="ADMINISTRACAO" title="Configuracoes" description="Controle usuarios, permissoes, identidade, integracoes e faturamento.">
-    <div className="settings-grid">{[
+  const settings = [
       ["Empresa e identidade", "Logotipo, cores, dados e personalizacao.", BriefcaseBusiness],
       ["Usuarios e permissoes", "Perfis de administrador, gestor e vendedor.", Users],
       ["IA e automacoes", "Comportamento, recomendacoes e limites de uso.", Bot],
@@ -325,7 +332,13 @@ function SettingsModule() {
       ["Plano e faturamento", "Assinatura, consumo, pagamentos e notas.", FileText],
       ["Seguranca e privacidade", "Acesso, auditoria, retencao e LGPD.", ShieldCheck],
       ["Gamificacao", "XP, moedas, badges, desafios e recompensas.", Trophy],
-    ].map(([title, text, Icon]) => { const Component = Icon as typeof Settings; return <button key={title as string}><span><Component /></span><div><strong>{title as string}</strong><small>{text as string}</small></div><ChevronRight /></button>; })}</div>
+    ] as const;
+  const [selected, setSelected] = useState(0);
+  const [saved, setSaved] = useState(false);
+  const [toggles, setToggles] = useState([true, true, false]);
+  const current = settings[selected];
+  return <ModuleFrame eyebrow="ADMINISTRACAO" title="Configuracoes" description="Controle usuarios, permissoes, identidade, integracoes e faturamento.">
+    <div className="settings-layout"><div className="settings-grid">{settings.map(([title, text, Icon], index) => { const Component = Icon as typeof Settings; return <button className={selected===index?"active":""} onClick={() => {setSelected(index);setSaved(false);}} key={title}><span><Component /></span><div><strong>{title}</strong><small>{text}</small></div><ChevronRight /></button>; })}</div><section className="settings-detail"><small>CONFIGURACAO SELECIONADA</small><h2>{current[0]}</h2><p>{current[1]}</p><label><span>Nome de exibicao</span><input defaultValue={selected===0?"Performa AI":current[0]} /></label><label><span>Nivel de controle</span><select defaultValue="recommended"><option value="recommended">Recomendado</option><option value="strict">Restrito</option><option value="custom">Personalizado</option></select></label><div className="settings-toggles">{["Ativar para toda a empresa","Enviar alertas importantes","Permitir alteracao por gestores"].map((label,index)=><button className={toggles[index]?"on":""} onClick={()=>setToggles((values)=>values.map((value,itemIndex)=>itemIndex===index?!value:value))} key={label}><span><i /></span>{label}</button>)}</div><button className="settings-save" onClick={()=>setSaved(true)}>{saved?<CheckCircle2 />:<Settings />}{saved?"Alteracoes salvas":"Salvar configuracoes"}</button></section></div>
   </ModuleFrame>;
 }
 
@@ -339,8 +352,8 @@ export function EnterpriseModule({ view, onNavigate }: { view: EnterpriseView; o
   if (view === "reports") return <ReportsModule />;
   if (view === "teams") return <TeamsModule onNavigate={onNavigate} />;
   if (view === "library") return <LibraryModule />;
-  if (view === "certificates") return <CertificatesModule />;
-  if (view === "notifications") return <NotificationsModule />;
+  if (view === "certificates") return <CertificatesModule onNavigate={onNavigate} />;
+  if (view === "notifications") return <NotificationsModule onNavigate={onNavigate} />;
   if (view === "settings") return <SettingsModule />;
   return null;
 }
