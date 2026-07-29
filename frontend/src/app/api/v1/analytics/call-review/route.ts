@@ -109,6 +109,30 @@ function buildRubricReport(transcript: string) {
       "Encerre a próxima ligação com data, participantes e objetivo do próximo encontro confirmados em voz alta.",
     ],
     critical_moments: [],
+    evaluation_blocks: [
+      ["Abertura e rapport", communicationScore], ["Agenda e controle da call", communicationScore],
+      ["Descoberta e diagnostico", discoveryScore], ["Escuta ativa", discoveryScore],
+      ["Apresentacao da solucao e pitch", valueScore], ["Tratamento de objecoes", valueScore],
+      ["Qualificacao e alinhamento", discoveryScore], ["Fechamento e proximos passos", closingScore],
+      ["Tom, linguagem e postura", communicationScore], ["Compliance e boas praticas", communicationScore],
+    ].map(([name, score]) => ({
+      name,
+      score: Math.round(Number(score) / 10),
+      what_worked: "A transcricao apresentou sinais compativeis com este criterio.",
+      what_to_improve: "Aprofunde este bloco com perguntas, confirmacoes e um compromisso verificavel.",
+      excerpt: "Nao identificado com seguranca no modo de contingencia.",
+    })),
+    crm_report: {
+      callData: { vendedor: "Nao identificado", lead_empresa: "Nao identificado", produto_servico: "Nao identificado", etapa_funil: "Nao identificado" },
+      temperature: { classification: "NAO IDENTIFICADA", justification: "A classificacao exige sinais explicitos de urgencia, orcamento, autoridade e engajamento." },
+      conversationSummary: "Resumo gerado a partir dos elementos comerciais identificados na transcricao.",
+      pains: ["Nao identificado com seguranca no modo de contingencia."],
+      objections: [],
+      qualification: { orcamento: "Nao identificado", autoridade: "Nao identificado", necessidade: "Nao identificado", prazo_urgencia: "Nao identificado" },
+      nextSteps: [],
+      sellerObservations: "Revise a transcricao integral antes de registrar informacoes no CRM.",
+      quickEvaluation: { score: Math.round(overallScore / 10), verdict: "A call apresenta base comercial, mas requer aprofundamento nos criterios com menor pontuacao." },
+    },
     transcript,
   };
 }
@@ -200,15 +224,27 @@ export async function POST(request: Request) {
     // Invalid optional metadata does not block the analysis.
   }
 
-  const prompt = `Analise integralmente esta call de vendas em portugues brasileiro.
+  const prompt = `Voce e especialista em avaliacao de calls B2B e B2C, SPIN Selling, Challenger Sale, BANT e GPCT.
+Analise integralmente esta call de vendas em portugues brasileiro e separe AVALIACAO TECNICA de RELATORIO GERENCIAL.
 Considere os metadados: ${metadata.slice(0, 4000)}.
-Retorne somente JSON com: overall_score de 0 a 100, summary, strengths,
-improvements, competency_scores, next_actions, transcript e critical_moments.
-Avalie abertura, rapport, pitch, descoberta, qualificacao, escuta ativa,
-observacoes e sinais do cliente, postura do SDR ou closer, dominio do servico,
-duvidas, objecoes, valor, negociacao, fechamento e proximo passo.
+Retorne SOMENTE JSON valido com:
+- overall_score de 0 a 100, summary, strengths (3), improvements (3), competency_scores, next_actions e critical_moments;
+- evaluation_blocks com EXATAMENTE 10 itens. Cada item deve ter name, score de 0 a 10, what_worked, what_to_improve e excerpt;
+- use estes blocos: Abertura e rapport; Agenda e controle da call; Descoberta e diagnostico; Escuta ativa; Apresentacao da solucao e pitch; Tratamento de objecoes; Qualificacao e alinhamento de expectativas; Fechamento e proximos passos; Tom, linguagem e postura; Compliance e boas praticas.
+- Cada justificativa deve ser especifica, criteriosa e construtiva. Avalie proporcao de fala, perguntas abertas, custo da inacao, decisores, orcamento, prazo, transicoes, prova social, valor, objecoes, compromisso e CRM.
+- crm_report com esta estrutura exata:
+  callData (data_hora, duracao, vendedor, lead_empresa, cargo, produto_servico, etapa_funil, origem_lead);
+  temperature (classification: QUENTE, MORNO, FRIO ou NAO IDENTIFICADA; justification);
+  conversationSummary com 4 a 6 frases factuais em ordem cronologica;
+  pains (lista);
+  objections (lista de objection e handling);
+  qualification (orcamento, autoridade, necessidade, prazo_urgencia);
+  nextSteps (lista de action, owner, deadline);
+  sellerObservations;
+  quickEvaluation (score de 0 a 10 e verdict).
 Cada critical_moment deve conter timestamp, speaker, quote, issue e recommendation.
-Nao invente falas ou timestamps e seja conservador quando a transcricao nao permitir certeza.
+Baseie-se SOMENTE na transcricao. Nunca invente dados, valores, combinacoes, falas ou timestamps.
+Quando nao houver informacao, escreva exatamente "Nao identificado".
 Explique os motivos das recomendacoes, inclua exemplos praticos, erros a evitar e
 proximos passos objetivos. A resposta deve ter profundidade de consultoria profissional.
 
@@ -241,7 +277,7 @@ ${transcript || "A gravacao esta anexada nesta solicitacao."}`;
                 { text: prompt },
               ],
         }],
-        generationConfig: { responseMimeType: "application/json", temperature: 0.2 },
+        generationConfig: { responseMimeType: "application/json", temperature: 0.15, maxOutputTokens: 8192 },
       }),
       signal: AbortSignal.timeout(290_000),
       },

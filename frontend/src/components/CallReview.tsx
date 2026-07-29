@@ -3,7 +3,7 @@
 import { ChangeEvent, DragEvent, useRef, useState } from "react";
 import {
   AlertCircle, ArrowRight, CheckCircle, Clock3, FileAudio,
-  Lightbulb, RotateCcw, Sparkles, Target, UploadCloud,
+  FileText, Lightbulb, Printer, RotateCcw, Sparkles, Target, UploadCloud,
 } from "lucide-react";
 import "./call-review.css";
 
@@ -19,6 +19,18 @@ type ReviewReport = {
   strengths: string[];
   improvements: string[];
   actions: string[];
+  evaluationBlocks: Array<{ name: string; score?: number; worked?: string; improve?: string; excerpt?: string }>;
+  crmReport?: {
+    callData?: Record<string, string>;
+    temperature?: { classification?: string; justification?: string };
+    conversationSummary?: string;
+    pains?: string[];
+    objections?: Array<{ objection?: string; handling?: string }>;
+    qualification?: Record<string, string>;
+    nextSteps?: Array<{ action?: string; owner?: string; deadline?: string }>;
+    sellerObservations?: string;
+    quickEvaluation?: { score?: number; verdict?: string };
+  };
 };
 
 function firstString(source: Record<string, unknown>, keys: string[]) {
@@ -60,6 +72,15 @@ function normalizeReport(payload: unknown): ReviewReport {
       })
     : [];
   const numericScore = typeof source.score === "number" ? source.score : typeof source.overall_score === "number" ? source.overall_score : undefined;
+  const rawBlocks = source.evaluation_blocks;
+  const evaluationBlocks = Array.isArray(rawBlocks) ? rawBlocks.flatMap((item) => {
+    if (!item || typeof item !== "object") return [];
+    const row = item as Record<string, unknown>;
+    const name = firstString(row, ["name", "block", "criterion"]);
+    if (!name) return [];
+    return [{ name, score: typeof row.score === "number" ? row.score : undefined, worked: firstString(row, ["what_worked", "worked"]), improve: firstString(row, ["what_to_improve", "improve"]), excerpt: firstString(row, ["excerpt", "quote"]) }];
+  }) : [];
+  const crmReport = source.crm_report && typeof source.crm_report === "object" ? source.crm_report as ReviewReport["crmReport"] : undefined;
   return {
     score: numericScore,
     summary: firstString(source, ["summary", "executive_summary", "feedback"]),
@@ -68,6 +89,8 @@ function normalizeReport(payload: unknown): ReviewReport {
     strengths: stringList(source.strengths ?? source.positive_points),
     improvements: stringList(source.improvements ?? source.areas_for_improvement),
     actions: stringList(source.actions ?? source.next_actions ?? source.action_plan),
+    evaluationBlocks,
+    crmReport,
   };
 }
 
@@ -145,6 +168,7 @@ export function CallReview() {
   const [report, setReport] = useState<ReviewReport | null>(null);
   const [sellerRole, setSellerRole] = useState("closer");
   const [callType, setCallType] = useState("closing");
+  const [documentMode, setDocumentMode] = useState(false);
 
   const selectFile = (next: File | undefined) => {
     if (!next) return;
@@ -163,6 +187,7 @@ export function CallReview() {
     setError("");
     setReport(null);
     setStatus("idle");
+    setDocumentMode(false);
     setDuration(null);
     const url = URL.createObjectURL(next);
     const audio = new Audio(url);
@@ -227,15 +252,37 @@ export function CallReview() {
     if (inputRef.current) inputRef.current.value = "";
   };
 
+  if (status === "report" && report && documentMode) {
+    const crm = report.crmReport ?? {};
+    const callData = crm.callData ?? {};
+    return <div className="call-review-page crm-report-page">
+      <header className="review-heading no-print"><div><p className="eyebrow">DOCUMENTO GERENCIAL</p><h1>Relatorio profissional da call</h1><p>Documento objetivo para CRM, acompanhamento e tomada de decisao.</p></div><div className="review-document-actions"><button className="secondary-button" onClick={() => setDocumentMode(false)}>Voltar para avaliacao</button><button className="primary-button compact" onClick={() => window.print()}><Printer size={17} /> Salvar em PDF</button></div></header>
+      <article className="crm-document">
+        <header><div><strong>Performa <b>AI</b></strong><span>INTELIGENCIA COMERCIAL</span></div><div><small>RELATORIO DE CALL DE VENDA</small><b>{file?.name}</b></div></header>
+        <section className="crm-call-data"><h2>1. Dados da call</h2><div>{Object.entries(callData).length ? Object.entries(callData).map(([key,value])=><span key={key}><small>{key.replaceAll("_"," ")}</small><strong>{value || "Nao identificado"}</strong></span>) : <span><small>Dados</small><strong>Nao identificados na transcricao</strong></span>}</div></section>
+        <section className="crm-temperature"><div><small>2. TEMPERATURA DO LEAD</small><strong>{crm.temperature?.classification ?? "NAO IDENTIFICADA"}</strong></div><p>{crm.temperature?.justification ?? "Nao houve sinais suficientes na transcricao para classificar o lead."}</p></section>
+        <section><h2>3. Resumo da conversa</h2><p>{crm.conversationSummary ?? report.summary ?? "Nao identificado."}</p></section>
+        <section><h2>4. Dor / necessidade identificada</h2><ul>{crm.pains?.length ? crm.pains.map((item)=><li key={item}>{item}</li>) : <li>Nao identificado.</li>}</ul></section>
+        <section><h2>5. Objecoes levantadas</h2><div className="crm-table"><div><b>Objecao</b><b>Como foi tratada</b></div>{crm.objections?.length ? crm.objections.map((item,index)=><div key={index}><span>{item.objection ?? "Nao identificado"}</span><span>{item.handling ?? "Nao identificado"}</span></div>) : <div><span>Nenhuma objecao relevante levantada</span><span>-</span></div>}</div></section>
+        <section><h2>6. Qualificacao (BANT / GPCT)</h2><div className="crm-qualification">{Object.entries(crm.qualification ?? {}).map(([key,value])=><p key={key}><b>{key.replaceAll("_"," ")}:</b> {value}</p>)}{!Object.keys(crm.qualification ?? {}).length && <p>Nao identificado.</p>}</div></section>
+        <section><h2>7. Proximos passos</h2><div className="crm-table three"><div><b>Acao</b><b>Responsavel</b><b>Prazo</b></div>{crm.nextSteps?.length ? crm.nextSteps.map((item,index)=><div key={index}><span>{item.action ?? "Nao identificado"}</span><span>{item.owner ?? "Nao identificado"}</span><span>{item.deadline ?? "Nao identificado"}</span></div>) : <div><span>Nenhum passo confirmado</span><span>-</span><span>-</span></div>}</div></section>
+        <section><h2>8. Observacoes para o gestor</h2><p>{crm.sellerObservations ?? "Nao identificado."}</p></section>
+        <section className="crm-final-score"><div><small>9. AVALIACAO RAPIDA</small><strong>{crm.quickEvaluation?.score ?? (report.score !== undefined ? (report.score / 10).toFixed(1) : "--")}<span>/10</span></strong></div><p>{crm.quickEvaluation?.verdict ?? report.summary}</p></section>
+        <footer>Documento gerado pela Performa AI exclusivamente a partir da transcricao da call.</footer>
+      </article>
+    </div>;
+  }
+
   if (status === "report" && report) return <div className="call-review-page">
     <header className="review-heading">
-      <div><p className="eyebrow">ANALISE CONCLUIDA</p><h1>Relatorio da ligacao</h1><p>{file?.name}</p></div>
+      <div><p className="eyebrow">AVALIACAO CONCLUIDA</p><h1>Avaliacao detalhada da call</h1><p>{file?.name}</p></div>
       <button className="secondary-button" onClick={reset}><RotateCcw size={17} /> Analisar outra</button>
     </header>
     <section className="review-overview">
       {report.score !== undefined && <div className="review-score"><span>Nota geral</span><strong>{report.score}<small>/100</small></strong></div>}
       <div className="review-summary"><p className="eyebrow">RESUMO EXECUTIVO</p><h2>Leitura da conversa</h2><p>{report.summary ?? "Resumo nao fornecido pelo analisador."}</p></div>
     </section>
+    {report.evaluationBlocks.length > 0 && <section className="review-section evaluation-blocks"><div className="review-section-title"><Target /><div><p className="eyebrow">AVALIACAO COMPLETA</p><h2>Analise criteriosa em 10 blocos</h2></div></div><div>{report.evaluationBlocks.map((block,index)=><article key={block.name}><header><span>{String(index+1).padStart(2,"0")}</span><h3>{block.name}</h3><strong>{block.score ?? "--"}<small>/10</small></strong></header><div><p><b>O que funcionou</b>{block.worked ?? "Nao identificado com seguranca."}</p><p><b>O que precisa melhorar</b>{block.improve ?? "Nao identificado com seguranca."}</p>{block.excerpt && <blockquote>&ldquo;{block.excerpt}&rdquo;</blockquote>}</div></article>)}</div></section>}
     {report.competencies.length > 0 && <section className="review-section"><div className="review-section-title"><Target /><div><p className="eyebrow">COMPETENCIAS</p><h2>Desempenho por habilidade</h2></div></div><div className="review-skills">{report.competencies.map((item) => <article key={item.name}><header><strong>{item.name.replaceAll("_", " ")}</strong>{item.score !== undefined && <span>{item.score}/100</span>}</header>{item.score !== undefined && <div><i style={{ width: `${Math.max(0, Math.min(100, item.score))}%` }} /></div>}{item.feedback && <p>{item.feedback}</p>}</article>)}</div></section>}
     {report.excerpts.length > 0 && <section className="review-section"><div className="review-section-title"><Clock3 /><div><p className="eyebrow">MOMENTOS-CHAVE</p><h2>Trechos da ligacao</h2></div></div><div className="review-excerpts">{report.excerpts.map((item, index) => <article key={`${item.timestamp}-${index}`}><span>{item.timestamp ?? "--:--"}</span><div><blockquote>{item.text}</blockquote>{item.insight && <p>{item.insight}</p>}</div></article>)}</div></section>}
     <div className="review-columns">
@@ -243,6 +290,7 @@ export function CallReview() {
       <section className="review-list improvements"><Sparkles /><div><p className="eyebrow">MELHORIAS</p><h2>O que desenvolver</h2><ul>{report.improvements.length ? report.improvements.map((item) => <li key={item}>{item}</li>) : <li>Nenhuma melhoria foi detalhada pelo analisador.</li>}</ul></div></section>
     </div>
     {report.actions.length > 0 && <section className="review-actions"><Lightbulb /><div><p className="eyebrow">PROXIMAS ACOES</p><h2>Plano pratico</h2><ol>{report.actions.map((item) => <li key={item}>{item}</li>)}</ol></div></section>}
+    <section className="generate-crm-report"><FileText /><div><p className="eyebrow">SEGUNDA ETAPA</p><h2>Transforme a avaliacao em relatorio gerencial</h2><p>Gere um documento separado, objetivo e pronto para CRM ou PDF, com dados, temperatura, dores, objecoes, qualificacao e proximos passos.</p></div><button className="primary-button compact" onClick={() => setDocumentMode(true)}>Gerar relatorio profissional <ArrowRight size={17} /></button></section>
   </div>;
 
   return <div className="call-review-page">
