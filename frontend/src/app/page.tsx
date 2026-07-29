@@ -11,6 +11,7 @@ import {
 import { AnimatePresence, motion } from "framer-motion";
 import { type TranscriptMessage, useLiveAudio } from "@/hooks/useLiveAudio";
 import { CallReview } from "@/components/CallReview";
+import { NextGenCoach } from "@/components/NextGenCoach";
 import { LandingPage } from "@/components/LandingPage";
 import { EnterpriseModule, EnterpriseSidebar, type EnterpriseView } from "@/components/EnterprisePlatform";
 
@@ -373,7 +374,7 @@ function Workspace({ onLogout }: { onLogout: () => void }) {
       </div>
     </header>
     <section className="workspace-content">
-      {profile && view === "simulation" && <Training profile={profile} />}
+      {profile && view === "simulation" && <NextGenCoach />}
       {profile && view === "ai" && <FocusCoach profile={profile} />}
       {profile && view === "calls" && <CallReview />}
       {profile && !["simulation", "ai", "calls"].includes(view) && <EnterpriseModule view={view} onNavigate={navigate} />}

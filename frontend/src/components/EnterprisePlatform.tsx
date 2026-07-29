@@ -26,7 +26,7 @@ const FOUNDER_SIGNATURE = `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/brand/foun
 const NAVIGATION: { id: EnterpriseView; label: string; icon: typeof LayoutDashboard }[] = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
   { id: "learning", label: "Central de Aprendizagem", icon: GraduationCap },
-  { id: "simulation", label: "Simulacao por voz", icon: Mic },
+  { id: "simulation", label: "AI Sales Coach", icon: Brain },
   { id: "ai", label: "Mentor de Vendas IA", icon: Bot },
   { id: "calls", label: "Inteligencia de Calls", icon: FileAudio },
   { id: "paths", label: "Jornada de Aprendizagem", icon: Target },
