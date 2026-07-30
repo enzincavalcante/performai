@@ -357,10 +357,9 @@ function Workspace({ onLogout }: { onLogout: () => void }) {
     queueMicrotask(() => {
       const saved = localStorage.getItem("performai_company_profile");
       if (saved) setProfile(JSON.parse(saved));
-      if (!localStorage.getItem("performai_tutorial_seen")) setShowTutorial(Boolean(saved));
     });
   }, []);
-  const saveProfile = (next: CompanyProfile) => { localStorage.setItem("performai_company_profile", JSON.stringify(next)); setProfile(next); setEditingProfile(false); if (!localStorage.getItem("performai_tutorial_seen")) setShowTutorial(true); };
+  const saveProfile = (next: CompanyProfile) => { localStorage.setItem("performai_company_profile", JSON.stringify(next)); setProfile(next); setEditingProfile(false); };
   const closeTutorial = () => { localStorage.setItem("performai_tutorial_seen", "true"); setShowTutorial(false); };
   const navigate = (next: EnterpriseView) => setView(next);
   return <main className={`app-shell enterprise-shell view-${view}`}>
