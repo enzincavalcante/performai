@@ -44,6 +44,7 @@ import {
   Zap,
 } from "lucide-react";
 import "./enterprise.css";
+import "./premium-home.css";
 
 export type EnterpriseView =
   | "dashboard"
@@ -379,7 +380,7 @@ function LegacyEnterpriseDashboard({ onNavigate }: { onNavigate: Navigate }) {
   );
 }
 
-export function EnterpriseDashboard({ onNavigate }: { onNavigate: Navigate }) {
+function LegacyDarkEnterpriseDashboard({ onNavigate }: { onNavigate: Navigate }) {
   return <div className="internal-home">
     <section className="internal-home-hero">
       <div className="internal-home-copy">
@@ -403,6 +404,69 @@ export function EnterpriseDashboard({ onNavigate }: { onNavigate: Navigate }) {
     </section>
     <section className="internal-metric-strip">{[["+850","Vendedores ativos",Users],["+3.200","Treinamentos concluidos",GraduationCap],["94%","Aumento de performance",Trophy],["+12.000","Certificados emitidos",Award],["+37%","Aumento medio em vendas",LineChart]].map(([value,label,Icon])=>{const Component=Icon as typeof Users;return <article key={label as string}><Component/><div><strong>{value as string}</strong><span>{label as string}</span></div></article>;})}</section>
     <section className="internal-home-tools"><header><h2>Tudo que seu time <b>comercial</b> precisa<br/>em um so lugar</h2></header><div>{[["Treinamentos","Trilhas completas com conteudo pratico e certificacao.",GraduationCap,"learning"],["IA Coach","Simulacoes realistas, dicas personalizadas e feedback inteligente.",Bot,"simulation"],["Analise de Calls","IA que analisa suas ligacoes e entrega insights que geram evolucao.",FileAudio,"calls"],["Gamificacao","Missoes, ranking e recompensas que motivam e engajam.",Trophy,"gamification"],["Relatorios","Dashboards completos para gestores tomarem decisoes melhores.",BarChart3,"reports"]].map(([title,text,Icon,target])=>{const Component=Icon as typeof Users;return <button onClick={()=>onNavigate(target as EnterpriseView)} key={title as string}><span><Component/></span><strong>{title as string}</strong><small>{text as string}</small><ChevronRight/></button>;})}</div></section>
+  </div>;
+}
+
+export function EnterpriseDashboard({ onNavigate }: { onNavigate: Navigate }) {
+  const features = [
+    ["IA treinando vendedores", "Pratica individual com clientes virtuais realistas.", Bot, "simulation"],
+    ["Feedback em tempo real", "Orientacao objetiva durante e depois da conversa.", MessageSquareText, "simulation"],
+    ["Simulacoes", "Cargos, objecoes e niveis de pressao diferentes.", Mic, "simulation"],
+    ["Ranking", "Evolucao e consistencia de cada vendedor.", Medal, "gamification"],
+    ["Gamificacao", "XP, desafios e conquistas que engajam o time.", Trophy, "gamification"],
+    ["Relatorios", "Dados claros para o gestor decidir onde agir.", BarChart3, "reports"],
+    ["Digital Twin", "A IA aprende sua empresa, oferta e abordagem.", Brain, "ai"],
+    ["Certificados", "Conquistas profissionais para cada etapa concluida.", Award, "certificates"],
+  ] as const;
+
+  return <div className="premium-home">
+    <section className="premium-home-hero">
+      <div className="premium-home-grid" />
+      <div className="premium-home-copy">
+        <span className="premium-home-badge"><Sparkles /> A PLATAFORMA PARA TIMES COMERCIAIS</span>
+        <h1>Treine melhor.<br/>Venda mais.<br/><b>Supere suas metas.</b></h1>
+        <p>Desenvolva vendedores com treinamentos inteligentes, simulacoes de vendas por IA e analises de calls que mostram exatamente onde melhorar.</p>
+        <div className="premium-home-actions">
+          <button onClick={() => onNavigate("learning")}><GraduationCap /> Explorar treinamentos <ChevronRight /></button>
+          <button onClick={() => onNavigate("performance")}><BarChart3 /> Ver meu progresso</button>
+        </div>
+        <div className="premium-home-proof"><span><CheckCircle2 /> Treino personalizado</span><span><CheckCircle2 /> Feedback profissional</span><span><CheckCircle2 /> Evolucao mensuravel</span></div>
+      </div>
+      <div className="premium-product">
+        <div className="premium-product-screen">
+          <header><span><Image src={BRAND_LOGO} alt="" width={20} height={20}/> Performa AI</span><small>Bom dia, Enzo. Veja sua evolucao.</small></header>
+          <div className="premium-product-kpis">{[["Treinamentos","12"],["Horas de estudo","24h"],["Media geral","8,7"],["Ranking","2o"]].map((item)=><article key={item[0]}><span>{item[0]}</span><strong>{item[1]}</strong><small>este mes</small></article>)}</div>
+          <div className="premium-product-lower"><article><span>EVOLUCAO DE DESEMPENHO</span><div>{[38,55,47,66,61,78,88].map((value,index)=><i key={index} style={{height:`${value}%`}} />)}</div></article><article><span>RANKING DA EQUIPE</span>{[["Mariana Lima","9,2"],["Enzo Cavalcante","8,7"],["Lucas Ferreira","8,1"]].map((item,index)=><p key={item[0]}><b>{index+1}</b><small>{item[0]}</small><strong>{item[1]}</strong></p>)}</article></div>
+        </div>
+        <div className="premium-float premium-certificate"><Award/><span><small>CERTIFICADO CONQUISTADO</small><strong>Vendas Consultivas</strong></span></div>
+        <div className="premium-float premium-call"><LineChart/><span><small>ANALISE DE CALL</small><strong>8,7</strong></span></div>
+        <div className="premium-float premium-coach"><Bot/><span><small>IA COACH</small><strong>Como posso ajudar voce a vender mais hoje?</strong></span></div>
+      </div>
+    </section>
+
+    <section className="premium-home-stats">{[["+850","Vendedores ativos",Users],["+3.200","Treinamentos concluidos",GraduationCap],["94%","Aumento de performance",Trophy],["+12.000","Certificados emitidos",Award],["+37%","Aumento medio em vendas",LineChart]].map(([value,label,Icon])=>{const Component=Icon as typeof Users;return <article key={label as string}><Component/><div><strong>{value as string}</strong><span>{label as string}</span></div></article>;})}</section>
+
+    <section className="premium-home-section">
+      <header><span>PLATAFORMA COMPLETA</span><h2>Tudo que seu time comercial precisa<br/>para evoluir em um so lugar.</h2><p>Treinamento, pratica e gestao conectados em uma experiencia simples para vendedores e poderosa para lideres.</p></header>
+      <div className="premium-feature-grid">{features.map(([title,text,Icon,target],index)=>{const Component=Icon as typeof Users;return <button style={{animationDelay:`${index*55}ms`}} onClick={()=>onNavigate(target as EnterpriseView)} key={title}><span><Component/></span><strong>{title}</strong><small>{text}</small><ChevronRight/></button>;})}</div>
+    </section>
+
+    <section className="premium-home-section premium-process">
+      <header><span>COMO FUNCIONA</span><h2>Sua equipe evoluindo em 3 passos.</h2><p>Sem projetos longos. A Performa AI entra na rotina comercial desde o primeiro dia.</p></header>
+      <div>{[["01","Cadastre sua empresa","Defina oferta, segmento e habilidades prioritarias.",BriefcaseBusiness],["02","Treine sua equipe","Aprenda, pratique com IA e receba feedback.",GraduationCap],["03","Acompanhe os resultados","Veja notas, progresso, ranking e prioridades.",BarChart3]].map(([number,title,text,Icon])=>{const Component=Icon as typeof Users;return <article key={number as string}><b>{number as string}</b><span><Component/></span><h3>{title as string}</h3><p>{text as string}</p></article>;})}</div>
+    </section>
+
+    <section className="premium-home-section premium-result">
+      <header><span>RESULTADOS</span><h2>Treinamento que aparece no desempenho.</h2><p>Uma rotina mais consistente para o vendedor e uma operacao mais previsivel para o gestor.</p></header>
+      <div>{[["+97%","Engajamento"],["3x","Mais velocidade no treinamento"],["+42%","Conversao"],["+95%","Conclusao"]].map(([value,label])=><article key={label}><strong>{value}</strong><span>{label}</span></article>)}</div>
+    </section>
+
+    <section className="premium-home-cta">
+      <span><Zap /> SUA PROXIMA EVOLUCAO COMERCIAL</span>
+      <h2>Transforme cada conversa em uma oportunidade de melhorar.</h2>
+      <p>Escolha agora o proximo passo do seu desenvolvimento.</p>
+      <div><button onClick={() => onNavigate("simulation")}><Mic /> Treinar com a IA</button><button onClick={() => onNavigate("calls")}><FileAudio /> Analisar uma call</button></div>
+    </section>
   </div>;
 }
 
