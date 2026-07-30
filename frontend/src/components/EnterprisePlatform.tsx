@@ -375,7 +375,7 @@ function LegacyEnterpriseDashboard({ onNavigate }: { onNavigate: Navigate }) {
   );
 }
 
-export function EnterpriseDashboard({ onNavigate }: { onNavigate: Navigate }) {
+function DesignedEnterpriseDashboard({ onNavigate }: { onNavigate: Navigate }) {
   return <div className="internal-home">
     <section className="internal-home-hero">
       <div className="internal-home-copy">
@@ -399,6 +399,29 @@ export function EnterpriseDashboard({ onNavigate }: { onNavigate: Navigate }) {
     </section>
     <section className="internal-metric-strip">{[["48","Colaboradores ativos",Users],["126","Treinamentos concluidos",GraduationCap],["8,4","Media geral da equipe",Star],["34","Certificados emitidos",Award],["+18%","Evolucao no periodo",LineChart]].map(([value,label,Icon])=>{const Component=Icon as typeof Users;return <article key={label as string}><Component/><div><strong>{value as string}</strong><span>{label as string}</span></div></article>;})}</section>
     <section className="internal-home-tools"><header><h2>Tudo que seu time <b>comercial</b> precisa<br/>em um so lugar</h2></header><div>{[["Treinamentos","Aulas completas, pratica e certificacao.",GraduationCap,"learning"],["IA Coach","Orientacao, simulacoes e feedback inteligente.",Bot,"simulation"],["Analise de Calls","Descubra exatamente onde cada vendedor deve melhorar.",FileAudio,"calls"],["Gamificacao","Missoes, ranking e recompensas que engajam.",Trophy,"gamification"],["Equipe","Desempenho individual e coletivo para gestores.",Users,"teams"]].map(([title,text,Icon,target])=>{const Component=Icon as typeof Users;return <button onClick={()=>onNavigate(target as EnterpriseView)} key={title as string}><span><Component/></span><strong>{title as string}</strong><small>{text as string}</small><ChevronRight/></button>;})}</div></section>
+  </div>;
+}
+
+export function EnterpriseDashboard({ onNavigate }: { onNavigate: Navigate }) {
+  const reference = `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/brand/performai-dashboard-reference.jpeg`;
+  const hotspots: Array<{ label: string; target: EnterpriseView; className: string }> = [
+    { label: "Abrir Dashboard", target: "dashboard", className: "hotspot-dashboard" },
+    { label: "Abrir Treinamentos", target: "learning", className: "hotspot-learning" },
+    { label: "Abrir IA Coach", target: "simulation", className: "hotspot-coach" },
+    { label: "Abrir Analise de Calls", target: "calls", className: "hotspot-calls" },
+    { label: "Abrir Gamificacao", target: "gamification", className: "hotspot-game" },
+    { label: "Abrir Equipe", target: "teams", className: "hotspot-team" },
+    { label: "Abrir Certificados", target: "certificates", className: "hotspot-certificates" },
+    { label: "Abrir Configuracoes", target: "settings", className: "hotspot-settings" },
+    { label: "Explorar Treinamentos", target: "learning", className: "hotspot-primary" },
+    { label: "Ver meu progresso", target: "gamification", className: "hotspot-progress" },
+  ];
+  return <div className="reference-dashboard">
+    <div className="reference-dashboard-frame">
+      <Image src={reference} alt="Dashboard Performa AI com treinamentos, IA Coach, analise de calls, gamificacao e indicadores da equipe" fill priority sizes="100vw" />
+      {hotspots.map((item) => <button className={`reference-hotspot ${item.className}`} onClick={() => onNavigate(item.target)} aria-label={item.label} title={item.label} key={item.label} />)}
+    </div>
+    <div className="reference-dashboard-mobile"><DesignedEnterpriseDashboard onNavigate={onNavigate} /></div>
   </div>;
 }
 
