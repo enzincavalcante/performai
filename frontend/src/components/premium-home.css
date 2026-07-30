@@ -1,5 +1,28 @@
 .enterprise-shell .premium-home-copy h1,
 .enterprise-shell .premium-home-section h2,
-.enterprise-shell .premium-process article h3 {
+.enterprise-shell .premium-process article h3,
+.enterprise-shell .premium-feature-grid strong,
+.enterprise-shell .premium-home-stats strong {
   color: #0f172a !important;
+}
+
+.enterprise-shell .premium-home-copy > p,
+.enterprise-shell .premium-home-section header p,
+.enterprise-shell .premium-feature-grid small,
+.enterprise-shell .premium-process article p,
+.enterprise-shell .premium-home-stats span {
+  color: #526079 !important;
+}
+
+.enterprise-shell .premium-result article strong {
+  color: #74a1ff !important;
+}
+
+.enterprise-shell .premium-result article span,
+.enterprise-shell .premium-home-cta,
+.enterprise-shell .premium-home-cta h2,
+.enterprise-shell .premium-home-cta p,
+.enterprise-shell .premium-product-screen,
+.enterprise-shell .premium-product-screen strong {
+  color: #ffffff !important;
 }
