@@ -224,29 +224,34 @@ export async function POST(request: Request) {
     // Invalid optional metadata does not block the analysis.
   }
 
-  const prompt = `Voce e especialista em avaliacao de calls B2B e B2C, SPIN Selling, Challenger Sale, BANT e GPCT.
-Analise integralmente esta call de vendas em portugues brasileiro e separe AVALIACAO TECNICA de RELATORIO GERENCIAL.
+  const prompt = `Voce e um gerente comercial senior e consultor especialista em avaliacao de calls B2B e B2C, SPIN Selling, Challenger Sale, Sandler, BANT, GPCT e MEDDICC.
+Analise integralmente esta call em portugues brasileiro. Entregue um diagnostico profundo, personalizado e sustentado por evidencias da conversa. Separe AVALIACAO TECNICA de RELATORIO GERENCIAL.
 Considere os metadados: ${metadata.slice(0, 4000)}.
 Retorne SOMENTE JSON valido com:
-- overall_score de 0 a 100, summary, strengths (3), improvements (3), competency_scores, next_actions e critical_moments;
-- evaluation_blocks com EXATAMENTE 10 itens. Cada item deve ter name, score de 0 a 10, what_worked, what_to_improve e excerpt;
-- use estes blocos: Abertura e rapport; Agenda e controle da call; Descoberta e diagnostico; Escuta ativa; Apresentacao da solucao e pitch; Tratamento de objecoes; Qualificacao e alinhamento de expectativas; Fechamento e proximos passos; Tom, linguagem e postura; Compliance e boas praticas.
-- Cada justificativa deve ser especifica, criteriosa e construtiva. Avalie proporcao de fala, perguntas abertas, custo da inacao, decisores, orcamento, prazo, transicoes, prova social, valor, objecoes, compromisso e CRM.
+- overall_score de 0 a 100 e summary;
+- diagnosis com executive_summary, call_objective, conversation_context, seller_conduction, overall_diagnosis e professional_conclusion. Cada campo deve ter 2 a 5 frases especificas;
+- strengths com 3 objetos contendo title, evidence, why_it_worked e how_to_repeat;
+- improvements com 3 objetos contendo title, error, impact, how_to_fix, prevention e practical_example;
+- competency_scores com objetos contendo name, score de 0 a 100, explanation, impact, level (Iniciante, Intermediario, Avancado ou Elite), gap e next_step;
+- next_actions com EXATAMENTE 3 objetos contendo priority, objective, practical_action, exercise, target e expected_result;
+- evaluation_blocks com EXATAMENTE 28 itens. Cada item deve ter name, score de 0 a 100, reason, what_worked, what_to_improve, how_to_improve, practical_example e excerpt;
+- use estes 28 criterios, nesta ordem: Abertura da ligacao; Rapport; Descoberta de necessidades; Qualificacao; Comunicacao; Clareza; Escuta ativa; Controle da conversa; Autoridade; Confianca; Tom de voz; Ritmo da conversa; Argumentacao; Pitch de vendas; Demonstracao de valor; Tratamento de objecoes; Contorno de objecoes; Negociacao; Fechamento; Proximos passos; Follow-up; Uso de gatilhos mentais; Inteligencia emocional; Postura consultiva; Capacidade de gerar urgencia; Capacidade de gerar desejo; Persuasao; Organizacao da conversa.
+- critical_moments com timestamp real, speaker, quote, issue, recommendation e type (acerto, risco ou oportunidade).
+- Cada explicacao deve citar comportamento ou fala concreta. Explique impacto comercial, motivo da recomendacao, exemplo pratico, erro a evitar e proximo passo. Evite qualquer texto generico.
 - crm_report com esta estrutura exata:
-  callData (data_hora, duracao, vendedor, lead_empresa, cargo, produto_servico, etapa_funil, origem_lead);
+  callData (data_hora, duracao, vendedor, lead, empresa, cargo, produto_servico, segmento, objetivo_ligacao, etapa_funil, origem_lead, situacao_cliente, resultado_ligacao);
   temperature (classification: QUENTE, MORNO, FRIO ou NAO IDENTIFICADA; justification);
-  conversationSummary com 4 a 6 frases factuais em ordem cronologica;
-  pains (lista);
+  conversationSummary com 6 a 10 frases factuais em ordem cronologica;
+  pains, needs e presentedSolution (listas);
   objections (lista de objection e handling);
   qualification (orcamento, autoridade, necessidade, prazo_urgencia);
   nextSteps (lista de action, owner, deadline);
   sellerObservations;
   quickEvaluation (score de 0 a 10 e verdict).
 Cada critical_moment deve conter timestamp, speaker, quote, issue e recommendation.
-Baseie-se SOMENTE na transcricao. Nunca invente dados, valores, combinacoes, falas ou timestamps.
-Quando nao houver informacao, escreva exatamente "Nao identificado".
-Explique os motivos das recomendacoes, inclua exemplos praticos, erros a evitar e
-proximos passos objetivos. A resposta deve ter profundidade de consultoria profissional.
+Identifique vendedor, lead, empresa, produto, segmento e objetivo automaticamente. Voce pode inferir apenas quando houver evidencias contextuais suficientes e deve sinalizar a inferencia com "(inferido pelo contexto)".
+Baseie-se SOMENTE na transcricao. Nunca invente dados, valores, combinacoes, falas ou timestamps. Quando realmente nao houver evidencia, escreva "Informacao nao mencionada durante a ligacao.".
+A resposta deve ter profundidade de consultoria profissional, linguagem corporativa clara e recomendacoes executaveis.
 
 TRANSCRICAO:
 ${transcript || "A gravacao esta anexada nesta solicitacao."}`;
@@ -277,7 +282,7 @@ ${transcript || "A gravacao esta anexada nesta solicitacao."}`;
                 { text: prompt },
               ],
         }],
-        generationConfig: { responseMimeType: "application/json", temperature: 0.15, maxOutputTokens: 8192 },
+        generationConfig: { responseMimeType: "application/json", temperature: 0.12, maxOutputTokens: 16384 },
       }),
       signal: AbortSignal.timeout(290_000),
       },
