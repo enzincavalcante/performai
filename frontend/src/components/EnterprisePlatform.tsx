@@ -197,7 +197,7 @@ const KPI_DATA = [
   },
 ];
 
-export function EnterpriseDashboard({ onNavigate }: { onNavigate: Navigate }) {
+function LegacyEnterpriseDashboard({ onNavigate }: { onNavigate: Navigate }) {
   return (
     <div className="enterprise-page enterprise-dashboard">
       <header className="enterprise-page-heading">
@@ -373,6 +373,33 @@ export function EnterpriseDashboard({ onNavigate }: { onNavigate: Navigate }) {
       </section>
     </div>
   );
+}
+
+export function EnterpriseDashboard({ onNavigate }: { onNavigate: Navigate }) {
+  return <div className="internal-home">
+    <section className="internal-home-hero">
+      <div className="internal-home-copy">
+        <span className="internal-home-badge">A PLATAFORMA PARA TIMES COMERCIAIS</span>
+        <h1>Treine mais.<br/><b>Venda melhor.</b><br/>Supere metas.</h1>
+        <p>Treinamentos inteligentes, IA que desenvolve, analises que geram acao e gamificacao que engaja sua equipe todos os dias.</p>
+        <div><button onClick={() => onNavigate("learning")}><GraduationCap /> Explorar treinamentos</button><button onClick={() => onNavigate("paths")}><BarChart3 /> Ver meu progresso</button></div>
+        <small>Seu ambiente de desenvolvimento comercial</small>
+        <div className="internal-home-tags"><span>Treinamentos</span><span>IA Coach</span><span>Calls</span><span>Certificados</span></div>
+      </div>
+      <div className="internal-product-stage">
+        <div className="internal-dashboard-mock">
+          <header><span><Image src={BRAND_LOGO} alt="" width={20} height={20}/> Performa AI</span><small>Bom dia, Enzo. Vamos avancar grandes resultados hoje.</small></header>
+          <div className="internal-mini-kpis">{[["Treinamentos","12"],["Horas de estudo","24h"],["Media geral","8,7"],["Ranking","2º"]].map((item)=><article key={item[0]}><span>{item[0]}</span><strong>{item[1]}</strong><small>este mes</small></article>)}</div>
+          <div className="internal-mock-lower"><article><span>EVOLUCAO DE DESEMPENHO</span><div className="internal-line-chart">{[38,55,47,66,61,78,88].map((value,index)=><i key={index} style={{height:`${value}%`}} />)}</div></article><article className="internal-ranking"><span>RANKING DA EQUIPE</span>{[["Mariana Lima","9,2"],["Enzo Cavalcante","8,7"],["Lucas Ferreira","8,1"],["Juliana Costa","7,8"]].map((item,index)=><div key={item[0]}><b>{index+1}</b><small>{item[0]}</small><strong>{item[1]}</strong></div>)}</article></div>
+        </div>
+        <div className="internal-float internal-float-certificate"><Award/><span><small>Certificado conquistado</small><strong>Fundamentos de Vendas Consultivas</strong></span></div>
+        <div className="internal-float internal-float-call"><small>ANALISE DE CALL</small><strong>8,7</strong><span><Star/><Star/><Star/><Star/><Star/></span></div>
+        <div className="internal-float internal-float-coach"><Bot/><span><small>IA COACH</small><strong>Como posso ajudar voce a vender mais hoje?</strong></span><i/></div>
+      </div>
+    </section>
+    <section className="internal-metric-strip">{[["48","Colaboradores ativos",Users],["126","Treinamentos concluidos",GraduationCap],["8,4","Media geral da equipe",Star],["34","Certificados emitidos",Award],["+18%","Evolucao no periodo",LineChart]].map(([value,label,Icon])=>{const Component=Icon as typeof Users;return <article key={label as string}><Component/><div><strong>{value as string}</strong><span>{label as string}</span></div></article>;})}</section>
+    <section className="internal-home-tools"><header><h2>Tudo que seu time <b>comercial</b> precisa<br/>em um so lugar</h2></header><div>{[["Treinamentos","Aulas completas, pratica e certificacao.",GraduationCap,"learning"],["IA Coach","Orientacao, simulacoes e feedback inteligente.",Bot,"simulation"],["Analise de Calls","Descubra exatamente onde cada vendedor deve melhorar.",FileAudio,"calls"],["Gamificacao","Missoes, ranking e recompensas que engajam.",Trophy,"gamification"],["Equipe","Desempenho individual e coletivo para gestores.",Users,"teams"]].map(([title,text,Icon,target])=>{const Component=Icon as typeof Users;return <button onClick={()=>onNavigate(target as EnterpriseView)} key={title as string}><span><Component/></span><strong>{title as string}</strong><small>{text as string}</small><ChevronRight/></button>;})}</div></section>
+  </div>;
 }
 
 const COURSE_DATA = [
