@@ -1,9 +1,10 @@
 "use client";
 
 import Image from "next/image";
+import type * as React from "react";
 import {
-  BarChart3, CheckCircle2, ChevronRight, FileAudio, GraduationCap,
-  LayoutDashboard, Mic, Play, Sparkles, Target, Trophy,
+  Award, BarChart3, Bot, CheckCircle2, ChevronRight, FileAudio, GraduationCap,
+  LayoutDashboard, Mic, Play, ShieldCheck, Sparkles, Target, Trophy, Users, Zap,
 } from "lucide-react";
 import "./landing.css";
 
@@ -41,14 +42,14 @@ export function LandingPage({ onEnter }: { onEnter: () => void }) {
 
     <section className="landing-hero">
       <div className="landing-glow-top" />
-      <div className="landing-badge"><i /> Novo - treino por chamada, direto no app</div>
-      <h1>A Performa AI transforma inseguranca em confianca e treinamento em faturamento.</h1>
-      <p className="landing-lede">Cada vendedor enfrenta clientes simulados por IA, pratica objecoes, negociacao e fechamento quantas vezes forem necessarias ate estar preparado para vender de verdade.</p>
+      <div className="landing-badge"><i /> Inteligencia comercial para equipes de alta performance</div>
+      <h1>Desenvolva vendedores. Acelere resultados. Evolua com IA.</h1>
+      <p className="landing-lede">Treinamentos inteligentes, IA Coach, analise automatica de ligacoes, gamificacao e certificacoes em uma unica plataforma.</p>
       <div className="landing-hero-ctas">
-        <button className="landing-btn landing-btn-ghost" onClick={() => scrollTo("como-funciona")}>Ver como funciona</button>
-        <button className="landing-btn landing-btn-solid" onClick={() => scrollTo("precos")}>Quero treinar meu time</button>
+        <button className="landing-btn landing-btn-solid" onClick={onEnter}>Comecar gratuitamente <ChevronRight /></button>
+        <button className="landing-btn landing-btn-ghost" onClick={() => scrollTo("como-funciona")}>Ver demonstracao</button>
       </div>
-      <div className="landing-hero-stat"><span><b>+80%</b> de melhoria na taxa de conversao<small>*Baseado em clientes da Performa AI apos 7 dias de uso.</small></span></div>
+      <div className="landing-hero-stat"><span><b>8 modulos essenciais</b> para treinar, analisar e desenvolver sua equipe comercial.</span></div>
 
       <div className="landing-demo-shell">
         <div className="landing-demo-head">
@@ -119,8 +120,36 @@ export function LandingPage({ onEnter }: { onEnter: () => void }) {
     </section>
 
     <section className="landing-logo-strip">
-      <p>Confiado por times comerciais de alta performance</p>
-      <div><span>Aircall</span><span>Mojo</span><span>Bamboo</span><span>Citibank</span><span>Ramp</span></div>
+      <p>Uma operacao comercial completa, organizada em um unico ambiente</p>
+      <div><span>Treinamento</span><span>IA Coach</span><span>Calls</span><span>Equipe</span><span>Certificacao</span></div>
+    </section>
+
+    <section className="landing-block landing-benefits" id="beneficios">
+      <div className="landing-wrap">
+        <p className="landing-eyebrow">Plataforma completa</p>
+        <h2>Tudo que seu time comercial precisa para evoluir.</h2>
+        <p className="landing-sub">Menos ferramentas desconectadas. Mais clareza sobre o que treinar, como praticar e onde melhorar.</p>
+        <div className="landing-benefit-grid">
+          {[
+            ["IA Coach", "Conversa, orienta e simula situacoes comerciais em tempo real.", Bot],
+            ["Treinamentos", "Aulas, materiais, exercicios, quizzes e certificacao.", GraduationCap],
+            ["Analise de Calls", "Avalia ligacoes e transforma erros em um plano pratico.", FileAudio],
+            ["Gamificacao", "Ranking, XP, medalhas e desafios que estimulam constancia.", Trophy],
+            ["Dashboard", "Indicadores claros para vendedores, gestores e equipes.", LayoutDashboard],
+            ["Certificados", "Documentos profissionais com progresso e validacao.", Award],
+          ].map(([title, text, Icon], index) => { const Component = Icon as typeof Bot; return <article style={{ "--delay": `${index * 65}ms` } as React.CSSProperties} key={title as string}><span><Component /></span><h3>{title as string}</h3><p>{text as string}</p><i><ChevronRight /></i></article>; })}
+        </div>
+      </div>
+    </section>
+
+    <section className="landing-block landing-process" id="processo">
+      <div className="landing-wrap">
+        <p className="landing-eyebrow">Implementacao simples</p>
+        <h2>Da configuracao ao desenvolvimento em cinco passos.</h2>
+        <div className="landing-process-track">
+          {[["01","Cadastre sua empresa",ShieldCheck],["02","Convide sua equipe",Users],["03","Treine com IA",Bot],["04","Analise resultados",BarChart3],["05","Evolua continuamente",Zap]].map(([number,title,Icon]) => { const Component = Icon as typeof Bot; return <article key={number as string}><span>{number as string}</span><Component /><strong>{title as string}</strong></article>; })}
+        </div>
+      </div>
     </section>
 
     <section className="landing-block" id="produto">

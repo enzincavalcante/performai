@@ -343,6 +343,22 @@ input::placeholder,textarea::placeholder { color:#8197b8; opacity:1; }
   .focus-result>header { display:block; }
   .focus-result>header>span { margin-bottom:16px; }
 }
+
+/* Premium motion system: short, composited transitions with accessible fallback. */
+.workspace-content>*,.enterprise-page,.call-review-page,.coach-hub{animation:app-page-enter .28s cubic-bezier(.2,.8,.2,1) both}
+.enterprise-sidebar nav button,.enterprise-page button,.call-review-page button,.coach-hub button,.topbar button{transition:transform .18s ease,background-color .2s ease,border-color .2s ease,color .2s ease,box-shadow .2s ease}.enterprise-sidebar nav button{position:relative}
+.enterprise-sidebar nav button:hover,.enterprise-page button:hover,.call-review-page button:hover,.coach-hub button:hover{transform:translateY(-1px)}
+.enterprise-sidebar nav button:active,.enterprise-page button:active,.call-review-page button:active,.coach-hub button:active,.topbar button:active{transform:scale(.975)}
+.enterprise-sidebar nav button.active:before{content:"";position:absolute;left:0;width:3px;height:62%;border-radius:0 3px 3px 0;background:#5bdce5;animation:app-indicator .25s ease both}
+.enterprise-kpis article,.course-card,.settings-grid>button,.notification-list article,.team-cards article{transition:transform .22s ease,box-shadow .22s ease,border-color .22s ease}
+.enterprise-kpis article:hover,.course-card:hover,.settings-grid>button:hover,.notification-list article:hover,.team-cards article:hover{transform:translateY(-3px);border-color:#3d679b;box-shadow:0 15px 35px rgba(4,20,46,.22)}
+.enterprise-progress i,.competency-row i,.review-skills i{transform-origin:left;animation:app-progress-fill .7s cubic-bezier(.2,.8,.2,1) both}
+input,textarea,select{transition:border-color .18s ease,box-shadow .18s ease,background-color .18s ease}
+input:focus,textarea:focus,select:focus{outline:0;box-shadow:0 0 0 3px rgba(71,112,235,.14)}
+@keyframes app-page-enter{from{opacity:0;transform:translateX(7px) scale(.997)}to{opacity:1;transform:none}}
+@keyframes app-indicator{from{opacity:0;transform:scaleY(.3)}to{opacity:1;transform:scaleY(1)}}
+@keyframes app-progress-fill{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto!important}*,*:before,*:after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}}
 @media(max-width:760px){
   .report-header,.report-feedback { grid-template-columns:1fr; }
   .overall-score { padding:18px 0 0; border-top:1px solid #29466f; border-left:0; }
