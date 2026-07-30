@@ -390,7 +390,8 @@ export default function Home() {
   const [authenticated, setAuthenticated] = useState(false);
   const [productOpen, setProductOpen] = useState(false);
   useEffect(() => { queueMicrotask(() => setAuthenticated(localStorage.getItem("performai_session") === "active")); }, []);
+  if (authenticated)
+    return <Workspace onLogout={() => { localStorage.removeItem("performai_session"); setAuthenticated(false); }} />;
   if (!productOpen) return <LandingPage onEnter={() => setProductOpen(true)} />;
-  if (!authenticated) return <Login onSuccess={() => setAuthenticated(true)} />;
-  return <Workspace onLogout={() => { localStorage.removeItem("performai_session"); setAuthenticated(false); }} />;
+  return <Login onSuccess={() => setAuthenticated(true)} />;
 }
