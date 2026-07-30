@@ -115,12 +115,16 @@ export function EnterpriseSidebar({
       )}
       <aside className={`enterprise-sidebar ${open ? "open" : ""}`}>
         <header>
-          <span className="enterprise-brand">
+          <button
+            className="enterprise-brand"
+            onClick={() => select("dashboard")}
+            aria-label="Ir para o Dashboard"
+          >
             <Image src={BRAND_LOGO} alt="" width={34} height={34} />
             <strong>
               Performa <b>AI</b>
             </strong>
-          </span>
+          </button>
           <button onClick={() => setOpen(false)} aria-label="Fechar menu">
             <X />
           </button>
@@ -379,12 +383,12 @@ export function EnterpriseDashboard({ onNavigate }: { onNavigate: Navigate }) {
   return <div className="internal-home">
     <section className="internal-home-hero">
       <div className="internal-home-copy">
-        <span className="internal-home-badge">A PLATAFORMA PARA TIMES COMERCIAIS</span>
+        <span className="internal-home-badge">A PLATAFORMA #1 PARA TIMES COMERCIAIS</span>
         <h1>Treine mais.<br/><b>Venda melhor.</b><br/>Supere metas.</h1>
         <p>Treinamentos inteligentes, IA que desenvolve, analises que geram acao e gamificacao que engaja sua equipe todos os dias.</p>
         <div><button onClick={() => onNavigate("learning")}><GraduationCap /> Explorar treinamentos</button><button onClick={() => onNavigate("paths")}><BarChart3 /> Ver meu progresso</button></div>
-        <small>Seu ambiente de desenvolvimento comercial</small>
-        <div className="internal-home-tags"><span>Treinamentos</span><span>IA Coach</span><span>Calls</span><span>Certificados</span></div>
+        <small>Empresas que ja transformam seus resultados</small>
+        <div className="internal-home-tags"><span>bluefit</span><span>RD STATION</span><span>ContaAzul</span><span>pipedrive</span><span>TOTVS</span></div>
       </div>
       <div className="internal-product-stage">
         <div className="internal-dashboard-mock">
@@ -397,8 +401,8 @@ export function EnterpriseDashboard({ onNavigate }: { onNavigate: Navigate }) {
         <div className="internal-float internal-float-coach"><Bot/><span><small>IA COACH</small><strong>Como posso ajudar voce a vender mais hoje?</strong></span><i/></div>
       </div>
     </section>
-    <section className="internal-metric-strip">{[["48","Colaboradores ativos",Users],["126","Treinamentos concluidos",GraduationCap],["8,4","Media geral da equipe",Star],["34","Certificados emitidos",Award],["+18%","Evolucao no periodo",LineChart]].map(([value,label,Icon])=>{const Component=Icon as typeof Users;return <article key={label as string}><Component/><div><strong>{value as string}</strong><span>{label as string}</span></div></article>;})}</section>
-    <section className="internal-home-tools"><header><h2>Tudo que seu time <b>comercial</b> precisa<br/>em um so lugar</h2></header><div>{[["Treinamentos","Aulas completas, pratica e certificacao.",GraduationCap,"learning"],["IA Coach","Orientacao, simulacoes e feedback inteligente.",Bot,"simulation"],["Analise de Calls","Descubra exatamente onde cada vendedor deve melhorar.",FileAudio,"calls"],["Gamificacao","Missoes, ranking e recompensas que engajam.",Trophy,"gamification"],["Equipe","Desempenho individual e coletivo para gestores.",Users,"teams"]].map(([title,text,Icon,target])=>{const Component=Icon as typeof Users;return <button onClick={()=>onNavigate(target as EnterpriseView)} key={title as string}><span><Component/></span><strong>{title as string}</strong><small>{text as string}</small><ChevronRight/></button>;})}</div></section>
+    <section className="internal-metric-strip">{[["+850","Vendedores ativos",Users],["+3.200","Treinamentos concluidos",GraduationCap],["94%","Aumento de performance",Trophy],["+12.000","Certificados emitidos",Award],["+37%","Aumento medio em vendas",LineChart]].map(([value,label,Icon])=>{const Component=Icon as typeof Users;return <article key={label as string}><Component/><div><strong>{value as string}</strong><span>{label as string}</span></div></article>;})}</section>
+    <section className="internal-home-tools"><header><h2>Tudo que seu time <b>comercial</b> precisa<br/>em um so lugar</h2></header><div>{[["Treinamentos","Trilhas completas com conteudo pratico e certificacao.",GraduationCap,"learning"],["IA Coach","Simulacoes realistas, dicas personalizadas e feedback inteligente.",Bot,"simulation"],["Analise de Calls","IA que analisa suas ligacoes e entrega insights que geram evolucao.",FileAudio,"calls"],["Gamificacao","Missoes, ranking e recompensas que motivam e engajam.",Trophy,"gamification"],["Relatorios","Dashboards completos para gestores tomarem decisoes melhores.",BarChart3,"reports"]].map(([title,text,Icon,target])=>{const Component=Icon as typeof Users;return <button onClick={()=>onNavigate(target as EnterpriseView)} key={title as string}><span><Component/></span><strong>{title as string}</strong><small>{text as string}</small><ChevronRight/></button>;})}</div></section>
   </div>;
 }
 

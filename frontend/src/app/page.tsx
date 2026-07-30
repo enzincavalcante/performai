@@ -361,7 +361,10 @@ function Workspace({ onLogout }: { onLogout: () => void }) {
   }, []);
   const saveProfile = (next: CompanyProfile) => { localStorage.setItem("performai_company_profile", JSON.stringify(next)); setProfile(next); setEditingProfile(false); };
   const closeTutorial = () => { localStorage.setItem("performai_tutorial_seen", "true"); setShowTutorial(false); };
-  const navigate = (next: EnterpriseView) => setView(next);
+  const navigate = (next: EnterpriseView) => {
+    setView(next);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
   return <main className={`app-shell enterprise-shell view-${view}`}>
     <EnterpriseSidebar active={view} onNavigate={navigate} />
     <header className="topbar enterprise-topbar">

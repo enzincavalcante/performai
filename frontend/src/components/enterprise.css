@@ -10,7 +10,7 @@
 .enterprise-sidebar { position:fixed; z-index:40; inset:0 auto 0 0; width:248px; display:flex; flex-direction:column; border-right:1px solid #203a61; color:#dfe8f7; background:#081a34; box-shadow:14px 0 45px rgba(2,9,22,.18); }
 .enterprise-sidebar>header { height:72px; display:flex; align-items:center; justify-content:space-between; padding:0 20px; border-bottom:1px solid #1d365c; }
 .enterprise-sidebar>header>button { display:none; border:0; color:#b8c7dc; background:transparent; }
-.enterprise-brand { display:flex; align-items:center; gap:10px; }
+.enterprise-brand { display:flex; align-items:center; gap:10px; padding:0; border:0; color:inherit; text-align:left; background:transparent; cursor:pointer; }
 .enterprise-brand img { width:34px; height:34px; object-fit:contain; }
 .enterprise-brand strong { color:#fff; font-size:17px; }
 .enterprise-brand b { color:#6e91ff; }
