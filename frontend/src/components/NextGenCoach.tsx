@@ -26,6 +26,7 @@ import {
   Zap,
 } from "lucide-react";
 import "./next-gen-coach.css";
+import "./next-gen-coach-premium.css";
 
 type HubTab = "coach" | "battle" | "replay" | "twin" | "doctor" | "career";
 type ConversationMessage = { speaker: "coach" | "seller"; text: string };
@@ -66,7 +67,7 @@ function createMentorReply(
   return `${prefix} vejo contexto, mas ainda falta um dado para orientar uma acao precisa. Resuma em uma frase: o que voce vende, para quem, em qual etapa a conversa travou e o que o cliente disse literalmente. Com isso eu monto uma resposta e explico a tecnica por tras dela.`;
 }
 
-function createBuyerReply(message: string, turn: number, scenario: string, objection: string) {
+function createBuyerReply(message: string, turn: number, scenario: string, objection: string, profile: string) {
   const text = normalizeText(message);
   const askedQuestion = message.includes("?");
   if (text.includes("desconto") || text.includes("%")) {
@@ -79,7 +80,7 @@ function createBuyerReply(message: string, turn: number, scenario: string, objec
   }
   if (askedQuestion) {
     return turn < 2
-      ? `O maior problema e a equipe perder oportunidades no acompanhamento. Ainda assim, no cenario de ${scenario.toLowerCase()}, eu nao posso assumir um projeto sem reduzir o risco.`
+      ? `O maior problema e a equipe perder oportunidades no acompanhamento. Como ${profile.toLowerCase()}, eu nao posso assumir um projeto no cenario de ${scenario.toLowerCase()} sem reduzir o risco.`
       : `Isso faz sentido. Minha principal resistencia agora e ${objection.toLowerCase()}. Como voce sugere validar isso sem alongar o processo?`;
   }
   if (text.includes("reuniao") || text.includes("agenda") || text.includes("quinta") || text.includes("proximo passo")) {
@@ -91,25 +92,38 @@ function createBuyerReply(message: string, turn: number, scenario: string, objec
 }
 
 const tabs: Array<{ id: HubTab; label: string; icon: typeof Bot }> = [
-  { id: "coach", label: "Mentor IA de Vendas", icon: Bot },
+  { id: "coach", label: "Mentor e Simulador IA", icon: Bot },
   { id: "battle", label: "Desafios Comerciais", icon: Trophy },
-  { id: "replay", label: "Analise Inteligente", icon: RefreshCw },
-  { id: "twin", label: "Simulador de Clientes", icon: Brain },
+  { id: "replay", label: "Replay de Desenvolvimento", icon: RefreshCw },
+  { id: "twin", label: "Digital Twin Comercial", icon: Brain },
   { id: "doctor", label: "Estrategia de Negociacao", icon: BriefcaseBusiness },
   { id: "career", label: "Evolucao Profissional", icon: BarChart3 },
 ];
 
 const missions = [
   ["Fechamento com decisor", "Conquiste um proximo passo com data, pauta e participantes.", "600 XP", "Elite", "Fechamento sem urgencia", "Sem urgencia", "Confirmar decisao e compromisso sem pressao artificial.", "Nota 85, resumo final e proximo passo completo."],
-  ["Rapport sob pressao", "Crie conexao com um executivo direto e impaciente.", "360 XP", "Intermediario", "Descoberta com decisor cetico", "Sem autoridade", "Adaptar tom, ritmo e linguagem sem perder controle.", "Nota 78 em rapport e inteligencia emocional."],
+  ["Cliente indeciso", "Conduza um comprador inseguro ate um criterio claro de decisao.", "440 XP", "Avancado", "Cliente interessado e indeciso", "Sem urgencia", "Descobrir o medo real e construir seguranca sem pressionar.", "Nota 80 em escuta, clareza e compromisso."],
   ["Objecao de preco", "Proteja margem e reconstrua valor sem oferecer desconto.", "520 XP", "Dificil", "Negociacao de preco", "Preco", "Diagnosticar a causa real antes de argumentar.", "Nota 82 em objecoes e nenhuma concessao prematura."],
   ["Prospeccao em 60 segundos", "Ganhe permissao para continuar sem usar um pitch generico.", "420 XP", "Avancado", "Primeiro contato com executivo", "Sem urgencia", "Gerar relevancia e curiosidade em uma abertura curta.", "Nota 80 em clareza, autoridade e proximo passo."],
   ["Negociacao com concorrente", "Crie contraste sem atacar a solucao atual do cliente.", "480 XP", "Avancado", "Concorrente ja contratado", "Concorrente", "Reenquadrar criterios de decisao e custo de permanencia.", "Nota 82 em valor, negociacao e postura consultiva."],
-  ["Follow-up que avanca", "Retome uma oportunidade parada com contexto e motivo real.", "340 XP", "Intermediario", "Oportunidade sem resposta", "Sem urgencia", "Reabrir a conversa e propor uma acao especifica.", "Nota 76 e compromisso confirmado."],
-  ["Descoberta profunda", "Encontre dor, impacto, urgencia e processo de decisao.", "550 XP", "Dificil", "Descoberta com decisor cetico", "Sem autoridade", "Aplicar SPIN e GPCT antes de apresentar a solucao.", "Nota 85 em descoberta e escuta ativa."],
+  ["Recuperacao de cliente perdido", "Reconstrua confianca depois de uma experiencia ruim e recupere a oportunidade.", "540 XP", "Dificil", "Cliente perdido por falha no atendimento", "Concorrente", "Reconhecer o erro, diagnosticar impacto e propor recuperacao segura.", "Nota 84 em empatia, responsabilidade e plano de recuperacao."],
+  ["Cliente sem orcamento", "Crie valor e um caminho viavel sem empurrar desconto.", "550 XP", "Dificil", "Necessidade confirmada sem verba disponivel", "Preco", "Separar falta de verba, prioridade e percepcao de retorno.", "Nota 85 em qualificacao, valor e protecao de margem."],
   ["Inteligencia emocional", "Mantenha clareza diante de interrupcoes e respostas hostis.", "500 XP", "Dificil", "Cliente agressivo e impaciente", "Preco", "Regular o ritmo e recuperar uma conversa tensa.", "Nota 84 em postura, tom e controle da conversa."],
-  ["Persuasao consultiva", "Gere desejo conectando evidencia, impacto e prioridade.", "460 XP", "Avancado", "Cliente interessado sem prioridade", "Sem urgencia", "Construir uma tese de mudanca sem manipular.", "Nota 82 em valor, persuasao e urgencia genuina."],
-  ["Comunicacao executiva", "Explique uma proposta complexa com clareza e objetividade.", "390 XP", "Intermediario", "Apresentacao para diretoria", "Concorrente", "Sintetizar problema, impacto, evidencia e decisao.", "Nota 80 em clareza, ritmo e organizacao."],
+  ["Upsell baseado em resultado", "Amplie o contrato conectando a nova oferta ao resultado que o cliente ja conquistou.", "460 XP", "Avancado", "Expansao de conta ativa", "Sem urgencia", "Diagnosticar uma nova necessidade antes de oferecer o plano superior.", "Nota 82 em expansao, valor e timing comercial."],
+  ["Cross-sell consultivo", "Apresente uma solucao complementar sem parecer uma venda forcada.", "430 XP", "Avancado", "Nova solucao para cliente atual", "Preco", "Conectar a oferta complementar a um problema real ainda nao resolvido.", "Nota 80 em descoberta, relevancia e proximo passo."],
+];
+
+const missionProfiles = [
+  { client: "Helena Prado · CEO de SaaS", psychology: "Analitica, controladora e avessa a risco", story: "A diretoria adiou duas decisoes por medo de implantacao. Helena so avanca com compromisso claro, risco controlado e impacto financeiro." },
+  { client: "Roberto Nunes · Diretor Industrial", psychology: "Inseguro, detalhista e avesso a arrependimento", story: "Roberto reconhece a necessidade, mas adia toda decisao por medo de escolher errado. Ele precisa construir seus proprios criterios de seguranca." },
+  { client: "Camila Torres · CFO", psychology: "Racional, firme e orientada a margem", story: "Camila congelou novos investimentos e exigira comparacao entre custo, retorno e risco. Desconto precoce reduz sua confianca." },
+  { client: "Marcos Vieira · VP Comercial", psychology: "Ocupado, competitivo e seletivo", story: "Marcos recebe dezenas de abordagens. Voce tem 60 segundos para provar relevancia e conquistar uma conversa maior." },
+  { client: "Ana Luiza · Head de Operacoes", psychology: "Leal ao fornecedor atual e detalhista", story: "Ana usa o concorrente ha quatro anos. Ela reconhece problemas, mas teme o custo da mudanca." },
+  { client: "Felipe Andrade · Fundador", psychology: "Frustrado, cauteloso e pragmatista", story: "Felipe cancelou depois de uma falha no atendimento e migrou para um concorrente. Responsabilidade e um plano concreto podem reabrir a oportunidade." },
+  { client: "Patricia Gomes · Diretora de Receita", psychology: "Objetiva, pressionada por caixa e orientada a retorno", story: "Patricia confirmou o problema, mas nao possui verba aprovada neste trimestre. Ela diferencia vendedores consultivos de quem oferece desconto cedo demais." },
+  { client: "Sergio Matos · Dono de rede varejista", psychology: "Hostil, emocional e pouco paciente", story: "Sergio teve uma experiencia ruim com outro fornecedor. Ele interrompe e testa a calma do vendedor." },
+  { client: "Beatriz Melo · Gerente de Marketing", psychology: "Satisfeita, criteriosa e orientada a resultado", story: "Beatriz ja usa o produto basico e obteve resultado. Ela so amplia o contrato se a nova capacidade resolver uma prioridade comprovada." },
+  { client: "Daniel Faria · Diretor de Operacoes", psychology: "Pratico, estrategico e avesso a venda forcada", story: "Daniel e cliente atual e tem outro problema operacional. A oferta complementar precisa surgir do diagnostico, nao de uma lista de produtos." },
 ];
 
 const replayMoments = [
@@ -166,6 +180,7 @@ export function NextGenCoach() {
   const [trainingConfig, setTrainingConfig] = useState({
     segment: "Tecnologia B2B",
     size: "51 a 200 funcionarios",
+    profile: "CEO impaciente",
     scenario: "Descoberta com decisor cetico",
     difficulty: "Avancado",
     offer: "",
@@ -199,7 +214,7 @@ export function NextGenCoach() {
     setConversation([
       {
         speaker: "coach",
-        text: `Sou ${customer.name}, ${customer.role} da ${customer.company}. Tenho poucos minutos. Voce quer conversar sobre ${trainingConfig.offer}. Por que isso merece minha atencao agora?`,
+        text: `Sou ${customer.name}, ${trainingConfig.profile} da ${customer.company}. Tenho poucos minutos. Voce quer conversar sobre ${trainingConfig.offer}. Por que isso merece minha atencao agora?`,
       },
     ]);
     setStep("session");
@@ -218,6 +233,7 @@ export function NextGenCoach() {
           turn,
           trainingConfig.scenario,
           trainingConfig.objection,
+          trainingConfig.profile,
         ),
       },
     ]);
@@ -422,12 +438,12 @@ export function NextGenCoach() {
                   <p>CLIENTE GERADO</p>
                   <h2>{customer.name}</h2>
                   <strong>
-                    {customer.role} · {customer.company}
+                    {trainingConfig.profile} · {customer.company}
                   </strong>
                   <dl>
                     <div>
                       <dt>Personalidade</dt>
-                      <dd>{customer.personality}</dd>
+                      <dd>{trainingConfig.profile}</dd>
                     </div>
                     <div>
                       <dt>Experiencia</dt>
@@ -460,6 +476,18 @@ export function NextGenCoach() {
                       <option>51 a 200 funcionarios</option>
                       <option>Pequena empresa</option>
                       <option>Enterprise</option>
+                    </select>
+                  </label>
+                  <label>
+                    Quem estara do outro lado?
+                    <select value={trainingConfig.profile} onChange={(event) => setTrainingConfig((current) => ({ ...current, profile: event.target.value }))}>
+                      <option>CEO impaciente</option>
+                      <option>CFO rigoroso com orcamento</option>
+                      <option>Diretor comercial cetico</option>
+                      <option>Comprador agressivo</option>
+                      <option>Cliente mal-educado</option>
+                      <option>Gestor indeciso</option>
+                      <option>Cliente fiel ao concorrente</option>
                     </select>
                   </label>
                   <label>
@@ -522,7 +550,7 @@ export function NextGenCoach() {
                 <p>CLIENTE EM SIMULACAO</p>
                 <h2>{customer.name}</h2>
                 <strong>
-                  {customer.role} · {customer.company}
+                  {trainingConfig.profile} · {customer.company}
                 </strong>
                 <div>
                   <i />
@@ -652,10 +680,11 @@ export function NextGenCoach() {
             <div className="mission-room">
               <button className="mission-back" onClick={() => setSelectedMission(null)}>Voltar aos desafios</button>
               <header><div><p>MISSAO {String(selectedMission + 1).padStart(2, "0")} · {missions[selectedMission][3]}</p><h2>{missions[selectedMission][0]}</h2><span>{missions[selectedMission][1]}</span></div><strong>{missions[selectedMission][2]}</strong></header>
-              <div className="mission-briefing"><article><Target /><h3>Objetivo exclusivo</h3><p>{missions[selectedMission][6]}</p></article><article><Gauge /><h3>Criterio de aprovacao</h3><p>{missions[selectedMission][7]}</p></article><article><Award /><h3>Recompensas</h3><p>{missions[selectedMission][2]}, moedas, medalha e pontos no ranking.</p></article></div>
+              <div className="mission-story"><div><UserRound /><span><small>CLIENTE EXCLUSIVO</small><strong>{missionProfiles[selectedMission].client}</strong><p>{missionProfiles[selectedMission].psychology}</p></span></div><p>{missionProfiles[selectedMission].story}</p></div>
+              <div className="mission-briefing"><article><Target /><h3>Objetivo exclusivo</h3><p>{missions[selectedMission][6]}</p></article><article><Gauge /><h3>Criterio de aprovacao</h3><p>{missions[selectedMission][7]}</p></article><article><Brain /><h3>Correcao da IA</h3><p>Nota por competencia, erros, resposta de alta performance e proxima missao recomendada.</p></article><article><Award /><h3>Recompensas</h3><p>{missions[selectedMission][2]}, moedas, medalha e pontos no ranking.</p></article></div>
               <button className="mission-start" onClick={() => {
                 const mission = missions[selectedMission];
-                setTrainingConfig((current) => ({ ...current, scenario: mission[4], objection: mission[5], difficulty: mission[3] }));
+                setTrainingConfig((current) => ({ ...current, scenario: mission[4], objection: mission[5], difficulty: mission[3], profile: missionProfiles[selectedMission].client }));
                 setSelectedMission(null);
                 setTab("coach");
                 setStep("setup");

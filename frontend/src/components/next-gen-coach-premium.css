@@ -1,0 +1,91 @@
+.mission-story {
+  display: grid;
+  grid-template-columns: minmax(250px, .8fr) minmax(320px, 1.2fr);
+  gap: 18px;
+  padding: 20px;
+  border: 1px solid #35618f;
+  border-radius: 7px;
+  background: linear-gradient(135deg, #102c52 0%, #081a34 100%);
+  box-shadow: 0 18px 40px rgb(2 10 25 / 24%);
+}
+
+.mission-story > div {
+  display: flex;
+  align-items: flex-start;
+  gap: 13px;
+}
+
+.mission-story > div > svg {
+  width: 36px;
+  height: 36px;
+  flex: 0 0 36px;
+  padding: 8px;
+  border: 1px solid #4774a8;
+  border-radius: 50%;
+  color: #72dce4;
+  background: #15365e;
+}
+
+.mission-story span {
+  display: grid;
+  gap: 5px;
+}
+
+.mission-story small {
+  color: #67dde6;
+  font-size: 8px;
+  font-weight: 900;
+  letter-spacing: .08em;
+}
+
+.mission-story strong {
+  color: #f7fbff;
+  font-size: 15px;
+}
+
+.mission-story span p,
+.mission-story > p {
+  margin: 0;
+  color: #a9bfd8;
+  font-size: 11px;
+  line-height: 1.65;
+}
+
+.mission-story > p {
+  padding-left: 18px;
+  border-left: 1px solid #31577f;
+}
+
+.mission-briefing {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.mission-briefing article {
+  transition: border-color .2s ease, transform .2s ease, background .2s ease;
+}
+
+.mission-briefing article:hover {
+  transform: translateY(-2px);
+  border-color: #4775ad;
+  background: #0c2242;
+}
+
+@media (max-width: 900px) {
+  .mission-story,
+  .mission-briefing {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 560px) {
+  .mission-story,
+  .mission-briefing {
+    grid-template-columns: 1fr;
+  }
+
+  .mission-story > p {
+    padding: 14px 0 0;
+    border-top: 1px solid #31577f;
+    border-left: 0;
+  }
+}

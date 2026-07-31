@@ -14,6 +14,7 @@ import {
   CheckCircle2,
   ChevronRight,
   ClipboardCheck,
+  Clock3,
   Download,
   FileAudio,
   FileText,
@@ -21,6 +22,7 @@ import {
   GraduationCap,
   LayoutDashboard,
   Library,
+  Lightbulb,
   LineChart,
   ListChecks,
   Medal,
@@ -45,6 +47,7 @@ import {
 } from "lucide-react";
 import "./enterprise.css";
 import "./premium-home.css";
+import "./operational-home.css";
 
 export type EnterpriseView =
   | "dashboard"
@@ -407,7 +410,7 @@ function LegacyDarkEnterpriseDashboard({ onNavigate }: { onNavigate: Navigate })
   </div>;
 }
 
-export function EnterpriseDashboard({ onNavigate }: { onNavigate: Navigate }) {
+function MarketingEnterpriseDashboard({ onNavigate }: { onNavigate: Navigate }) {
   const features = [
     ["IA treinando vendedores", "Pratica individual com clientes virtuais realistas.", Bot, "simulation"],
     ["Feedback em tempo real", "Orientacao objetiva durante e depois da conversa.", MessageSquareText, "simulation"],
@@ -466,6 +469,68 @@ export function EnterpriseDashboard({ onNavigate }: { onNavigate: Navigate }) {
       <h2>Transforme cada conversa em uma oportunidade de melhorar.</h2>
       <p>Escolha agora o proximo passo do seu desenvolvimento.</p>
       <div><button onClick={() => onNavigate("simulation")}><Mic /> Treinar com a IA</button><button onClick={() => onNavigate("calls")}><FileAudio /> Analisar uma call</button></div>
+    </section>
+  </div>;
+}
+
+export function EnterpriseDashboard({ onNavigate }: { onNavigate: Navigate }) {
+  const quickActions = [
+    ["Treinar uma ligacao", "Pratique com um cliente de IA antes da proxima conversa real.", "Melhor para: ganhar confianca e testar seu discurso.", Mic, "simulation", "Iniciar treino"],
+    ["Analisar uma call", "Envie uma gravacao e descubra onde acertou, errou e perdeu oportunidades.", "Melhor para: transformar uma ligacao real em plano de evolucao.", FileAudio, "calls", "Enviar gravacao"],
+    ["Conversar com IA Coach", "Tire duvidas, melhore argumentos e prepare uma negociacao importante.", "Melhor para: receber orientacao comercial personalizada.", Bot, "simulation", "Abrir IA Coach"],
+    ["Continuar treinamento", "Retome sua trilha no ponto exato em que parou.", "Melhor para: construir habilidade com consistencia.", GraduationCap, "learning", "Continuar aula"],
+  ] as const;
+
+  return <div className="ops-home">
+    <header className="ops-welcome">
+      <div><span>PAINEL DE DESENVOLVIMENTO</span><h1>Bom dia, Enzo.</h1><p>Seu foco agora e aprofundar a descoberta antes de apresentar a solucao.</p></div>
+      <button onClick={() => onNavigate("simulation")}><Mic /> Treinar agora <ChevronRight /></button>
+    </header>
+
+    <section className="ops-kpis">
+      {[
+        ["Nota media das calls", "8,4", "+0,6 neste mes", LineChart, "positive"],
+        ["Treinos concluidos", "12", "3 nesta semana", GraduationCap, "positive"],
+        ["Tempo de pratica", "24h", "Meta semanal: 2h", Clock3, "neutral"],
+        ["Ranking da equipe", "2o", "Subiu 1 posicao", Trophy, "positive"],
+      ].map(([label,value,detail,Icon,tone])=>{const Component=Icon as typeof Users;return <article key={label as string}><header><span>{label as string}</span><Component /></header><strong>{value as string}</strong><small className={tone as string}>{detail as string}</small></article>;})}
+    </section>
+
+    <section className="ops-main-grid">
+      <article className="ops-priority">
+        <header><div><span><Target /></span><div><small>ATENCAO IMEDIATA</small><h2>Descoberta limita sua conversao.</h2></div></div><b>Prioridade alta</b></header>
+        <p>Nas ultimas calls, voce apresentou a solucao antes de quantificar impacto, urgencia e criterio de decisao. Isso deixa o pitch generico e reduz a percepcao de valor.</p>
+        <div className="ops-priority-reasons"><span><strong>64/100</strong>Nota em descoberta</span><span><strong>3 de 5</strong>Calls com pitch precoce</span><span><strong>+18%</strong>Potencial de evolucao</span></div>
+        <footer><div><Lightbulb /><span><strong>O que fazer agora</strong>Treine uma descoberta com 3 perguntas SPIN e finalize resumindo a dor.</span></div><button onClick={() => onNavigate("simulation")}>Treinar esta habilidade <ChevronRight /></button></footer>
+      </article>
+      <article className="ops-weekly-goal">
+        <header><div><small>META DA SEMANA</small><h2>Construa consistencia</h2></div><strong>60%</strong></header>
+        <div className="ops-goal-ring"><span><b>72</b><small>de 120 min</small></span></div>
+        <ul><li className="done"><CheckCircle2 /> 2 simulacoes concluidas</li><li className="done"><CheckCircle2 /> 1 call analisada</li><li><Clock3 /> 48 min restantes</li></ul>
+        <button onClick={() => onNavigate("learning")}>Ver plano semanal</button>
+      </article>
+    </section>
+
+    <section className="ops-performance-grid">
+      <article className="ops-evolution">
+        <header><div><small>EVOLUCAO DE DESEMPENHO</small><h2>Seu progresso nos ultimos 7 treinos</h2></div><button onClick={() => onNavigate("performance")}>Ver detalhes</button></header>
+        <div className="ops-chart"><div className="ops-chart-bars">{[62,68,65,74,77,81,84].map((value,index)=><span key={index}><i style={{height:`${value}%`}}/><small>{value}</small></span>)}</div><footer>{["T1","T2","T3","T4","T5","T6","Hoje"].map(item=><span key={item}>{item}</span>)}</footer></div>
+      </article>
+      <article className="ops-skills">
+        <header><small>MAPA DE HABILIDADES</small><h2>Onde voce esta mais forte</h2></header>
+        <div>{[["Rapport",88],["Pitch",82],["Fechamento",76],["Objecoes",71],["Descoberta",64]].map(([label,value])=><span key={label as string}><strong>{label as string}</strong><i><b style={{width:`${value}%`}}/></i><em>{value}</em></span>)}</div>
+        <button onClick={() => onNavigate("performance")}>Abrir evolucao profissional <ChevronRight /></button>
+      </article>
+    </section>
+
+    <section className="ops-actions-section">
+      <header><span>ESCOLHA SEU PROXIMO PASSO</span><h2>O que voce quer fazer agora?</h2><p>Cada opcao explica o resultado esperado antes de voce entrar.</p></header>
+      <div>{quickActions.map(([title,text,why,Icon,target,action])=>{const Component=Icon as typeof Users;return <button onClick={()=>onNavigate(target as EnterpriseView)} key={title}><span><Component /></span><h3>{title}</h3><p>{text}</p><small>{why}</small><strong>{action}<ChevronRight /></strong></button>;})}</div>
+    </section>
+
+    <section className="ops-bottom-grid">
+      <article className="ops-ranking"><header><div><small>RANKING SEMANAL</small><h2>Melhores vendedores</h2></div><button onClick={() => onNavigate("gamification")}>Ver ranking</button></header><ol>{[["Mariana Lima","9,2","1"],["Enzo Cavalcante","8,7","2"],["Lucas Ferreira","8,1","3"],["Juliana Costa","7,8","4"]].map(([name,score,rank])=><li className={name.startsWith("Enzo")?"current":""} key={name}><b>{rank}</b><i>{name.split(" ").map(part=>part[0]).join("")}</i><span><strong>{name}</strong><small>{name.startsWith("Enzo")?"Voce":"Alta performance"}</small></span><em>{score}</em></li>)}</ol></article>
+      <article className="ops-recent"><header><div><small>ATIVIDADE RECENTE</small><h2>Sua evolucao continua</h2></div></header><ul><li><FileAudio /><span><strong>Call de fechamento analisada</strong><small>Nota 8,7 · ha 2 horas</small></span></li><li><Award /><span><strong>Certificado conquistado</strong><small>Vendas Consultivas · ontem</small></span></li><li><Trophy /><span><strong>Subiu no ranking semanal</strong><small>Agora na 2a posicao · ha 2 dias</small></span></li></ul></article>
     </section>
   </div>;
 }
