@@ -48,6 +48,7 @@ import {
 import "./enterprise.css";
 import "./premium-home.css";
 import "./operational-home.css";
+import { PremiumTrainingAcademy } from "./PremiumTraining";
 
 export type EnterpriseView =
   | "dashboard"
@@ -2765,7 +2766,7 @@ export function EnterpriseModule({
 }) {
   if (view === "dashboard")
     return <EnterpriseDashboard onNavigate={onNavigate} />;
-  if (view === "learning") return <LearningModule onNavigate={onNavigate} />;
+  if (view === "learning") return <PremiumTrainingAcademy onNavigate={onNavigate} />;
   if (view === "paths") return <FixedPathsModule onNavigate={onNavigate} />;
   if (view === "assessments") return <InteractiveAssessmentsModule />;
   if (view === "gamification") return <GamificationModule />;
