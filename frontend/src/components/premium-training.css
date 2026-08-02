@@ -128,6 +128,25 @@
 .lesson-tools{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:14px}
 .lesson-tools button{display:flex;align-items:center;justify-content:center;gap:5px;padding:9px 5px;border:1px solid var(--line);color:#335d9f;background:#fff;font-size:7px;font-weight:900}
 .lesson-tools svg{width:13px}
+.lesson-resource-backdrop{position:fixed;z-index:120;inset:0;display:grid;place-items:center;padding:24px;background:rgba(3,12,28,.78);backdrop-filter:blur(8px)}
+.lesson-resource-modal{width:min(860px,100%);max-height:90vh;overflow:auto;border:1px solid #d7e1ee;border-radius:8px;color:#17243b;background:#fff;box-shadow:0 30px 90px rgba(2,12,28,.38)}
+.lesson-resource-modal>header{position:sticky;z-index:2;top:0;display:flex;align-items:flex-start;justify-content:space-between;gap:20px;padding:24px 28px;border-bottom:1px solid #dce4ef;background:#fff}
+.lesson-resource-modal header small{color:#2563eb;font-size:8px;font-weight:900;letter-spacing:.1em}
+.lesson-resource-modal header h2{margin:7px 0 3px!important;color:#12213a!important;font-size:25px!important}
+.lesson-resource-modal header p{margin:0;color:#718096;font-size:10px}
+.lesson-resource-modal header button{width:36px;height:36px;display:grid;place-items:center;border:1px solid #dce4ef;border-radius:5px;color:#53647c;background:#fff}
+.lesson-resource-modal header button svg{width:17px}
+.lesson-resource-body{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:24px 28px}
+.lesson-resource-body section{padding:18px;border:1px solid #e0e7f0;border-radius:6px;background:#f8fafc}
+.lesson-resource-body section:first-child,.lesson-resource-body .resource-script{grid-column:1/-1}
+.lesson-resource-body h3{margin:0 0 9px;color:#17345d;font-size:13px}
+.lesson-resource-body p,.lesson-resource-body li,.lesson-resource-body blockquote{color:#53647b;font-size:11px;line-height:1.65}
+.lesson-resource-body ul{display:grid;gap:7px;margin:0;padding-left:18px}
+.lesson-resource-body blockquote{margin:0;padding:14px;border-left:3px solid #2563eb;color:#17345d;background:#edf4ff;font-weight:800}
+.lesson-resource-modal>footer{position:sticky;bottom:0;display:flex;justify-content:flex-end;gap:8px;padding:16px 28px;border-top:1px solid #dce4ef;background:#fff}
+.lesson-resource-modal>footer button{display:flex;align-items:center;gap:7px;padding:11px 14px;border:1px solid #cad6e5;border-radius:5px;color:#1e4fa9;background:#fff;font-size:9px;font-weight:900}
+.lesson-resource-modal>footer button:last-child{border-color:#2563eb;color:#fff;background:#2563eb}
+.lesson-resource-modal>footer svg{width:15px}
 .academy-exercise,.academy-quiz,.lesson-mentor{padding:34px}
 .academy-exercise>button{width:100%;display:grid;grid-template-columns:30px 1fr;align-items:center;gap:9px;margin-top:8px;padding:14px;border:1px solid var(--line);color:#3e506a;text-align:left;background:#fff}
 .academy-exercise>button span{width:25px;height:25px;display:grid;place-items:center;border-radius:50%;background:#eaf1fc}
@@ -213,4 +232,5 @@ to{opacity:1;transform:none}
 .lesson-mentor>div>div{grid-template-columns:1fr}
 .lesson-footer{align-items:stretch;flex-direction:column;margin:0 18px}
 .lesson-footer>button{justify-content:center}
+.lesson-resource-backdrop{padding:8px}.lesson-resource-modal{max-height:96vh}.lesson-resource-modal>header,.lesson-resource-body,.lesson-resource-modal>footer{padding-right:17px;padding-left:17px}.lesson-resource-body{grid-template-columns:1fr}.lesson-resource-body section:first-child,.lesson-resource-body .resource-script{grid-column:auto}.lesson-resource-modal>footer{align-items:stretch;flex-direction:column}.lesson-resource-modal>footer button{justify-content:center}
 }

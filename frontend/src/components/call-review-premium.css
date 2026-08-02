@@ -43,6 +43,35 @@
   margin-top: 5px;
 }
 
+.call-audio-timeline {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 38px 44px 38px auto minmax(130px, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid #315b8e;
+  border-radius: 7px;
+  background: #071a34;
+}
+
+.review-dropzone .call-audio-timeline { width: min(680px, 100%); }
+.call-audio-timeline audio { display: none; }
+.call-audio-timeline button {
+  width: 38px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #315a8c;
+  border-radius: 5px;
+  color: #dce9f9;
+  background: #102b50;
+}
+.call-audio-timeline button.audio-main-control { width: 44px; color: #fff; border-color: #2563eb; background: #2563eb; }
+.call-audio-timeline button svg { width: 16px; }
+.call-audio-timeline span { display: block; color: #a9bdd8; font: 800 10px monospace; }
+.call-audio-timeline input { width: 100%; accent-color: #4f7cff; cursor: pointer; }
+
 .review-diagnosis-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -272,6 +301,13 @@
   text-transform: uppercase;
 }
 
+.review-processing-steps span.done { color: #dffbf4; border-color: #2e9b7a; background: #143d3d; }
+.review-processing-steps b { margin-left: auto; color: #67dce8; font-size: 11px; }
+.review-progress-track { height: 6px; margin-top: 13px; overflow: hidden; border-radius: 4px; background: #071a34; }
+.review-progress-track i { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg,#2563eb,#58d9e4); transition: width .45s ease; }
+.review-error button { display: inline-flex; align-items: center; gap: 6px; margin-top: 12px; padding: 9px 12px; border: 1px solid #a5455c; border-radius: 5px; color: #fff; background: #7d263b; font-weight: 800; }
+.review-error button svg { width: 14px; }
+
 @keyframes review-wave {
   to { transform: scaleY(0.35); opacity: 0.55; }
 }
@@ -294,6 +330,10 @@
   .review-excerpts article {
     grid-template-columns: 1fr;
   }
+
+  .call-audio-timeline { grid-template-columns: 38px 44px 38px 1fr; }
+  .call-audio-timeline span { text-align:center; }
+  .call-audio-timeline input { grid-column:1/-1; grid-row:2; }
 }
 
 @media print {

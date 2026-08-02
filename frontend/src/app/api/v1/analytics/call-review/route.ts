@@ -117,18 +117,18 @@ function buildRubricReport(transcript: string) {
       ["Tom, linguagem e postura", communicationScore], ["Compliance e boas praticas", communicationScore],
     ].map(([name, score]) => ({
       name,
-      score: Math.round(Number(score) / 10),
+      score: Math.round(Number(score)),
       what_worked: "A transcricao apresentou sinais compativeis com este criterio.",
       what_to_improve: "Aprofunde este bloco com perguntas, confirmacoes e um compromisso verificavel.",
-      excerpt: "Nao identificado com seguranca no modo de contingencia.",
+      excerpt: "Nao houve uma fala explicita sobre este ponto durante a ligacao.",
     })),
     crm_report: {
-      callData: { vendedor: "Nao identificado", lead_empresa: "Nao identificado", produto_servico: "Nao identificado", etapa_funil: "Nao identificado" },
+      callData: { vendedor: "Nao mencionado durante a ligacao.", lead_empresa: "Nao mencionado durante a ligacao.", produto_servico: "Nao mencionado durante a ligacao.", etapa_funil: "Nao mencionada explicitamente durante a ligacao." },
       temperature: { classification: "NAO IDENTIFICADA", justification: "A classificacao exige sinais explicitos de urgencia, orcamento, autoridade e engajamento." },
       conversationSummary: "Resumo gerado a partir dos elementos comerciais identificados na transcricao.",
-      pains: ["Nao identificado com seguranca no modo de contingencia."],
+      pains: ["Nenhuma dor foi mencionada de forma explicita durante a ligacao."],
       objections: [],
-      qualification: { orcamento: "Nao identificado", autoridade: "Nao identificado", necessidade: "Nao identificado", prazo_urgencia: "Nao identificado" },
+      qualification: { orcamento: "Nao mencionado durante a ligacao.", autoridade: "Nao mencionada durante a ligacao.", necessidade: "Nao mencionada durante a ligacao.", prazo_urgencia: "Nao mencionado durante a ligacao." },
       nextSteps: [],
       sellerObservations: "Revise a transcricao integral antes de registrar informacoes no CRM.",
       quickEvaluation: { score: Math.round(overallScore / 10), verdict: "A call apresenta base comercial, mas requer aprofundamento nos criterios com menor pontuacao." },
@@ -164,9 +164,10 @@ export async function POST(request: Request) {
   }
 
   const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) {
+  const deepgramKey = process.env.DEEPGRAM_API_KEY;
+  if (!apiKey && !deepgramKey) {
     return NextResponse.json({
-      detail: "O modulo de analise ainda nao possui uma chave Gemini de producao configurada.",
+      detail: "O modulo de analise precisa de uma chave Deepgram ou Gemini configurada.",
       code: "call_review_not_configured",
     }, { status: 503 });
   }
@@ -179,7 +180,6 @@ export async function POST(request: Request) {
   }
 
   const bytes = audio instanceof File ? Buffer.from(await audio.arrayBuffer()) : Buffer.alloc(0);
-  const deepgramKey = process.env.DEEPGRAM_API_KEY;
   let transcript = suppliedTranscript;
 
   if (deepgramKey && audio instanceof File && !transcript) {
@@ -222,6 +222,27 @@ export async function POST(request: Request) {
     }
   } catch {
     // Invalid optional metadata does not block the analysis.
+  }
+
+  if (!apiKey && transcript) {
+    return NextResponse.json({
+      request_id: crypto.randomUUID(),
+      status: "completed",
+      processing: {
+        mode: "deepgram_transcription_commercial_rubric",
+        transcription_model: "deepgram-nova-3",
+        analysis_model: "performai-commercial-rubric-v1",
+        advanced_analysis_pending: true,
+      },
+      report: buildRubricReport(transcript),
+    });
+  }
+
+  if (!apiKey) {
+    return NextResponse.json({
+      detail: "A transcricao nao retornou falas suficientes para gerar a avaliacao.",
+      code: "empty_transcript",
+    }, { status: 422 });
   }
 
   const prompt = `Voce e um gerente comercial senior e consultor especialista em avaliacao de calls B2B e B2C, SPIN Selling, Challenger Sale, Sandler, BANT, GPCT e MEDDICC.

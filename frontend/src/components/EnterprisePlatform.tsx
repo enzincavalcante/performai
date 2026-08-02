@@ -48,6 +48,7 @@ import {
 import "./enterprise.css";
 import "./premium-home.css";
 import "./operational-home.css";
+import "./functional-upgrades.css";
 import { PremiumTrainingAcademy } from "./PremiumTraining";
 
 export type EnterpriseView =
@@ -2100,6 +2101,7 @@ function TeamsModule({ onNavigate }: { onNavigate: Navigate }) {
   );
   const [joinCode, setJoinCode] = useState("");
   const [message, setMessage] = useState("");
+  const [selectedTeam, setSelectedTeam] = useState<string | null>(null);
   const createInvite = () => {
     const code = crypto
       .randomUUID()
@@ -2171,58 +2173,52 @@ function TeamsModule({ onNavigate }: { onNavigate: Navigate }) {
         <article>
           <Users />
           <span>
-            <strong>62</strong> colaboradores
+            <strong>0</strong> colaboradores
           </span>
         </article>
         <article>
           <BriefcaseBusiness />
           <span>
-            <strong>4</strong> equipes
+            <strong>1</strong> workspace
           </span>
         </article>
         <article>
           <Target />
           <span>
-            <strong>78%</strong> das metas
+            <strong>--</strong> desempenho
           </span>
         </article>
       </section>
       <div className="team-cards">
-        {[
-          ["Inside Sales", "Ana Martins", "18 vendedores", "8,7", "92%"],
-          ["SDR Outbound", "Carlos Mendes", "22 vendedores", "7,9", "76%"],
-          ["Enterprise", "Juliana Alves", "12 vendedores", "8,4", "84%"],
-          ["Customer Success", "Paulo Lima", "10 vendedores", "8,1", "88%"],
-        ].map((team) => (
-          <article key={team[0]}>
+          <article>
             <header>
               <span>
                 <Users />
               </span>
-              <button aria-label="Mais opcoes">
+              <button aria-label="Mais opcoes" onClick={() => setMessage("Abra a equipe para administrar membros e indicadores.")}>
                 <MoreHorizontal />
               </button>
             </header>
-            <h2>{team[0]}</h2>
+            <h2>Equipe Cavalcante</h2>
             <p>
-              Gestor: {team[1]} · {team[2]}
+              Nenhum membro adicionado ainda.
             </p>
             <dl>
               <div>
                 <dt>Nota media</dt>
-                <dd>{team[3]}</dd>
+                <dd>--</dd>
               </div>
               <div>
                 <dt>Treinamentos</dt>
-                <dd>{team[4]}</dd>
+                <dd>--</dd>
               </div>
             </dl>
-            <button>
+            <button onClick={() => setSelectedTeam("Equipe Cavalcante")}>
               Ver equipe <ChevronRight />
             </button>
           </article>
-        ))}
       </div>
+      {selectedTeam && <section className="team-member-panel"><header><div><p>EQUIPE SELECIONADA</p><h2>{selectedTeam}</h2><span>Dados reais aparecerao quando os membros aceitarem o convite e iniciarem as atividades.</span></div><button onClick={createInvite}><UserPlus /> Adicionar membro</button></header><div className="team-empty"><Users /><h3>Nenhum membro adicionado ainda.</h3><p>Use um convite seguro para adicionar vendedores. Depois do primeiro acesso, esta area mostrara nome, cargo, progresso, treinamentos, desempenho, calls, certificados e status.</p><button onClick={createInvite}><UserPlus /> Adicionar membro</button></div><button className="team-close-detail" onClick={() => setSelectedTeam(null)}>Fechar equipe</button></section>}
     </ModuleFrame>
   );
 }
@@ -2350,6 +2346,8 @@ function LibraryModule() {
 
 function CertificatesModule({ onNavigate }: { onNavigate: Navigate }) {
   const [showPreview, setShowPreview] = useState(false);
+  const [demoMode, setDemoMode] = useState(false);
+  const [demoCertificateId] = useState(() => `PERFORMA-DEMO-${new Date().getFullYear()}-${crypto.randomUUID().slice(0, 8).toUpperCase()}`);
   const [participantName, setParticipantName] = useState(() =>
     typeof window === "undefined"
       ? ""
@@ -2380,20 +2378,23 @@ function CertificatesModule({ onNavigate }: { onNavigate: Navigate }) {
       description="Cada treinamento libera um certificado apos a conclusao das aulas e aprovacao na nota minima definida pela empresa."
       action={
         <div className="hub-actions">
-          <button onClick={() => setShowPreview((value) => !value)}>
+          <button onClick={() => { setDemoMode(false); setShowPreview((value) => !value); }}>
             <Award />{" "}
             {showPreview ? "Proteger previa" : "Visualizar certificado"}
           </button>
+          <button onClick={() => { setDemoMode(true); setShowPreview(true); }}>
+            <Sparkles /> Gerar certificado de teste
+          </button>
           {showPreview && (
             <button onClick={() => window.print()}>
-              <FileText /> Salvar previa em PDF
+              <FileText /> Baixar PDF
             </button>
           )}
         </div>
       }
     >
       <section className="earned-certificates">
-        {[["Fundamentos de Vendas Consultivas", "Concluido em 18/07/2026", "8,9", true], ["Prospeccao de Alta Performance", "72% concluido", "--", false]].map((item) => <article key={item[0] as string}><Award /><div><small>{item[3] ? "CERTIFICADO CONQUISTADO" : "EM ANDAMENTO"}</small><h3>{item[0] as string}</h3><span>{item[1] as string} · Nota {item[2] as string}</span></div><button disabled={!item[3]}>{item[3] ? <><Download /> Baixar PDF</> : <><Lock /> Bloqueado</>}</button></article>)}
+        <article><Award /><div><small>JORNADA EM ANDAMENTO</small><h3>Especialista em Vendas Consultivas</h3><span>O certificado real sera liberado quando os requisitos abaixo forem concluidos.</span></div><button disabled><Lock /> Bloqueado</button></article>
       </section>
       <section className="certificate-levels">
         {[
@@ -2463,7 +2464,7 @@ function CertificatesModule({ onNavigate }: { onNavigate: Navigate }) {
           <strong>{readiness}% pronto para certificacao</strong>
         </div>
         <div
-          className={`certificate-paper ${readiness < 100 ? "certificate-preview" : ""}`}
+          className={`certificate-paper ${readiness < 100 && !demoMode ? "certificate-preview" : ""} ${demoMode ? "certificate-demo" : ""}`}
         >
           <header>
             <Image src={BRAND_LOGO} alt="Performa AI" width={42} height={42} />
@@ -2494,10 +2495,11 @@ function CertificatesModule({ onNavigate }: { onNavigate: Navigate }) {
             <span>
               <ShieldCheck />
               <b>VALIDACAO DIGITAL</b>
-              <small>PERFORMA-2026-0001</small>
+              <small>{demoMode ? demoCertificateId : "PERFORMA-2026-0001"}</small>
             </span>
           </footer>
-          {!showPreview && (
+          {demoMode && <em className="certificate-demo-label">CERTIFICADO DE TESTE · SEM VALIDADE ACADEMICA</em>}
+          {!showPreview && !demoMode && (
             <em>
               <Lock /> Previa protegida ate a conclusao
             </em>

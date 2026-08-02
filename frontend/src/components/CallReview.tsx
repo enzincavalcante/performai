@@ -3,7 +3,8 @@
 import { ChangeEvent, DragEvent, useEffect, useRef, useState } from "react";
 import {
   AlertCircle, ArrowRight, CheckCircle, Clock3, FileAudio,
-  FileText, Lightbulb, Printer, RotateCcw, Sparkles, Target, UploadCloud,
+  FastForward, FileText, Lightbulb, Pause, Play, Printer, Rewind,
+  RotateCcw, Sparkles, Target, UploadCloud,
 } from "lucide-react";
 import "./call-review.css";
 import "./call-review-premium.css";
@@ -211,7 +212,14 @@ function encodeWav(samples: Float32Array, sampleRate: number) {
   return new Blob([buffer], { type: "audio/wav" });
 }
 
-async function transcribeLargeFile(file: File) {
+function offsetTranscriptTimestamps(transcript: string, offsetSeconds: number) {
+  return transcript.replace(/\[(\d{2,}):(\d{2})\]/g, (_match, minutes, seconds) => {
+    const absolute = Number(minutes) * 60 + Number(seconds) + offsetSeconds;
+    return `[${String(Math.floor(absolute / 60)).padStart(2, "0")}:${String(absolute % 60).padStart(2, "0")}]`;
+  });
+}
+
+async function transcribeLargeFile(file: File, onProgress: (progress: number) => void) {
   const AudioContextClass = window.AudioContext;
   const context = new AudioContextClass();
   try {
@@ -228,6 +236,7 @@ async function transcribeLargeFile(file: File) {
 
     const chunkSamples = targetRate * 75;
     const transcripts: string[] = [];
+    const totalParts = Math.ceil(mono.length / chunkSamples);
     for (let start = 0, part = 1; start < mono.length; start += chunkSamples, part += 1) {
       const wav = encodeWav(mono.slice(start, Math.min(start + chunkSamples, mono.length)), targetRate);
       const body = new FormData();
@@ -236,7 +245,8 @@ async function transcribeLargeFile(file: File) {
       const response = await fetch("/api/v1/analytics/call-review", { method: "POST", body, signal: AbortSignal.timeout(120_000) });
       const payload = await response.json().catch(() => null);
       if (!response.ok || !payload?.transcript) throw new Error(payload?.detail ?? `Falha ao transcrever a parte ${part}.`);
-      transcripts.push(String(payload.transcript));
+      transcripts.push(offsetTranscriptTimestamps(String(payload.transcript), (part - 1) * 75));
+      onProgress(Math.round((part / totalParts) * 55) + 15);
     }
     return transcripts.join("\n");
   } finally {
@@ -257,6 +267,10 @@ export function CallReview() {
   const [sellerRole, setSellerRole] = useState("closer");
   const [callType, setCallType] = useState("closing");
   const [documentMode, setDocumentMode] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [processingProgress, setProcessingProgress] = useState(0);
+  const [processingStage, setProcessingStage] = useState<"upload" | "transcribing" | "analyzing" | "report">("upload");
 
   const selectFile = (next: File | undefined) => {
     if (!next) return;
@@ -277,6 +291,8 @@ export function CallReview() {
     setStatus("idle");
     setDocumentMode(false);
     setDuration(null);
+    setCurrentTime(0);
+    setIsPlaying(false);
     if (audioUrl) URL.revokeObjectURL(audioUrl);
     const url = URL.createObjectURL(next);
     setAudioUrl(url);
@@ -295,11 +311,19 @@ export function CallReview() {
     const endpoint = `${baseUrl}/api/v1/analytics/call-review`;
     setError("");
     setStatus("uploading");
-    const processingTimer = window.setTimeout(() => setStatus("processing"), 500);
+    setProcessingStage("upload");
+    setProcessingProgress(8);
+    const stageTimers = [
+      window.setTimeout(() => { setStatus("processing"); setProcessingStage("transcribing"); setProcessingProgress(24); }, 600),
+      window.setTimeout(() => { setProcessingStage("analyzing"); setProcessingProgress(62); }, 3200),
+      window.setTimeout(() => { setProcessingStage("report"); setProcessingProgress(84); }, 9000),
+    ];
     try {
       const body = new FormData();
       if (selectedFile.size > VERCEL_DIRECT_LIMIT && !baseUrl) {
-        const transcript = await transcribeLargeFile(selectedFile);
+        setStatus("processing");
+        setProcessingStage("transcribing");
+        const transcript = await transcribeLargeFile(selectedFile, setProcessingProgress);
         if (!transcript) throw new Error("Nao foi possivel identificar falas nesta gravacao.");
         body.append("transcript", transcript);
       } else {
@@ -311,23 +335,28 @@ export function CallReview() {
         seller_role: sellerRole,
         call_type: callType,
       }));
+      setProcessingStage("analyzing");
+      setProcessingProgress((value) => Math.max(value, 68));
       const response = await fetch(endpoint, { method: "POST", body, signal: AbortSignal.timeout(120_000) });
       const payload = await response.json().catch(() => null);
       if (!response.ok) {
         const detail = payload && typeof payload === "object" && "detail" in payload ? String(payload.detail) : `HTTP ${response.status}`;
         throw new Error(detail);
       }
+      setProcessingStage("report");
+      setProcessingProgress(92);
       const normalized = normalizeReport(payload);
       if (!normalized.summary && normalized.competencies.length === 0 && normalized.excerpts.length === 0) {
         throw new Error("O backend respondeu, mas nao retornou um relatorio reconhecivel.");
       }
       setReport(normalized);
+      setProcessingProgress(100);
       setStatus("report");
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : "Nao foi possivel analisar a ligacao.");
       setStatus("error");
     } finally {
-      window.clearTimeout(processingTimer);
+      stageTimers.forEach(window.clearTimeout);
     }
   };
 
@@ -362,8 +391,55 @@ export function CallReview() {
     setReport(null);
     setError("");
     setStatus("idle");
+    setCurrentTime(0);
+    setIsPlaying(false);
+    setProcessingProgress(0);
     if (inputRef.current) inputRef.current.value = "";
   };
+
+  const togglePlayback = () => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    if (audio.paused) void audio.play();
+    else audio.pause();
+  };
+
+  const movePlayback = (seconds: number) => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    audio.currentTime = Math.max(0, Math.min(audio.duration || 0, audio.currentTime + seconds));
+  };
+
+  const audioTimeline = audioUrl && <div className="call-audio-timeline">
+    <audio
+      ref={audioRef}
+      preload="metadata"
+      src={audioUrl}
+      onLoadedMetadata={(event) => setDuration(Number.isFinite(event.currentTarget.duration) ? event.currentTarget.duration : null)}
+      onTimeUpdate={(event) => setCurrentTime(event.currentTarget.currentTime)}
+      onPlay={() => setIsPlaying(true)}
+      onPause={() => setIsPlaying(false)}
+      onEnded={() => setIsPlaying(false)}
+    />
+    <button type="button" onClick={() => movePlayback(-10)} aria-label="Voltar 10 segundos"><Rewind /></button>
+    <button type="button" className="audio-main-control" onClick={togglePlayback} aria-label={isPlaying ? "Pausar gravacao" : "Reproduzir gravacao"}>{isPlaying ? <Pause /> : <Play />}</button>
+    <button type="button" onClick={() => movePlayback(10)} aria-label="Avancar 10 segundos"><FastForward /></button>
+    <span>{durationLabel(currentTime)}</span>
+    <input
+      aria-label="Posicao da gravacao"
+      type="range"
+      min="0"
+      max={duration ?? 0}
+      step="0.1"
+      value={Math.min(currentTime, duration ?? 0)}
+      onChange={(event) => {
+        const next = Number(event.target.value);
+        setCurrentTime(next);
+        if (audioRef.current) audioRef.current.currentTime = next;
+      }}
+    />
+    <span>{durationLabel(duration)}</span>
+  </div>;
 
   if (status === "report" && report && documentMode) {
     const crm = report.crmReport ?? {};
@@ -372,15 +448,20 @@ export function CallReview() {
       <header className="review-heading no-print"><div><p className="eyebrow">DOCUMENTO GERENCIAL</p><h1>Relatorio profissional da call</h1><p>Documento objetivo para CRM, acompanhamento e tomada de decisao.</p></div><div className="review-document-actions"><button className="secondary-button" onClick={() => setDocumentMode(false)}>Voltar para avaliacao</button><button className="primary-button compact" onClick={() => window.print()}><Printer size={17} /> Salvar em PDF</button></div></header>
       <article className="crm-document">
         <header><div><strong>Performa <b>AI</b></strong><span>INTELIGENCIA COMERCIAL</span></div><div><small>RELATORIO DE CALL DE VENDA</small><b>{file?.name}</b></div></header>
+        <section className="crm-document-score"><div><small>NOTA GERAL</small><strong>{report.score ?? "--"}<span>/100</span></strong></div><p>{report.diagnosis?.executiveSummary ?? report.summary ?? "Resumo executivo nao fornecido pelo analisador."}</p></section>
         <section className="crm-call-data"><h2>1. Dados da call</h2><div>{Object.entries(callData).length ? Object.entries(callData).map(([key,value])=><span key={key}><small>{key.replaceAll("_"," ")}</small><strong>{value || "Informacao nao mencionada durante a ligacao."}</strong></span>) : <span><small>Dados</small><strong>Informacoes nao mencionadas durante a ligacao.</strong></span>}</div></section>
         <section className="crm-temperature"><div><small>2. TEMPERATURA DO LEAD</small><strong>{crm.temperature?.classification ?? "NAO IDENTIFICADA"}</strong></div><p>{crm.temperature?.justification ?? "Nao houve sinais suficientes na transcricao para classificar o lead."}</p></section>
         <section><h2>3. Resumo da conversa</h2><p>{crm.conversationSummary ?? report.summary ?? "A conversa nao trouxe informacoes suficientes para um resumo seguro."}</p></section>
         <section><h2>4. Dor / necessidade identificada</h2><ul>{crm.pains?.length ? crm.pains.map((item)=><li key={item}>{item}</li>) : <li>Nenhuma dor foi mencionada explicitamente durante a ligacao.</li>}</ul></section>
-        <section><h2>5. Objecoes levantadas</h2><div className="crm-table"><div><b>Objecao</b><b>Como foi tratada</b></div>{crm.objections?.length ? crm.objections.map((item,index)=><div key={index}><span>{item.objection ?? "Nao identificado"}</span><span>{item.handling ?? "Nao identificado"}</span></div>) : <div><span>Nenhuma objecao relevante levantada</span><span>-</span></div>}</div></section>
-        <section><h2>6. Qualificacao (BANT / GPCT)</h2><div className="crm-qualification">{Object.entries(crm.qualification ?? {}).map(([key,value])=><p key={key}><b>{key.replaceAll("_"," ")}:</b> {value}</p>)}{!Object.keys(crm.qualification ?? {}).length && <p>Nao identificado.</p>}</div></section>
-        <section><h2>7. Proximos passos</h2><div className="crm-table three"><div><b>Acao</b><b>Responsavel</b><b>Prazo</b></div>{crm.nextSteps?.length ? crm.nextSteps.map((item,index)=><div key={index}><span>{item.action ?? "Nao identificado"}</span><span>{item.owner ?? "Nao identificado"}</span><span>{item.deadline ?? "Nao identificado"}</span></div>) : <div><span>Nenhum passo confirmado</span><span>-</span><span>-</span></div>}</div></section>
+        <section><h2>5. Objecoes levantadas</h2><div className="crm-table"><div><b>Objecao</b><b>Como foi tratada</b></div>{crm.objections?.length ? crm.objections.map((item,index)=><div key={index}><span>{item.objection ?? "Nao mencionada durante a ligacao."}</span><span>{item.handling ?? "Tratamento nao mencionado durante a ligacao."}</span></div>) : <div><span>Nenhuma objecao relevante levantada</span><span>-</span></div>}</div></section>
+        <section><h2>6. Qualificacao (BANT / GPCT)</h2><div className="crm-qualification">{Object.entries(crm.qualification ?? {}).map(([key,value])=><p key={key}><b>{key.replaceAll("_"," ")}:</b> {value}</p>)}{!Object.keys(crm.qualification ?? {}).length && <p>Os criterios de qualificacao nao foram mencionados durante a ligacao.</p>}</div></section>
+        <section><h2>7. Proximos passos</h2><div className="crm-table three"><div><b>Acao</b><b>Responsavel</b><b>Prazo</b></div>{crm.nextSteps?.length ? crm.nextSteps.map((item,index)=><div key={index}><span>{item.action ?? "Acao nao mencionada durante a ligacao."}</span><span>{item.owner ?? "Responsavel nao mencionado durante a ligacao."}</span><span>{item.deadline ?? "Prazo nao mencionado durante a ligacao."}</span></div>) : <div><span>Nenhum passo confirmado</span><span>-</span><span>-</span></div>}</div></section>
         <section><h2>8. Observacoes para o gestor</h2><p>{crm.sellerObservations ?? "A ligacao nao trouxe evidencias suficientes para observacoes adicionais."}</p></section>
-        <section className="crm-final-score"><div><small>9. AVALIACAO RAPIDA</small><strong>{crm.quickEvaluation?.score ?? (report.score !== undefined ? (report.score / 10).toFixed(1) : "--")}<span>/10</span></strong></div><p>{crm.quickEvaluation?.verdict ?? report.summary}</p></section>
+        {report.excerpts.length > 0 && <section><h2>9. Linha do tempo da call</h2><div className="crm-timeline">{report.excerpts.map((item,index)=><article key={`${item.timestamp}-${index}`}><strong>{item.timestamp ?? "--:--"}</strong><div><p>{item.text}</p>{item.insight && <small>{item.insight}</small>}</div></article>)}</div></section>}
+        {report.competencies.length > 0 && <section><h2>10. Avaliacao por competencia</h2><div className="crm-competencies">{report.competencies.map((item)=><article key={item.name}><header><strong>{item.name.replaceAll("_"," ")}</strong><b>{item.score ?? "--"}/100</b></header><p>{item.feedback ?? "Analise detalhada nao fornecida."}</p>{item.nextStep && <small><b>Como melhorar:</b> {item.nextStep}</small>}</article>)}</div></section>}
+        <section className="crm-report-columns"><div><h2>11. Pontos fortes</h2>{report.strengths.length ? report.strengths.map((item)=><article key={item.title}><strong>{item.title}</strong><p>{item.evidence ?? item.why ?? "Evidencia descrita na avaliacao tecnica."}</p></article>) : <p>Nenhum ponto forte foi detalhado.</p>}</div><div><h2>12. Erros e oportunidades perdidas</h2>{report.improvements.length ? report.improvements.map((item)=><article key={item.title}><strong>{item.title}</strong><p>{item.error ?? item.impact ?? "Ponto de melhoria descrito na avaliacao tecnica."}</p>{item.example && <small><b>Exemplo melhor:</b> {item.example}</small>}</article>) : <p>Nenhuma melhoria foi detalhada.</p>}</div></section>
+        {report.actions.length > 0 && <section><h2>13. Plano de melhoria do vendedor</h2><div className="crm-action-plan">{report.actions.map((item)=><article key={item.priority}><strong>{item.priority}</strong><p>{item.action ?? item.objective}</p>{item.exercise && <small><b>Exercicio:</b> {item.exercise}</small>}{item.target && <small><b>Meta:</b> {item.target}</small>}</article>)}</div></section>}
+        <section className="crm-final-score"><div><small>14. AVALIACAO RAPIDA</small><strong>{crm.quickEvaluation?.score ?? (report.score !== undefined ? (report.score / 10).toFixed(1) : "--")}<span>/10</span></strong></div><p>{crm.quickEvaluation?.verdict ?? report.summary}</p></section>
         <footer>Documento gerado pela Performa AI exclusivamente a partir da transcricao da call.</footer>
       </article>
     </div>;
@@ -393,7 +474,7 @@ export function CallReview() {
     </header>
     {audioUrl && <section className="review-audio-player">
       <div><FileAudio /><span><strong>Gravacao analisada</strong><small>Use os controles ou clique em um momento-chave para navegar pela ligacao.</small></span></div>
-      <audio ref={audioRef} controls preload="metadata" src={audioUrl}>Seu navegador nao suporta reproducao de audio.</audio>
+      {audioTimeline}
     </section>}
     <section className="review-overview">
       {report.score !== undefined && <div className="review-score"><span>Nota geral</span><strong>{report.score}<small>/100</small></strong></div>}
@@ -432,10 +513,10 @@ export function CallReview() {
         onDrop={(event: DragEvent<HTMLDivElement>) => { event.preventDefault(); setDragging(false); selectFile(event.dataTransfer.files[0]); }}
       >
         <input ref={inputRef} type="file" accept={ACCEPTED_AUDIO} onChange={(event: ChangeEvent<HTMLInputElement>) => selectFile(event.target.files?.[0])} />
-        {file ? <><span className="review-file-icon"><FileAudio /></span><div><strong>{file.name}</strong><p>{fileSize(file.size)} <i /> {durationLabel(duration)}</p></div>{audioUrl && <audio controls preload="metadata" src={audioUrl}>Seu navegador nao suporta este audio.</audio>}<button type="button" className="text-button" onClick={() => inputRef.current?.click()}>Trocar arquivo</button></> : <><span className="review-file-icon"><UploadCloud /></span><div><strong>Arraste a gravacao para ca</strong><p>ou selecione um arquivo do computador</p></div><button type="button" className="secondary-button" onClick={() => inputRef.current?.click()}>Selecionar audio</button><small>MP3, WAV, M4A, MP4, WEBM, OGG ou AAC, ate 100 MB</small></>}
+        {file ? <><span className="review-file-icon"><FileAudio /></span><div><strong>{file.name}</strong><p>{fileSize(file.size)} <i /> {durationLabel(duration)}</p></div>{audioTimeline}<button type="button" className="text-button" onClick={() => inputRef.current?.click()}>Trocar arquivo</button></> : <><span className="review-file-icon"><UploadCloud /></span><div><strong>Arraste a gravacao para ca</strong><p>ou selecione um arquivo do computador</p></div><button type="button" className="secondary-button" onClick={() => inputRef.current?.click()}>Selecionar audio</button><small>MP3, WAV, M4A, MP4, WEBM, OGG ou AAC, ate 100 MB</small></>}
       </div>
-      {(status === "uploading" || status === "processing") && <div className="review-progress intelligent-processing" aria-live="polite"><span className="review-ai-wave"><i/><i/><i/><i/><i/></span><div><strong>{status === "uploading" ? "Preparando a gravacao" : "Construindo seu diagnostico profissional"}</strong><p>{status === "uploading" ? "Validando audio, duracao e qualidade das falas..." : "A IA esta cruzando contexto, habilidades, objecoes, momentos-chave e proximos passos."}</p><div className="review-processing-steps"><span>Transcricao</span><span>28 criterios</span><span>Plano de acao</span><span>Relatorio</span></div></div></div>}
-      {status === "error" && <div className="review-error" role="alert"><AlertCircle /><div><strong>Nao foi possivel gerar o relatorio</strong><p>{error}</p><small>A gravacao nao foi pontuada. Tente novamente; para arquivos muito grandes, exporte em MP3 sem cortar a conversa.</small></div></div>}
+      {(status === "uploading" || status === "processing") && <div className="review-progress intelligent-processing" aria-live="polite"><span className="review-ai-wave"><i/><i/><i/><i/><i/></span><div><strong>{{upload:"Enviando e validando a gravacao",transcribing:"Transcrevendo a call inteira",analyzing:"Analisando competencias e momentos",report:"Gerando o relatorio profissional"}[processingStage]}</strong><p>{{upload:"Conferindo formato, duracao e qualidade do arquivo.",transcribing:"Processando todas as falas e organizando os participantes.",analyzing:"Avaliando contexto, descoberta, pitch, objecoes, negociacao e fechamento.",report:"Montando notas, evidencias, linha do tempo e plano de melhoria."}[processingStage]}</p><div className="review-progress-track"><i style={{width:`${processingProgress}%`}} /></div><div className="review-processing-steps"><span className={processingProgress>=8?"done":""}>Arquivo</span><span className={processingProgress>=24?"done":""}>Transcricao</span><span className={processingProgress>=62?"done":""}>Analise</span><span className={processingProgress>=84?"done":""}>Relatorio</span><b>{processingProgress}%</b></div></div></div>}
+      {status === "error" && <div className="review-error" role="alert"><AlertCircle /><div><strong>Nao foi possivel gerar o relatorio</strong><p>{error}</p><small>A gravacao nao foi pontuada. O arquivo continua selecionado e pode ser enviado novamente.</small><button type="button" onClick={() => void analyze()} disabled={!file}><RotateCcw /> Tentar novamente</button></div></div>}
       <div className="review-submit"><div><strong>Analise instantanea</strong><span>A avaliacao comeca automaticamente assim que o arquivo e selecionado.</span></div><button className="primary-button compact" disabled={!file || status === "uploading" || status === "processing"} onClick={() => void analyze()}>Analisar novamente <ArrowRight size={17} /></button></div>
     </section>
   </div>;

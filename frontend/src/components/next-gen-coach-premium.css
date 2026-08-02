@@ -70,6 +70,30 @@
   background: #0c2242;
 }
 
+.coach-config textarea,
+.doctor-layout textarea {
+  width: 100%;
+  min-height: 92px;
+  resize: vertical;
+  padding: 11px 12px;
+  border: 1px solid #31517d;
+  border-radius: 5px;
+  color: #eef5ff;
+  background: #071a34;
+  outline: 0;
+}
+
+.doctor-layout > form {
+  max-height: 860px;
+  overflow: auto;
+  align-content: start;
+}
+
+.meeting-plan {
+  max-height: 860px;
+  overflow: auto;
+}
+
 @media (max-width: 900px) {
   .mission-story,
   .mission-briefing {
