@@ -55,6 +55,7 @@ export type EnterpriseView =
   | "dashboard"
   | "learning"
   | "simulation"
+  | "coach"
   | "ai"
   | "calls"
   | "paths"
@@ -81,10 +82,11 @@ const NAVIGATION: {
 }[] = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
   { id: "learning", label: "Treinamentos", icon: GraduationCap },
-  { id: "simulation", label: "IA Coach", icon: Brain },
-  { id: "calls", label: "Analise de Calls", icon: FileAudio },
+  { id: "simulation", label: "Treino de Vendas IA", icon: Brain },
+  { id: "coach", label: "Coach Comercial", icon: Bot },
+  { id: "calls", label: "Analisar Ligacao", icon: FileAudio },
   { id: "gamification", label: "Gamificacao", icon: Trophy },
-  { id: "teams", label: "Equipe", icon: Users },
+  { id: "teams", label: "Minha Equipe", icon: Users },
   { id: "certificates", label: "Certificados", icon: Award },
   { id: "settings", label: "Configuracoes", icon: Settings },
 ];
@@ -257,7 +259,7 @@ function LegacyEnterpriseDashboard({ onNavigate }: { onNavigate: Navigate }) {
             <button onClick={() => onNavigate("paths")}>
               Ver trilha recomendada <ChevronRight />
             </button>
-            <button onClick={() => onNavigate("ai")}>Perguntar para IA</button>
+            <button onClick={() => onNavigate("coach")}>Perguntar ao Coach Comercial</button>
           </div>
         </article>
         <article className="enterprise-panel enterprise-learning-progress">
@@ -404,11 +406,11 @@ function LegacyDarkEnterpriseDashboard({ onNavigate }: { onNavigate: Navigate })
         </div>
         <div className="internal-float internal-float-certificate"><Award/><span><small>Certificado conquistado</small><strong>Fundamentos de Vendas Consultivas</strong></span></div>
         <div className="internal-float internal-float-call"><small>ANALISE DE CALL</small><strong>8,7</strong><span><Star/><Star/><Star/><Star/><Star/></span></div>
-        <div className="internal-float internal-float-coach"><Bot/><span><small>IA COACH</small><strong>Como posso ajudar voce a vender mais hoje?</strong></span><i/></div>
+        <div className="internal-float internal-float-coach"><Bot/><span><small>COACH COMERCIAL</small><strong>Como posso ajudar voce a vender mais hoje?</strong></span><i/></div>
       </div>
     </section>
     <section className="internal-metric-strip">{[["+850","Vendedores ativos",Users],["+3.200","Treinamentos concluidos",GraduationCap],["94%","Aumento de performance",Trophy],["+12.000","Certificados emitidos",Award],["+37%","Aumento medio em vendas",LineChart]].map(([value,label,Icon])=>{const Component=Icon as typeof Users;return <article key={label as string}><Component/><div><strong>{value as string}</strong><span>{label as string}</span></div></article>;})}</section>
-    <section className="internal-home-tools"><header><h2>Tudo que seu time <b>comercial</b> precisa<br/>em um so lugar</h2></header><div>{[["Treinamentos","Trilhas completas com conteudo pratico e certificacao.",GraduationCap,"learning"],["IA Coach","Simulacoes realistas, dicas personalizadas e feedback inteligente.",Bot,"simulation"],["Analise de Calls","IA que analisa suas ligacoes e entrega insights que geram evolucao.",FileAudio,"calls"],["Gamificacao","Missoes, ranking e recompensas que motivam e engajam.",Trophy,"gamification"],["Relatorios","Dashboards completos para gestores tomarem decisoes melhores.",BarChart3,"reports"]].map(([title,text,Icon,target])=>{const Component=Icon as typeof Users;return <button onClick={()=>onNavigate(target as EnterpriseView)} key={title as string}><span><Component/></span><strong>{title as string}</strong><small>{text as string}</small><ChevronRight/></button>;})}</div></section>
+    <section className="internal-home-tools"><header><h2>Tudo que seu time <b>comercial</b> precisa<br/>em um so lugar</h2></header><div>{[["Treinamentos","Trilhas completas com conteudo pratico e certificacao.",GraduationCap,"learning"],["Treino de Vendas IA","Pratique com clientes simulados e receba feedback.",Brain,"simulation"],["Coach Comercial","Tire duvidas e receba orientacao contextual.",Bot,"coach"],["Analisar Ligacao","Envie calls reais e transforme erros em evolucao.",FileAudio,"calls"],["Gamificacao","Missoes, ranking e recompensas que motivam e engajam.",Trophy,"gamification"]].map(([title,text,Icon,target])=>{const Component=Icon as typeof Users;return <button onClick={()=>onNavigate(target as EnterpriseView)} key={title as string}><span><Component/></span><strong>{title as string}</strong><small>{text as string}</small><ChevronRight/></button>;})}</div></section>
   </div>;
 }
 
@@ -420,7 +422,7 @@ function MarketingEnterpriseDashboard({ onNavigate }: { onNavigate: Navigate }) 
     ["Ranking", "Evolucao e consistencia de cada vendedor.", Medal, "gamification"],
     ["Gamificacao", "XP, desafios e conquistas que engajam o time.", Trophy, "gamification"],
     ["Relatorios", "Dados claros para o gestor decidir onde agir.", BarChart3, "reports"],
-    ["Digital Twin", "A IA aprende sua empresa, oferta e abordagem.", Brain, "ai"],
+    ["Coach Comercial", "Tire duvidas e receba orientacao para vender melhor.", Bot, "coach"],
     ["Certificados", "Conquistas profissionais para cada etapa concluida.", Award, "certificates"],
   ] as const;
 
@@ -445,7 +447,7 @@ function MarketingEnterpriseDashboard({ onNavigate }: { onNavigate: Navigate }) 
         </div>
         <div className="premium-float premium-certificate"><Award/><span><small>CERTIFICADO CONQUISTADO</small><strong>Vendas Consultivas</strong></span></div>
         <div className="premium-float premium-call"><LineChart/><span><small>ANALISE DE CALL</small><strong>8,7</strong></span></div>
-        <div className="premium-float premium-coach"><Bot/><span><small>IA COACH</small><strong>Como posso ajudar voce a vender mais hoje?</strong></span></div>
+        <div className="premium-float premium-coach"><Bot/><span><small>COACH COMERCIAL</small><strong>Como posso ajudar voce a vender mais hoje?</strong></span></div>
       </div>
     </section>
 
@@ -479,7 +481,7 @@ export function EnterpriseDashboard({ onNavigate }: { onNavigate: Navigate }) {
   const quickActions = [
     ["Treinar uma ligacao", "Pratique com um cliente de IA antes da proxima conversa real.", "Melhor para: ganhar confianca e testar seu discurso.", Mic, "simulation", "Iniciar treino"],
     ["Analisar uma call", "Envie uma gravacao e descubra onde acertou, errou e perdeu oportunidades.", "Melhor para: transformar uma ligacao real em plano de evolucao.", FileAudio, "calls", "Enviar gravacao"],
-    ["Conversar com IA Coach", "Tire duvidas, melhore argumentos e prepare uma negociacao importante.", "Melhor para: receber orientacao comercial personalizada.", Bot, "simulation", "Abrir IA Coach"],
+    ["Conversar com o Coach Comercial", "Tire duvidas, melhore argumentos e prepare uma negociacao importante.", "Melhor para: receber orientacao comercial personalizada.", Bot, "coach", "Abrir Coach Comercial"],
     ["Continuar treinamento", "Retome sua trilha no ponto exato em que parou.", "Melhor para: construir habilidade com consistencia.", GraduationCap, "learning", "Continuar aula"],
   ] as const;
 
@@ -1073,7 +1075,7 @@ function LearningModule({ onNavigate }: { onNavigate: Navigate }) {
               className="course-practice"
               onClick={() => onNavigate("simulation")}
             >
-              <Mic /> Praticar com IA Coach
+              <Mic /> Praticar no Treino de Vendas IA
             </button>
           </aside>
         </section>
@@ -2122,9 +2124,9 @@ function TeamsModule({ onNavigate }: { onNavigate: Navigate }) {
   };
   return (
     <ModuleFrame
-      eyebrow="EQUIPES E PERFORMANCE"
-      title="Pessoas, evolucao e resultado."
-      description="Acompanhe vendedores, rankings, conversao, volume e orientacoes da IA."
+      eyebrow="GESTAO COMERCIAL"
+      title="Minha Equipe"
+      description="Veja quem esta na equipe, como cada vendedor esta performando e quem precisa de apoio."
       action={
         <div className="team-actions">
           <button onClick={() => onNavigate("performance")}>
@@ -2173,19 +2175,25 @@ function TeamsModule({ onNavigate }: { onNavigate: Navigate }) {
         <article>
           <Users />
           <span>
-            <strong>0</strong> colaboradores
+            <strong>0</strong> membros
           </span>
         </article>
         <article>
-          <BriefcaseBusiness />
+          <Star />
           <span>
-            <strong>1</strong> workspace
+            <strong>--</strong> media da equipe
           </span>
         </article>
         <article>
-          <Target />
+          <CheckCircle2 />
           <span>
-            <strong>--</strong> desempenho
+            <strong>0</strong> treinamentos concluidos
+          </span>
+        </article>
+        <article>
+          <Play />
+          <span>
+            <strong>0</strong> em treinamento
           </span>
         </article>
       </section>
@@ -2218,7 +2226,7 @@ function TeamsModule({ onNavigate }: { onNavigate: Navigate }) {
             </button>
           </article>
       </div>
-      {selectedTeam && <section className="team-member-panel"><header><div><p>EQUIPE SELECIONADA</p><h2>{selectedTeam}</h2><span>Dados reais aparecerao quando os membros aceitarem o convite e iniciarem as atividades.</span></div><button onClick={createInvite}><UserPlus /> Adicionar membro</button></header><div className="team-empty"><Users /><h3>Nenhum membro adicionado ainda.</h3><p>Use um convite seguro para adicionar vendedores. Depois do primeiro acesso, esta area mostrara nome, cargo, progresso, treinamentos, desempenho, calls, certificados e status.</p><button onClick={createInvite}><UserPlus /> Adicionar membro</button></div><button className="team-close-detail" onClick={() => setSelectedTeam(null)}>Fechar equipe</button></section>}
+      {selectedTeam && <section className="team-member-panel"><header><div><p>EQUIPE SELECIONADA</p><h2>{selectedTeam}</h2><span>Dados reais aparecerao quando os membros aceitarem o convite e iniciarem as atividades.</span></div><button onClick={createInvite}><UserPlus /> Adicionar vendedor</button></header><div className="team-empty"><Users /><h3>Sua equipe ainda esta vazia.</h3><p>Adicione vendedores para acompanhar treinamentos, desempenho, evolucao, calls analisadas, pontos fortes e recomendacoes.</p><button onClick={createInvite}><UserPlus /> Adicionar vendedor</button></div><button className="team-close-detail" onClick={() => setSelectedTeam(null)}>Fechar equipe</button></section>}
     </ModuleFrame>
   );
 }
@@ -2348,6 +2356,7 @@ function CertificatesModule({ onNavigate }: { onNavigate: Navigate }) {
   const [showPreview, setShowPreview] = useState(false);
   const [demoMode, setDemoMode] = useState(false);
   const [demoCertificateId] = useState(() => `PERFORMA-DEMO-${new Date().getFullYear()}-${crypto.randomUUID().slice(0, 8).toUpperCase()}`);
+  const [demoDate] = useState(() => new Date().toLocaleDateString("pt-BR"));
   const [participantName, setParticipantName] = useState(() =>
     typeof window === "undefined"
       ? ""
@@ -2383,7 +2392,7 @@ function CertificatesModule({ onNavigate }: { onNavigate: Navigate }) {
             {showPreview ? "Proteger previa" : "Visualizar certificado"}
           </button>
           <button onClick={() => { setDemoMode(true); setShowPreview(true); }}>
-            <Sparkles /> Gerar certificado de teste
+            <Sparkles /> Certificado de demonstracao
           </button>
           {showPreview && (
             <button onClick={() => window.print()}>
@@ -2480,6 +2489,12 @@ function CertificatesModule({ onNavigate }: { onNavigate: Navigate }) {
             <b>Especialista em Vendas Consultivas</b>, demonstrando dominio
             teorico e pratico das competencias comerciais avaliadas.
           </p>
+          <section className="certificate-meta">
+            <span><small>CURSO</small><strong>Especialista em Vendas Consultivas</strong></span>
+            <span><small>CARGA HORARIA</small><strong>20 horas</strong></span>
+            <span><small>DATA DE EMISSAO</small><strong>{demoDate}</strong></span>
+            <span><small>IDENTIFICACAO</small><strong>{demoMode ? demoCertificateId : "PERFORMA-2026-0001"}</strong></span>
+          </section>
           <footer>
             <div>
               <Image

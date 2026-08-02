@@ -51,6 +51,24 @@ type TrainingModule = {
   lessons: string[];
 };
 
+type LessonQuestion = {
+  type: string;
+  prompt: string;
+  options: string[];
+  correct: number;
+  explanation: string;
+  application: string;
+};
+
+type AssessmentState = {
+  index: number;
+  answers: number[];
+  revealed: boolean;
+  finished: boolean;
+};
+
+const EMPTY_ASSESSMENT: AssessmentState = { index: 0, answers: [], revealed: false, finished: false };
+
 const MODULES: TrainingModule[] = [
   { id: "fundamentos", number: 1, title: "Fundamentos de Vendas", description: "Mentalidade, disciplina e processo comercial moderno.", outcome: "Construa a base comportamental de um vendedor de alta performance.", level: "Essencial", hours: "4h 20min", color: "blue", icon: Star, videoId: "4XpoIWWaja4", lessons: ["Mentalidade comercial", "Vendedores de alta performance", "Processo comercial moderno", "Perfil dos melhores vendedores", "Disciplina e consistencia"] },
   { id: "produto", number: 2, title: "Conhecimento de Produto", description: "Domine valor, beneficios e diferenciais da sua oferta.", outcome: "Apresente valor com seguranca sem cair em uma lista de funcionalidades.", level: "Essencial", hours: "3h 45min", color: "violet", icon: BriefcaseBusiness, videoId: "MPRP2eGXdFM", lessons: ["Dominio da oferta", "Caracteristica versus beneficio", "Construcao de diferenciais", "Prova e confianca", "Estudo de caso: pitch de valor"] },
@@ -109,12 +127,146 @@ function lessonResource(module: TrainingModule, lessonTitle: string) {
     concepts: [module.outcome, `Em ${lessonTitle}, o comportamento esperado e: ${technique}`, "Toda tecnica precisa ser adaptada ao contexto, sustentada por evidencia e confirmada com o cliente."],
     checklist: ["Defini o objetivo da conversa", "Entendi o contexto antes de apresentar", "Usei uma pergunta de validacao", "Registrei evidencia e proximo passo"],
     avoid: ["Repetir um roteiro sem ouvir", "Apresentar funcionalidades antes da dor", "Usar promessas sem prova", "Encerrar sem compromisso verificavel"],
+    objective: `Aplicar ${lessonTitle.toLowerCase()} de forma consultiva, mensuravel e adaptada ao cliente.`,
+    deepDive: `${module.outcome} Nesta aula, o conceito deixa de ser teoria: o vendedor observa sinais do cliente, escolhe a tecnica adequada, executa com naturalidade e confirma se a conversa avancou.`,
+    examples: [
+      `Antes de aplicar ${lessonTitle.toLowerCase()}, o vendedor confirma contexto, impacto e expectativa do comprador.`,
+      `Depois da resposta, registra a evidencia, o risco e o proximo passo para nao depender da memoria.`,
+    ],
+    dialogue: [`Vendedor: ${script}`, "Cliente: Faz sentido. Quero entender como isso se aplica ao meu cenario.", "Vendedor: Posso fazer duas perguntas para conectar a proposta ao seu resultado?"],
+    bestPractices: ["Usar as palavras e os dados apresentados pelo cliente", "Explicar o motivo da pergunta quando o tema for sensivel", "Confirmar entendimento antes de mudar de assunto", "Terminar com uma acao verificavel"],
+    practice: `Escreva uma abordagem de tres etapas para aplicar ${lessonTitle.toLowerCase()} ao seu principal cliente: pergunta, argumento baseado em evidencia e confirmacao.`,
+    summary: `${lessonTitle} funciona quando o vendedor prepara o objetivo, entende o contexto, executa a tecnica sem parecer decorado e mede o efeito na decisao do cliente.`,
   };
+}
+
+function buildLessonQuestions(module: TrainingModule, lessonTitle: string, mode: "exercise" | "quiz"): LessonQuestion[] {
+  const resource = lessonResource(module, lessonTitle);
+  const prefix = mode === "exercise" ? "Atividade aplicada" : "Teste rapido";
+  return [
+    {
+      type: "Situacao comercial real",
+      prompt: `${prefix}: durante uma conversa sobre ${lessonTitle}, o cliente responde de forma vaga. Qual e a melhor proxima acao?`,
+      options: ["Apresentar todas as funcionalidades", "Aprofundar com uma pergunta ligada ao impacto", "Oferecer desconto", "Encerrar e enviar um PDF"],
+      correct: 1,
+      explanation: `A tecnica de ${lessonTitle.toLowerCase()} exige contexto antes de recomendacao. Aprofundar evita uma resposta generica.`,
+      application: "Na venda real, use a ultima frase do cliente como ponto de partida para a proxima pergunta.",
+    },
+    {
+      type: "Identificacao de erro",
+      prompt: `Qual comportamento mais prejudica a aplicacao de ${lessonTitle}?`,
+      options: ["Confirmar o entendimento", resource.avoid[0], "Registrar o proximo passo", "Adaptar a linguagem ao comprador"],
+      correct: 1,
+      explanation: `${resource.avoid[0]} transforma uma tecnica util em um discurso mecanico e reduz a escuta.`,
+      application: "Prepare pontos de apoio, mas construa a resposta usando o que o cliente acabou de dizer.",
+    },
+    {
+      type: "Tomada de decisao",
+      prompt: `O comprador pede objetividade no meio da conversa. O que voce faria ao aplicar ${lessonTitle}?`,
+      options: ["Acelerar e omitir o diagnostico", "Ignorar o pedido", "Resumir o que entendeu e fazer uma pergunta decisiva", "Reiniciar o pitch"],
+      correct: 2,
+      explanation: "Objetividade nao significa pular o diagnostico. Um resumo curto demonstra escuta e protege a qualidade da decisao.",
+      application: `Diga: "Pelo que entendi, o ponto central e X. Para aplicar ${lessonTitle.toLowerCase()}, preciso confirmar Y. Correto?"`,
+    },
+    {
+      type: "Construcao de argumento",
+      prompt: `Qual argumento demonstra melhor dominio do objetivo desta aula?`,
+      options: ["Somos lideres e temos muitos recursos", module.outcome, "Nosso preco termina hoje", "Todo cliente precisa desta solucao"],
+      correct: 1,
+      explanation: "Um argumento profissional descreve a mudanca esperada e conecta a tecnica a um resultado, sem promessas vazias.",
+      application: "Troque adjetivos por problema, impacto, evidencia e resultado esperado.",
+    },
+    {
+      type: "Objecao do cliente",
+      prompt: `O cliente diz: "nao vejo prioridade nisso agora". Qual resposta usa melhor o principio de ${lessonTitle}?`,
+      options: ["Se fechar hoje, consigo desconto", "Entendo. O que precisaria acontecer para isso virar prioridade?", "Voce esta errado", "Vou mandar a proposta novamente"],
+      correct: 1,
+      explanation: "A pergunta valida a resistencia e investiga o criterio real, em vez de criar pressao artificial.",
+      application: "Investigue evento, impacto e custo da inacao antes de defender urgencia.",
+    },
+    {
+      type: "O que voce faria?",
+      prompt: `Voce percebe que falou por dois minutos sem validar o cliente. Qual deve ser sua correcao imediata?`,
+      options: ["Continuar para nao perder a linha", "Perguntar se o preco cabe no orcamento", "Resumir em uma frase e devolver a conversa ao cliente", "Encerrar a reuniao"],
+      correct: 2,
+      explanation: "Recuperar a escuta exige interromper o proprio monologo, sintetizar valor e convidar o cliente a reagir.",
+      application: "Use uma pergunta de validacao a cada bloco importante da conversa.",
+    },
+    {
+      type: "Aplicacao da tecnica",
+      prompt: `Qual sequencia representa uma aplicacao profissional de ${lessonTitle}?`,
+      options: ["Pitch, desconto, urgencia", "Contexto, tecnica, confirmacao e proximo passo", "Funcionalidades, proposta e silencio", "Historia pessoal, preco e follow-up"],
+      correct: 1,
+      explanation: "A sequencia conecta preparacao, execucao e confirmacao. Isso torna o comportamento observavel e repetivel.",
+      application: `Use o checklist da aula antes de praticar ${lessonTitle.toLowerCase()} em uma call real.`,
+    },
+    {
+      type: "Boas praticas",
+      prompt: "O que um vendedor de alta performance faria diferente?",
+      options: [resource.bestPractices[0], "Usaria o mesmo texto em todas as conversas", "Evitaria perguntas para ganhar tempo", "Prometeria resultado sem dados"],
+      correct: 0,
+      explanation: `${resource.bestPractices[0]} aumenta relevancia e mostra que a recomendacao nasceu da conversa.`,
+      application: "Anote duas expressoes usadas pelo cliente e reutilize-as no resumo de valor.",
+    },
+    {
+      type: "Analise de conversa",
+      prompt: `No exemplo "${resource.script}", qual e o principal objetivo da frase?`,
+      options: ["Pressionar uma decisao", "Mostrar superioridade", "Conectar contexto e validar entendimento", "Mudar de assunto"],
+      correct: 2,
+      explanation: "O script organiza o raciocinio e termina abrindo espaco para o cliente confirmar, corrigir ou aprofundar.",
+      application: "Nao trate o script como frase decorada; substitua os campos pelo contexto verdadeiro.",
+    },
+    {
+      type: "Fechamento da atividade",
+      prompt: `Como saber se ${lessonTitle} foi bem aplicada?`,
+      options: ["O vendedor falou mais", "A reuniao ficou mais longa", "Existe evidencia de entendimento e um proximo passo coerente", "O cliente recebeu muitos materiais"],
+      correct: 2,
+      explanation: "Competencia comercial aparece em evidencias: entendimento confirmado, resistencia esclarecida e avancos verificaveis.",
+      application: "Ao final, registre o que mudou na percepcao do cliente e qual compromisso foi assumido.",
+    },
+  ];
 }
 
 function readProgress(): Record<string, number[]> {
   if (typeof window === "undefined") return {};
   try { return JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "{}"); } catch { return {}; }
+}
+
+function LessonAssessment({
+  mode,
+  questions,
+  state,
+  onChange,
+}: {
+  mode: "exercise" | "quiz";
+  questions: LessonQuestion[];
+  state: AssessmentState;
+  onChange: (state: AssessmentState) => void;
+}) {
+  const score = state.answers.reduce((total, answer, index) => total + (answer === questions[index]?.correct ? 1 : 0), 0);
+  const percentage = score * 10;
+  const performance = percentage >= 90 ? "Excelente" : percentage >= 70 ? "Bom" : percentage >= 50 ? "Regular" : "Precisa melhorar";
+  const current = questions[state.index];
+  const answer = state.answers[state.index];
+
+  if (state.finished) {
+    const mistakes = questions.map((question, index) => ({ question, index, answer: state.answers[index] })).filter((item) => item.answer !== item.question.correct);
+    return <section className="lesson-assessment-result">
+      <header><div><small>{mode === "exercise" ? "RESULTADO DO EXERCICIO" : "RESULTADO DO QUIZ"}</small><h2>{performance}</h2><p>{percentage >= 70 ? "Voce demonstrou dominio do conteudo. Revise os pontos abaixo para consolidar a aplicacao." : "Revise os erros antes de concluir a aula e refaca a atividade para transformar teoria em pratica."}</p></div><strong>{percentage}<span>/100</span></strong></header>
+      <div className="assessment-result-kpis"><article><span>Nota</span><strong>{percentage}/100</strong></article><article><span>Acertos</span><strong>{score}/10</strong></article><article><span>Erros</span><strong>{10 - score}/10</strong></article><article><span>Desempenho</span><strong>{performance}</strong></article></div>
+      {mistakes.length > 0 ? <div className="assessment-review"><h3>Questoes para revisar</h3>{mistakes.map(({ question, index, answer: selectedAnswer }) => <article key={question.prompt}><span>{index + 1}</span><div><strong>{question.prompt}</strong><p className="student-error">Sua resposta: {question.options[selectedAnswer] ?? "Nao respondida"}</p><p><b>Resposta correta:</b> {question.options[question.correct]}</p><p>{question.explanation}</p><small><Lightbulb /> Como aplicar: {question.application}</small></div></article>)}</div> : <div className="assessment-perfect"><CheckCircle2 /><div><strong>Dominio completo</strong><p>Voce acertou todas as questoes e pode seguir para a proxima etapa.</p></div></div>}
+      <div className="assessment-recommendation"><Target /><div><strong>Recomendacao personalizada</strong><p>{mistakes.length ? `Revise ${mistakes.slice(0, 2).map((item) => item.question.type.toLowerCase()).join(" e ")}. Depois, repita a atividade buscando justificar cada decisao com contexto, impacto e evidencia.` : "Aplique o checklist em uma conversa real nas proximas 48 horas e registre o resultado."}</p></div></div>
+      <button className="assessment-restart" onClick={() => onChange(EMPTY_ASSESSMENT)}>Refazer {mode === "exercise" ? "exercicio" : "quiz"}</button>
+    </section>;
+  }
+
+  return <section className={`lesson-assessment ${mode}`}>
+    <header><div><small>{mode === "exercise" ? "EXERCICIO COMPLETO" : "QUIZ DA AULA"} · PERGUNTA {state.index + 1} DE 10</small><h2>{current.prompt}</h2><p>{current.type} · Conteudo especifico desta aula</p></div><span>{Math.round((state.answers.length / 10) * 100)}%</span></header>
+    <div className="assessment-progress"><i style={{ width: `${(state.answers.length / 10) * 100}%` }} /><span>{state.answers.length} de 10 respondidas</span></div>
+    <div className="assessment-options">{current.options.map((option, index) => <button className={state.revealed ? index === current.correct ? "correct" : answer === index ? "wrong" : "" : ""} disabled={state.revealed} onClick={() => onChange({ ...state, answers: [...state.answers.slice(0, state.index), index], revealed: true })} key={option}><span>{String.fromCharCode(65 + index)}</span><strong>{option}</strong></button>)}</div>
+    {state.revealed && <div className={`assessment-feedback ${answer === current.correct ? "correct" : "wrong"}`}>{answer === current.correct ? <CheckCircle2 /> : <Target />}<div><strong>{answer === current.correct ? "Resposta correta" : "Resposta incorreta"}</strong>{answer !== current.correct && <p><b>Resposta correta:</b> {current.options[current.correct]}</p>}<p>{current.explanation}</p><small><Lightbulb /> Por que e melhor na venda real: {current.application}</small></div></div>}
+    <footer><span>Nota parcial: {score * 10}/{Math.max(10, state.answers.length * 10)}</span><button disabled={!state.revealed} onClick={() => state.index === 9 ? onChange({ ...state, finished: true }) : onChange({ ...state, index: state.index + 1, revealed: false })}>{state.index === 9 ? "Ver resultado" : "Proxima pergunta"}<ArrowRight /></button></footer>
+  </section>;
 }
 
 export function PremiumTrainingAcademy({ onNavigate }: { onNavigate: (view: EnterpriseView) => void }) {
@@ -124,12 +276,12 @@ export function PremiumTrainingAcademy({ onNavigate }: { onNavigate: (view: Ente
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState("Todos");
   const [progress, setProgress] = useState<Record<string, number[]>>({});
-  const [quizAnswer, setQuizAnswer] = useState<number | null>(null);
-  const [exerciseDone, setExerciseDone] = useState([false, false, false]);
+  const [exerciseState, setExerciseState] = useState<AssessmentState>(EMPTY_ASSESSMENT);
+  const [quizState, setQuizState] = useState<AssessmentState>(EMPTY_ASSESSMENT);
   const [notice, setNotice] = useState("");
   const [resourceView, setResourceView] = useState<"material" | "summary" | null>(null);
 
-  useEffect(() => { setProgress(readProgress()); }, []);
+  useEffect(() => { queueMicrotask(() => setProgress(readProgress())); }, []);
   const saveProgress = (next: Record<string, number[]>) => { setProgress(next); localStorage.setItem(STORAGE_KEY, JSON.stringify(next)); };
   const moduleProgress = (module: TrainingModule) => Math.round(((progress[module.id]?.length ?? 0) / module.lessons.length) * 100);
   const completedLessons = Object.values(progress).reduce((total, items) => total + items.length, 0);
@@ -138,19 +290,23 @@ export function PremiumTrainingAcademy({ onNavigate }: { onNavigate: (view: Ente
   const completedModules = MODULES.filter((module) => moduleProgress(module) === 100).length;
   const visible = useMemo(() => MODULES.filter((module) => (filter === "Todos" || module.level === filter) && `${module.title} ${module.description} ${module.lessons.join(" ")}`.toLowerCase().includes(query.toLowerCase())), [query, filter]);
 
-  const openModule = (module: TrainingModule) => { setSelected(module); setLesson(0); setPanel("content"); setQuizAnswer(null); setExerciseDone([false, false, false]); setResourceView(null); window.scrollTo({ top: 0, behavior: "smooth" }); };
+  const resetActivities = () => {
+    setExerciseState(EMPTY_ASSESSMENT);
+    setQuizState(EMPTY_ASSESSMENT);
+  };
+  const openModule = (module: TrainingModule) => { setSelected(module); setLesson(0); setPanel("content"); resetActivities(); setResourceView(null); window.scrollTo({ top: 0, behavior: "smooth" }); };
   const markLesson = () => {
     if (!selected) return;
     const completed = new Set(progress[selected.id] ?? []); completed.add(lesson);
     saveProgress({ ...progress, [selected.id]: [...completed] });
     setNotice("Aula concluida: +120 XP e 30 moedas");
     window.setTimeout(() => setNotice(""), 2800);
-    if (lesson < selected.lessons.length - 1) { setLesson(lesson + 1); setPanel("content"); setQuizAnswer(null); setExerciseDone([false, false, false]); }
+    if (lesson < selected.lessons.length - 1) { setLesson(lesson + 1); setPanel("content"); resetActivities(); }
   };
   const downloadMaterial = () => {
     if (!selected) return;
     const resource = lessonResource(selected, selected.lessons[lesson]);
-    const content = `PERFORMA AI - MATERIAL DA AULA\n\nMODULO: ${selected.title}\nAULA: ${selected.lessons[lesson]}\n\nOBJETIVO\n${selected.outcome}\n\nCONCEITOS IMPORTANTES\n${resource.concepts.map((item) => `- ${item}`).join("\n")}\n\nTECNICA\n${resource.technique}\n\nSCRIPT RECOMENDADO\n\"${resource.script}\"\n\nEXEMPLO COMERCIAL\nO vendedor investiga o contexto, conecta a tecnica a uma dor real e confirma se o cliente percebeu valor antes de avancar.\n\nO QUE EVITAR\n${resource.avoid.map((item) => `- ${item}`).join("\n")}\n\nCHECKLIST\n${resource.checklist.map((item) => `[ ] ${item}`).join("\n")}\n\nEXERCICIO\nReescreva o script com seu produto, seu cliente e uma evidencia real. Depois pratique no simulador da Performa AI.`;
+    const content = `PERFORMA AI - MATERIAL PROFISSIONAL\n\nMODULO: ${selected.title}\nAULA: ${selected.lessons[lesson]}\n\nOBJETIVO DA AULA\n${resource.objective}\n\nO QUE O VENDEDOR APRENDERA\n${selected.outcome}\n\nCONTEUDO PRINCIPAL\n${resource.deepDive}\n\nCONCEITOS IMPORTANTES\n${resource.concepts.map((item) => `- ${item}`).join("\n")}\n\nTECNICA\n${resource.technique}\n\nEXEMPLOS\n${resource.examples.map((item) => `- ${item}`).join("\n")}\n\nEXEMPLO DE CONVERSA\n${resource.dialogue.join("\n")}\n\nERROS COMUNS\n${resource.avoid.map((item) => `- ${item}`).join("\n")}\n\nBOAS PRATICAS\n${resource.bestPractices.map((item) => `- ${item}`).join("\n")}\n\nCHECKLIST\n${resource.checklist.map((item) => `[ ] ${item}`).join("\n")}\n\nEXERCICIO PRATICO\n${resource.practice}\n\nRESUMO\n${resource.summary}`;
     const url = URL.createObjectURL(new Blob([content], { type: "text/plain;charset=utf-8" }));
     const link = document.createElement("a"); link.href = url; link.download = `${selected.id}-aula-${lesson + 1}-material.txt`; link.click(); URL.revokeObjectURL(url);
   };
@@ -160,20 +316,22 @@ export function PremiumTrainingAcademy({ onNavigate }: { onNavigate: (view: Ente
     const completed = progress[selected.id]?.includes(lesson) ?? false;
     const percent = moduleProgress(selected);
     const resource = lessonResource(selected, selected.lessons[lesson]);
+    const exerciseQuestions = buildLessonQuestions(selected, selected.lessons[lesson], "exercise");
+    const quizQuestions = buildLessonQuestions(selected, selected.lessons[lesson], "quiz");
     return <div className="premium-academy lesson-workspace">
       {notice && <div className="academy-toast"><Award /> {notice}</div>}
-      {resourceView && <div className="lesson-resource-backdrop" role="presentation" onClick={() => setResourceView(null)}><article className="lesson-resource-modal" role="dialog" aria-modal="true" aria-label={resourceView === "material" ? "Material da aula" : "Resumo pratico"} onClick={(event) => event.stopPropagation()}><header><div><small>{resourceView === "material" ? "MATERIAL COMPLETO" : "RESUMO PRATICO"}</small><h2>{selected.lessons[lesson]}</h2><p>{selected.title}</p></div><button onClick={() => setResourceView(null)} aria-label="Fechar"><X /></button></header>{resourceView === "material" ? <div className="lesson-resource-body"><section><h3>Conteudo e objetivo</h3><p>{selected.outcome} O foco e transformar o conceito em um comportamento observavel e repetivel na rotina comercial.</p></section><section><h3>Conceitos importantes</h3><ul>{resource.concepts.map((item) => <li key={item}>{item}</li>)}</ul></section><section><h3>Tecnica apresentada</h3><p>{resource.technique}</p></section><section className="resource-script"><h3>Script recomendado</h3><blockquote>{resource.script}</blockquote></section><section><h3>Aplicacao pratica</h3><p>Adapte o script ao seu produto, use uma evidencia real e confirme a reacao do cliente antes de seguir. Registre a resposta para revisar depois.</p></section><section><h3>Exercicio</h3><p>Escreva uma versao do script para seu principal cliente e pratique no simulador com dificuldade avancada.</p></section></div> : <div className="lesson-resource-body summary"><section><h3>O que foi ensinado</h3><p>{selected.outcome}</p></section><section><h3>Pontos principais</h3><ul>{resource.concepts.map((item) => <li key={item}>{item}</li>)}</ul></section><section><h3>O que fazer</h3><ul>{resource.checklist.map((item) => <li key={item}>{item}</li>)}</ul></section><section><h3>O que evitar e erros comuns</h3><ul>{resource.avoid.map((item) => <li key={item}>{item}</li>)}</ul></section><section><h3>Exemplo melhor</h3><blockquote>{resource.script}</blockquote></section><section><h3>Proximo passo recomendado</h3><p>Pratique esta situacao no simulador, conclua o quiz e aplique a tecnica em uma conversa real nas proximas 48 horas.</p></section></div>}<footer><button onClick={downloadMaterial}><Download /> Baixar material</button><button onClick={() => { setResourceView(null); onNavigate("simulation"); }}><Mic /> Praticar agora</button></footer></article></div>}
+      {resourceView && <div className="lesson-resource-backdrop" role="presentation" onClick={() => setResourceView(null)}><article className="lesson-resource-modal" role="dialog" aria-modal="true" aria-label={resourceView === "material" ? "Material da aula" : "Resumo pratico"} onClick={(event) => event.stopPropagation()}><header><div><small>{resourceView === "material" ? "MATERIAL PROFISSIONAL" : "RESUMO PRATICO"}</small><h2>{selected.lessons[lesson]}</h2><p>{selected.title}</p></div><button onClick={() => setResourceView(null)} aria-label="Fechar"><X /></button></header>{resourceView === "material" ? <div className="lesson-resource-body professional"><section className="resource-wide"><h3>Objetivo da aula</h3><p>{resource.objective}</p></section><section className="resource-wide"><h3>O que o vendedor aprendera</h3><p>{selected.outcome}</p></section><section className="resource-wide"><h3>Conteudo principal</h3><p>{resource.deepDive}</p></section><section><h3>Conceitos fundamentais</h3><ul>{resource.concepts.map((item) => <li key={item}>{item}</li>)}</ul></section><section><h3>Tecnica comercial</h3><p>{resource.technique}</p></section><section><h3>Exemplos de aplicacao</h3><ul>{resource.examples.map((item) => <li key={item}>{item}</li>)}</ul></section><section className="resource-script"><h3>Exemplo de conversa</h3><blockquote>{resource.dialogue.map((line) => <span key={line}>{line}</span>)}</blockquote></section><section><h3>Erros comuns</h3><ul>{resource.avoid.map((item) => <li key={item}>{item}</li>)}</ul></section><section><h3>Boas praticas</h3><ul>{resource.bestPractices.map((item) => <li key={item}>{item}</li>)}</ul></section><section><h3>Checklist de campo</h3><ul>{resource.checklist.map((item) => <li key={item}>{item}</li>)}</ul></section><section><h3>Exercicio pratico</h3><p>{resource.practice}</p></section><section className="resource-wide"><h3>Resumo da aula</h3><p>{resource.summary}</p></section></div> : <div className="lesson-resource-body summary"><section><h3>O que foi ensinado</h3><p>{selected.outcome}</p></section><section><h3>Pontos principais</h3><ul>{resource.concepts.map((item) => <li key={item}>{item}</li>)}</ul></section><section><h3>O que fazer</h3><ul>{resource.checklist.map((item) => <li key={item}>{item}</li>)}</ul></section><section><h3>O que evitar e erros comuns</h3><ul>{resource.avoid.map((item) => <li key={item}>{item}</li>)}</ul></section><section><h3>Exemplo melhor</h3><blockquote>{resource.script}</blockquote></section><section><h3>Proximo passo recomendado</h3><p>Pratique esta situacao no Treino de Vendas IA, conclua o quiz e aplique a tecnica em uma conversa real nas proximas 48 horas.</p></section></div>}<footer><button onClick={downloadMaterial}><Download /> Baixar material</button><button onClick={() => { setResourceView(null); onNavigate("simulation"); }}><Mic /> Praticar agora</button></footer></article></div>}
       <header className="lesson-topbar"><button onClick={() => setSelected(null)}><ArrowLeft /> Voltar para trilhas</button><div><span>{selected.title}</span><strong>{percent}% concluido</strong><i><b style={{ width: `${percent}%` }} /></i></div></header>
       <section className="lesson-hero"><div className={`academy-icon ${selected.color}`}><Icon /></div><div><small>MODULO {selected.number} · AULA {lesson + 1} DE {selected.lessons.length}</small><h1>{selected.lessons[lesson]}</h1><p>{selected.outcome}</p></div><aside><span><Clock3 /> 35 minutos</span><span><Star /> 120 XP</span><span><Trophy /> 30 moedas</span></aside></section>
-      <nav className="lesson-tabs"><button className={panel === "content" ? "active" : ""} onClick={() => setPanel("content")}><Play /> Aula</button><button className={panel === "exercise" ? "active" : ""} onClick={() => setPanel("exercise")}><Target /> Exercicio</button><button className={panel === "quiz" ? "active" : ""} onClick={() => setPanel("quiz")}><Lightbulb /> Quiz</button><button className={panel === "mentor" ? "active" : ""} onClick={() => setPanel("mentor")}><Sparkles /> IA Mentor</button></nav>
+      <nav className="lesson-tabs"><button className={panel === "content" ? "active" : ""} onClick={() => setPanel("content")}><Play /> Aula</button><button className={panel === "exercise" ? "active" : ""} onClick={() => setPanel("exercise")}><Target /> Exercicio · 10 questoes</button><button className={panel === "quiz" ? "active" : ""} onClick={() => setPanel("quiz")}><Lightbulb /> Quiz · 10 questoes</button><button className={panel === "mentor" ? "active" : ""} onClick={() => setPanel("mentor")}><Sparkles /> Tirar duvidas</button></nav>
       <div className="lesson-layout">
         <main>
           {panel === "content" && <div className="lesson-content"><div className="academy-video"><iframe src={`https://www.youtube-nocookie.com/embed/${selected.videoId}`} title={selected.lessons[lesson]} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen /></div><section><small>CONCEITO APLICADO</small><h2>O que voce precisa dominar</h2><p>{selected.outcome} Nesta aula, voce aprende o conceito, reconhece os erros mais comuns e transforma o conhecimento em uma acao observavel na rotina comercial.</p><div className="lesson-summary"><Lightbulb /><span><strong>Resumo executivo</strong><p>Use o metodo em uma situacao real, confirme o entendimento do cliente e registre o resultado. Conhecimento comercial so vira competencia quando aparece no comportamento.</p></span></div><h3>Aplicacao em campo</h3><ol><li>Prepare o objetivo antes da conversa.</li><li>Use uma pergunta para validar o contexto.</li><li>Aplique a tecnica sem parecer decorado.</li><li>Registre o que funcionou e o que precisa mudar.</li></ol></section></div>}
-          {panel === "exercise" && <section className="academy-exercise"><small>EXERCICIO PRATICO</small><h2>Transforme o conceito em comportamento</h2><p>Conclua as tres entregas antes de marcar a aula como finalizada.</p>{["Escreva como voce aplica esta tecnica hoje.", "Crie uma frase melhor para usar na proxima conversa.", "Defina uma metrica para saber se funcionou."].map((item, index) => <button className={exerciseDone[index] ? "done" : ""} onClick={() => setExerciseDone((current) => current.map((value, itemIndex) => itemIndex === index ? !value : value))} key={item}><span>{exerciseDone[index] ? <Check /> : index + 1}</span><strong>{item}</strong></button>)}<div className="case-study"><BriefcaseBusiness /><div><small>ESTUDO DE CASO</small><h3>O cliente interrompe e pede objetividade.</h3><p>Explique em ate tres frases como voce adaptaria a tecnica desta aula sem perder o controle da conversa.</p><textarea placeholder="Escreva sua resposta e leve para a simulacao..." /></div></div><button className="practice-cta" onClick={() => onNavigate("simulation")}><Mic /> Praticar com cliente de IA <ArrowRight /></button></section>}
-          {panel === "quiz" && <section className="academy-quiz"><header><div><small>QUIZ INTELIGENTE · 1 DE 3</small><h2>Qual atitude demonstra melhor dominio desta aula?</h2></div><span>+80 XP</span></header>{["Repetir o mesmo roteiro para todos os clientes.", "Adaptar o metodo ao contexto e confirmar o entendimento.", "Apresentar o maior numero possivel de informacoes.", "Acelerar a conversa antes de ouvir o cliente."].map((answer, index) => <button className={quizAnswer === index ? index === 1 ? "correct" : "wrong" : ""} disabled={quizAnswer !== null} onClick={() => setQuizAnswer(index)} key={answer}><span>{String.fromCharCode(65 + index)}</span>{answer}</button>)}{quizAnswer !== null && <div className={quizAnswer === 1 ? "quiz-feedback correct" : "quiz-feedback wrong"}>{quizAnswer === 1 ? <CheckCircle2 /> : <Target />}<span><strong>{quizAnswer === 1 ? "Resposta correta" : "Ainda nao"}</strong><p>Alta performance exige adaptar a tecnica ao contexto e validar se o cliente acompanhou o raciocinio. O metodo orienta; ele nao substitui a escuta.</p></span></div>}<button className="quiz-reset" disabled={quizAnswer === null} onClick={() => setQuizAnswer(null)}>Refazer pergunta</button></section>}
-          {panel === "mentor" && <section className="lesson-mentor"><BotFace /><div><small>IA ESPECIALIZADA NESTE MODULO</small><h2>Tire duvidas sobre {selected.lessons[lesson]}</h2><p>O AI Coach recebe o contexto desta aula e ajuda a aplicar o conteudo em uma situacao real da sua operacao.</p><div>{["Explique com outro exemplo", "Corrija minha abordagem", "Crie um exercicio", "Mostre os erros comuns"].map((item) => <button onClick={() => onNavigate("ai")} key={item}>{item}<ChevronRight /></button>)}</div><button className="mentor-main" onClick={() => onNavigate("ai")}><Sparkles /> Abrir conversa com AI Coach</button></div></section>}
+          {panel === "exercise" && <LessonAssessment mode="exercise" questions={exerciseQuestions} state={exerciseState} onChange={setExerciseState} />}
+          {panel === "quiz" && <LessonAssessment mode="quiz" questions={quizQuestions} state={quizState} onChange={setQuizState} />}
+          {panel === "mentor" && <section className="lesson-mentor"><BotFace /><div><small>COACH COMERCIAL COM CONTEXTO</small><h2>Tire duvidas sobre {selected.lessons[lesson]}</h2><p>O Coach Comercial ajuda a aplicar o conteudo em uma situacao real, explica o motivo das recomendacoes e continua a conversa com voce.</p><div>{["Explique com outro exemplo", "Corrija minha abordagem", "Mostre os erros comuns", "Prepare uma conversa real"].map((item) => <button onClick={() => onNavigate("coach")} key={item}>{item}<ChevronRight /></button>)}</div><button className="mentor-main" onClick={() => onNavigate("coach")}><Sparkles /> Abrir Coach Comercial</button></div></section>}
         </main>
-        <aside className="lesson-sidebar"><header><small>CONTEUDO DO MODULO</small><h2>{selected.lessons.length} aulas</h2></header>{selected.lessons.map((item, index) => <button className={lesson === index ? "active" : progress[selected.id]?.includes(index) ? "completed" : ""} onClick={() => { setLesson(index); setPanel("content"); setQuizAnswer(null); setResourceView(null); }} key={item}><span>{progress[selected.id]?.includes(index) ? <Check /> : index + 1}</span><div><strong>{item}</strong><small>{progress[selected.id]?.includes(index) ? "Concluida · revisar" : "35 min · 120 XP"}</small></div><ChevronRight /></button>)}<div className="lesson-tools"><button onClick={() => setResourceView("material")}><BookOpen /> Material da aula</button><button onClick={() => setResourceView("summary")}><Lightbulb /> Resumo pratico</button><button onClick={downloadMaterial}><Download /> Baixar material</button><button onClick={() => onNavigate("assessments")}><Target /> Avaliacao final</button></div></aside>
+        <aside className="lesson-sidebar"><header><small>CONTEUDO DO MODULO</small><h2>{selected.lessons.length} aulas</h2></header>{selected.lessons.map((item, index) => <button className={lesson === index ? "active" : progress[selected.id]?.includes(index) ? "completed" : ""} onClick={() => { setLesson(index); setPanel("content"); resetActivities(); setResourceView(null); }} key={item}><span>{progress[selected.id]?.includes(index) ? <Check /> : index + 1}</span><div><strong>{item}</strong><small>{progress[selected.id]?.includes(index) ? "Concluida · revisar" : "35 min · 120 XP"}</small></div><ChevronRight /></button>)}<div className="lesson-tools"><button onClick={() => setResourceView("material")}><BookOpen /> Material da aula</button><button onClick={() => setResourceView("summary")}><Lightbulb /> Resumo pratico</button><button onClick={downloadMaterial}><Download /> Baixar material</button><button onClick={() => onNavigate("assessments")}><Target /> Avaliacao final</button></div></aside>
       </div>
       <footer className="lesson-footer"><div>{completed ? <><CheckCircle2 /><span><strong>Aula concluida</strong><small>Voce pode revisar e refazer as atividades quando quiser.</small></span></> : <><Target /><span><strong>Conclua sua jornada</strong><small>Assista, pratique e valide o conhecimento.</small></span></>}</div><button onClick={markLesson}>{completed ? "Continuar evolucao" : "Concluir aula"}<ArrowRight /></button></footer>
     </div>;

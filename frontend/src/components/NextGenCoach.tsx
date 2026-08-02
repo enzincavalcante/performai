@@ -13,7 +13,6 @@ import {
   Flame,
   Gauge,
   Lightbulb,
-  MessageSquareText,
   Mic,
   Play,
   RefreshCw,
@@ -23,50 +22,16 @@ import {
   Target,
   Trophy,
   UserRound,
-  Zap,
 } from "lucide-react";
 import "./next-gen-coach.css";
 import "./next-gen-coach-premium.css";
 import { CallReview } from "./CallReview";
 
-type HubTab = "coach" | "battle" | "replay" | "twin" | "doctor" | "career";
+type HubTab = "training" | "battle" | "replay" | "twin" | "doctor" | "career";
 type ConversationMessage = { speaker: "coach" | "seller"; text: string };
 
 const normalizeText = (value: string) =>
   value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
-
-function createMentorReply(
-  question: string,
-  level: string,
-  goal: string,
-  profile: { product: string; idealCustomer: string; difficulty: string; objection: string },
-) {
-  const text = normalizeText(question);
-  const context = [
-    profile.product && `voce vende ${profile.product}`,
-    profile.idealCustomer && `para ${profile.idealCustomer}`,
-    profile.difficulty && `sua maior dificuldade e ${profile.difficulty}`,
-    profile.objection && `a objecao recorrente e ${profile.objection}`,
-  ].filter(Boolean).join("; ");
-  const prefix = `Pensando no seu nivel ${level.toLowerCase()}, no objetivo de ${goal.toLowerCase()}${context ? ` e no contexto em que ${context}` : ""}:`;
-
-  if (text.includes("preco") || text.includes("caro") || text.includes("desconto")) {
-    return `${prefix} nao defenda o preco imediatamente. Acolha e investigue: "Quando voce diz que esta caro, esta comparando com outra proposta, com o orcamento disponivel ou com o retorno esperado?" Depois conecte o investimento ao impacto citado pelo cliente. Qual dessas tres comparacoes apareceu na conversa?`;
-  }
-  if (text.includes("pitch") || text.includes("apresent")) {
-    return `${prefix} reduza seu pitch a problema, impacto e evidencia. Experimente: "Ajudamos [perfil] a reduzir [problema mensuravel] por meio de [diferencial], sem [risco comum]." Escreva agora quem e o cliente e qual resultado voce consegue provar; eu ajusto a frase com voce.`;
-  }
-  if (text.includes("objec") || text.includes("concorrent")) {
-    return `${prefix} use a sequencia acolher, esclarecer e confirmar. Primeiro: "Faz sentido comparar antes de decidir. O que mais pesa para voce nessa escolha?" A resposta revela se a resistencia e valor, risco ou processo. Qual foi a frase exata do cliente?`;
-  }
-  if (text.includes("fech") || text.includes("proximo passo")) {
-    return `${prefix} teste compromisso sem pressionar: "Se resolvermos os pontos que discutimos, faz sentido envolver [decisor] em uma conversa de 30 minutos na quinta?" Antes disso, confirme o criterio de decisao e quem participa. O que ainda impede um proximo passo com data?`;
-  }
-  if (text.includes("descob") || text.includes("pergunta")) {
-    return `${prefix} aprofunde em tres camadas: como funciona hoje, qual impacto isso causa e por que mudar agora. Comece com "Onde esse processo mais atrasa o resultado do time?" e use a resposta para a proxima pergunta. Que problema o cliente ja reconheceu?`;
-  }
-  return `${prefix} vejo contexto, mas ainda falta um dado para orientar uma acao precisa. Resuma em uma frase: o que voce vende, para quem, em qual etapa a conversa travou e o que o cliente disse literalmente. Com isso eu monto uma resposta e explico a tecnica por tras dela.`;
-}
 
 function createBuyerReply(message: string, turn: number, scenario: string, objection: string, profile: string) {
   const text = normalizeText(message);
@@ -101,12 +66,10 @@ function createBuyerReply(message: string, turn: number, scenario: string, objec
 }
 
 const tabs: Array<{ id: HubTab; label: string; icon: typeof Bot }> = [
-  { id: "coach", label: "Mentor e Simulador IA", icon: Bot },
+  { id: "training", label: "Treinar uma Venda", icon: Bot },
   { id: "battle", label: "Desafios Comerciais", icon: Trophy },
-  { id: "replay", label: "Replay de Desenvolvimento", icon: RefreshCw },
-  { id: "twin", label: "Digital Twin Comercial", icon: Brain },
   { id: "doctor", label: "Estrategia de Negociacao", icon: BriefcaseBusiness },
-  { id: "career", label: "Evolucao Profissional", icon: BarChart3 },
+  { id: "career", label: "Minha Evolucao", icon: BarChart3 },
 ];
 
 const missions = [
@@ -163,7 +126,7 @@ const replayMoments = [
 ];
 
 export function NextGenCoach() {
-  const [tab, setTab] = useState<HubTab>("coach");
+  const [tab, setTab] = useState<HubTab>("training");
   const [step, setStep] = useState<"setup" | "session" | "result">("setup");
   const [message, setMessage] = useState("");
   const [conversation, setConversation] = useState<ConversationMessage[]>([]);
@@ -186,15 +149,9 @@ export function NextGenCoach() {
   const [planReady, setPlanReady] = useState(false);
   const [selectedMission, setSelectedMission] = useState<number | null>(null);
   const [replayFile, setReplayFile] = useState("");
-  const [mentorQuestion, setMentorQuestion] = useState("");
-  const [mentorLevel, setMentorLevel] = useState("Intermediario");
-  const [mentorGoal, setMentorGoal] = useState("Resolver uma dificuldade");
-  const [mentorProfile, setMentorProfile] = useState({
-    product: "",
-    idealCustomer: "",
-    difficulty: "",
-    objection: "",
-  });
+  const [missionStep, setMissionStep] = useState<"brief" | "session" | "result">("brief");
+  const [missionMessage, setMissionMessage] = useState("");
+  const [missionConversation, setMissionConversation] = useState<ConversationMessage[]>([]);
   const [trainingConfig, setTrainingConfig] = useState({
     clientName: "",
     company: "",
@@ -210,14 +167,6 @@ export function NextGenCoach() {
     objection: "Preco",
     context: "",
   });
-  const [mentorMessages, setMentorMessages] = useState<
-    Array<{ speaker: "mentor" | "seller"; text: string }>
-  >([
-    {
-      speaker: "mentor",
-      text: "Sou seu IA Coach. Antes de recomendar qualquer coisa, quero entender seu contexto: o que voce vende, quem e seu cliente ideal, qual sua maior dificuldade e qual objecao mais aparece? Preencha o perfil ao lado ou me responda naturalmente.",
-    },
-  ]);
   const customer = useMemo(
     () => ({
       name: trainingConfig.clientName || ["Roberto Almeida", "Camila Nunes", "Marcos Ferraz"][seed % 3],
@@ -303,15 +252,40 @@ export function NextGenCoach() {
     };
   }, [conversation, trainingConfig.objection]);
 
+  const missionEvaluation = useMemo(() => {
+    const seller = missionConversation.filter((item) => item.speaker === "seller");
+    const combined = normalizeText(seller.map((item) => item.text).join(" "));
+    const questions = seller.filter((item) => item.text.includes("?")).length;
+    const valueSignals = (combined.match(/valor|impacto|resultado|risco|retorno|prioridade/g) ?? []).length;
+    const nextStep = /proximo passo|agenda|reuniao|data|quinta|sexta|decis/.test(combined);
+    const discount = /desconto|reduzir o preco|baixar o preco/.test(combined);
+    const communication = Math.min(96, 58 + seller.length * 6);
+    const discovery = Math.min(96, 52 + questions * 10);
+    const value = Math.min(96, 54 + valueSignals * 7 - (discount ? 12 : 0));
+    const objections = Math.min(96, 57 + questions * 5 + valueSignals * 4 - (discount ? 15 : 0));
+    const closing = Math.min(96, 55 + (nextStep ? 28 : 0));
+    const overall = Math.round((communication + discovery + value + objections + closing) / 5);
+    return { overall, communication, discovery, value, objections, closing, questions, nextStep, discount };
+  }, [missionConversation]);
+
+  const sendMissionMessage = () => {
+    if (!missionMessage.trim() || selectedMission === null) return;
+    const text = missionMessage.trim();
+    const mission = missions[selectedMission];
+    const turn = missionConversation.filter((item) => item.speaker === "seller").length;
+    const reply = createBuyerReply(text, turn, mission[4], mission[5], missionProfiles[selectedMission].psychology);
+    setMissionConversation((current) => [...current, { speaker: "seller", text }, { speaker: "coach", text: reply }]);
+    setMissionMessage("");
+  };
+
   return (
     <div className="coach-hub">
       <header className="coach-hub-heading">
         <div>
-          <p>PERFORMA AI · COACHING ECOSYSTEM</p>
-          <h1>Seu treinador comercial inteligente.</h1>
+          <p>PERFORMA AI · TREINO DE VENDAS IA</p>
+          <h1>Pratique vendas com clientes simulados.</h1>
           <span>
-            Pratique, receba feedback e evolua com um sistema que aprende com
-            cada conversa.
+            Configure uma situacao real, converse, receba nota e descubra exatamente o que melhorar.
           </span>
         </div>
         <div>
@@ -335,116 +309,8 @@ export function NextGenCoach() {
         })}
       </nav>
 
-      {tab === "coach" && (
-        <section className="coach-core mentor-workspace">
-          <div className="mentor-intro">
-            <div>
-              <span>
-                <Bot />
-              </span>
-              <div>
-                <p>MENTOR COMERCIAL DISPONIVEL 24 HORAS</p>
-                <h2>Converse com um especialista que entende seu contexto.</h2>
-                <small>
-                  Ele pergunta, corrige, explica tecnicas e transforma sua
-                  dificuldade em um plano aplicavel.
-                </small>
-              </div>
-            </div>
-            <div>
-              {[
-                "Melhorar meu pitch",
-                "Quebrar uma objecao",
-                "Preparar uma negociacao",
-                "Revisar um erro",
-              ].map((item) => (
-                <button onClick={() => setMentorQuestion(item)} key={item}>
-                  {item}
-                </button>
-              ))}
-            </div>
-          </div>
-          <div className="mentor-conversation">
-            <main>
-              {mentorMessages.map((item, index) => (
-                <article className={item.speaker} key={index}>
-                  <small>
-                    {item.speaker === "mentor" ? "Mentor IA" : "Voce"}
-                  </small>
-                  <p>{item.text}</p>
-                </article>
-              ))}
-            </main>
-            <aside>
-              <div>
-                <Lightbulb />
-                <span>
-                  <strong>Como obter uma resposta melhor</strong>Inclua produto,
-                  perfil do cliente, etapa da venda e dificuldade encontrada.
-                </span>
-              </div>
-              <h3>Contexto desta sessao</h3>
-              <label>
-                Nivel do vendedor
-                <select value={mentorLevel} onChange={(event) => setMentorLevel(event.target.value)}>
-                  <option>Intermediario</option>
-                  <option>Iniciante</option>
-                  <option>Avancado</option>
-                </select>
-              </label>
-              <label>
-                Objetivo
-                <select value={mentorGoal} onChange={(event) => setMentorGoal(event.target.value)}>
-                  <option>Resolver uma dificuldade</option>
-                  <option>Aprender uma tecnica</option>
-                  <option>Preparar uma call</option>
-                  <option>Revisar um erro</option>
-                </select>
-              </label>
-              <label>
-                O que voce vende?
-                <input value={mentorProfile.product} onChange={(event) => setMentorProfile((current) => ({ ...current, product: event.target.value }))} placeholder="Produto ou servico" />
-              </label>
-              <label>
-                Cliente ideal
-                <input value={mentorProfile.idealCustomer} onChange={(event) => setMentorProfile((current) => ({ ...current, idealCustomer: event.target.value }))} placeholder="Segmento, porte e cargo" />
-              </label>
-              <label>
-                Maior dificuldade
-                <input value={mentorProfile.difficulty} onChange={(event) => setMentorProfile((current) => ({ ...current, difficulty: event.target.value }))} placeholder="Ex.: descoberta e urgencia" />
-              </label>
-              <label>
-                Objecao recorrente
-                <input value={mentorProfile.objection} onChange={(event) => setMentorProfile((current) => ({ ...current, objection: event.target.value }))} placeholder="Ex.: preco ou concorrente" />
-              </label>
-            </aside>
-            <form
-              onSubmit={(event) => {
-                event.preventDefault();
-                const question = mentorQuestion.trim();
-                if (!question) return;
-                setMentorMessages((items) => [
-                  ...items,
-                  { speaker: "seller", text: question },
-                  { speaker: "mentor", text: createMentorReply(question, mentorLevel, mentorGoal, mentorProfile) },
-                ]);
-                setMentorQuestion("");
-              }}
-            >
-              <textarea
-                value={mentorQuestion}
-                onChange={(event) => setMentorQuestion(event.target.value)}
-                placeholder="Explique sua situacao comercial..."
-                aria-label="Situacao comercial para o mentor"
-              />
-              <button type="submit" disabled={!mentorQuestion.trim()}>
-                <Send /> Enviar ao mentor
-              </button>
-            </form>
-          </div>
-          <div className="coach-separator">
-            <span>OU PRATIQUE COM UM CLIENTE GERADO PELA IA</span>
-          </div>
+      {tab === "training" && (
+        <section className="coach-core">
           {step === "setup" && (
             <>
               <div className="coach-section-title">
@@ -589,7 +455,7 @@ export function NextGenCoach() {
                     ))}
                   </div>
                   <button className="start-coaching" onClick={startSession} disabled={!trainingConfig.offer.trim()}>
-                    <Play /> Iniciar coaching <ArrowRight />
+                    <Play /> Iniciar treino <ArrowRight />
                   </button>
                 </div>
               </div>
@@ -653,7 +519,7 @@ export function NextGenCoach() {
                   disabled={conversation.filter((item) => item.speaker === "seller").length < 2}
                   title={conversation.filter((item) => item.speaker === "seller").length < 2 ? "Responda ao cliente pelo menos duas vezes" : undefined}
                 >
-                  Finalizar e receber coaching
+                  Finalizar e receber avaliacao
                 </button>
               </main>
             </div>
@@ -662,7 +528,7 @@ export function NextGenCoach() {
             <div className="coach-result">
               <header>
                 <div>
-                  <p>COACHING CONCLUIDO</p>
+                  <p>TREINO CONCLUIDO</p>
                   <h2>
                     {evaluation.headline}
                   </h2>
@@ -706,8 +572,8 @@ export function NextGenCoach() {
                 </article>
               </div>
               <footer>
-                <button onClick={() => setTab("replay")}>
-                  Abrir replay inteligente
+                <button onClick={() => setTab("battle")}>
+                  Ver desafios comerciais
                 </button>
                 <button onClick={() => setStep("setup")}>
                   <RefreshCw /> Treinar novamente
@@ -731,20 +597,19 @@ export function NextGenCoach() {
           </div>
           {selectedMission !== null && (
             <div className="mission-room">
-              <button className="mission-back" onClick={() => setSelectedMission(null)}>Voltar aos desafios</button>
+              <button className="mission-back" onClick={() => { setSelectedMission(null); setMissionStep("brief"); setMissionConversation([]); }}>Voltar aos desafios</button>
               <header><div><p>MISSAO {String(selectedMission + 1).padStart(2, "0")} · {missions[selectedMission][3]}</p><h2>{missions[selectedMission][0]}</h2><span>{missions[selectedMission][1]}</span></div><strong>{missions[selectedMission][2]}</strong></header>
-              <div className="mission-story"><div><UserRound /><span><small>CLIENTE EXCLUSIVO</small><strong>{missionProfiles[selectedMission].client}</strong><p>{missionProfiles[selectedMission].psychology}</p></span></div><p>{missionProfiles[selectedMission].story}</p></div>
-              <div className="mission-briefing"><article><Target /><h3>Objetivo exclusivo</h3><p>{missions[selectedMission][6]}</p></article><article><Gauge /><h3>Criterio de aprovacao</h3><p>{missions[selectedMission][7]}</p></article><article><Brain /><h3>Correcao da IA</h3><p>Nota por competencia, erros, resposta de alta performance e proxima missao recomendada.</p></article><article><Award /><h3>Recompensas</h3><p>{missions[selectedMission][2]}, moedas, medalha e pontos no ranking.</p></article></div>
+              {missionStep === "brief" && <><div className="mission-story"><div><UserRound /><span><small>CLIENTE EXCLUSIVO</small><strong>{missionProfiles[selectedMission].client}</strong><p>{missionProfiles[selectedMission].psychology}</p></span></div><p>{missionProfiles[selectedMission].story}</p></div>
+              <div className="mission-briefing"><article><Target /><h3>Objetivo exclusivo</h3><p>{missions[selectedMission][6]}</p></article><article><Gauge /><h3>Criterio de aprovacao</h3><p>{missions[selectedMission][7]}</p></article><article><Brain /><h3>Decisoes avaliadas</h3><p>Perguntas, construcao de valor, tratamento da resistencia e proximo passo.</p></article><article><Award /><h3>Recompensas</h3><p>{missions[selectedMission][2]}, moedas, medalha e pontos no ranking.</p></article></div>
               <button className="mission-start" onClick={() => {
                 const mission = missions[selectedMission];
                 const profile = missionProfiles[selectedMission];
                 const [clientName, role = "Decisor"] = profile.client.split(" · ");
-                setTrainingConfig((current) => ({ ...current, clientName, role, company: "Empresa do desafio", scenario: mission[4], objection: mission[5], difficulty: mission[3], profile: profile.psychology, objective: mission[6], context: profile.story }));
-                setConversation([{ speaker: "coach", text: `Sou ${clientName}, ${role}. ${profile.story} ${mission[1]} Antes de continuar, mostre que entendeu meu contexto e conduza esta conversa.` }]);
-                setSelectedMission(null);
-                setTab("coach");
-                setStep("session");
-              }}><Play /> Entrar no desafio agora</button>
+                setMissionConversation([{ speaker: "coach", text: `Sou ${clientName}, ${role}. ${profile.story} ${mission[1]} Voce esta dentro deste desafio. Comece a conversa e conduza a decisao.` }]);
+                setMissionStep("session");
+              }}><Play /> Iniciar este desafio</button></>}
+              {missionStep === "session" && <div className="mission-session"><aside><UserRound /><small>CLIENTE DO DESAFIO</small><strong>{missionProfiles[selectedMission].client}</strong><p>{missionProfiles[selectedMission].psychology}</p><dl><div><dt>Objetivo</dt><dd>{missions[selectedMission][6]}</dd></div><div><dt>Dificuldade</dt><dd>{missions[selectedMission][3]}</dd></div><div><dt>Recompensa</dt><dd>{missions[selectedMission][2]}</dd></div></dl></aside><main><div className="mission-transcript">{missionConversation.map((item, index) => <article className={item.speaker} key={index}><small>{item.speaker === "coach" ? missionProfiles[selectedMission].client.split(" · ")[0] : "Voce"}</small><p>{item.text}</p></article>)}</div><div className="mission-decision-tip"><Lightbulb /><span><strong>Decisao do turno</strong>Use a resposta do cliente para escolher entre aprofundar, construir valor ou pedir compromisso.</span></div><form onSubmit={(event) => { event.preventDefault(); sendMissionMessage(); }}><input value={missionMessage} onChange={(event) => setMissionMessage(event.target.value)} placeholder="Responda ao cliente deste desafio..." /><button disabled={!missionMessage.trim()}><Send /></button></form><button className="mission-finish" disabled={missionConversation.filter((item) => item.speaker === "seller").length < 3} onClick={() => setMissionStep("result")}>Finalizar desafio e receber nota</button></main></div>}
+              {missionStep === "result" && <div className="mission-result"><header><div><small>DESAFIO CONCLUIDO</small><h2>{missionEvaluation.overall >= 80 ? "Missao cumprida" : "Missao concluida com pontos para evoluir"}</h2><p>{missions[selectedMission][0]} · avaliacao exclusiva desta experiencia</p></div><strong>{missionEvaluation.overall}<span>/100</span></strong></header><div className="mission-result-scores">{[["Comunicacao", missionEvaluation.communication], ["Descoberta", missionEvaluation.discovery], ["Construcao de valor", missionEvaluation.value], ["Objecoes", missionEvaluation.objections], ["Fechamento", missionEvaluation.closing]].map(([label, value]) => <article key={label}><span>{label}</span><strong>{value}</strong><i><b style={{ width: `${value}%` }} /></i></article>)}</div><div className="mission-result-feedback"><article><CheckCircle2 /><div><strong>Pontos fortes</strong><p>{missionEvaluation.questions > 1 ? "Voce usou perguntas para entender a resistencia antes de responder." : "Voce manteve a conversa ativa e apresentou sua linha de raciocinio."}</p></div></article><article><ShieldAlert /><div><strong>Pontos a melhorar</strong><p>{missionEvaluation.discount ? "Houve concessao de preco antes de esgotar a construcao de valor." : !missionEvaluation.nextStep ? "Faltou transformar a conversa em um proximo passo com responsavel e data." : "Aprofunde impacto e criterio de decisao antes da proposta final."}</p></div></article><article><Sparkles /><div><strong>Melhor abordagem</strong><p>Valide a resistencia, investigue a causa, conecte valor a uma evidencia e confirme uma acao verificavel.</p></div></article><article><Award /><div><strong>XP conquistado</strong><p>{missionEvaluation.overall >= 80 ? missions[selectedMission][2] : "60% do XP · repita para conquistar a recompensa completa"}</p></div></article></div><footer><button onClick={() => { setMissionStep("brief"); setMissionConversation([]); }}>Rever contexto</button><button onClick={() => { setMissionStep("session"); setMissionConversation([]); const profile = missionProfiles[selectedMission]; setMissionConversation([{ speaker: "coach", text: `${profile.story} Vamos recomecar. Conduza esta conversa com uma abordagem melhor.` }]); }}><RefreshCw /> Tentar novamente</button></footer></div>}
             </div>
           )}
           {selectedMission === null && <div className="battle-grid">
@@ -760,7 +625,7 @@ export function NextGenCoach() {
                 <footer>
                   <strong>{mission[2]}</strong>
                   <button
-                    onClick={() => setSelectedMission(index)}
+                    onClick={() => { setSelectedMission(index); setMissionStep("brief"); setMissionConversation([]); }}
                   >
                     Abrir missao <ChevronRight />
                   </button>

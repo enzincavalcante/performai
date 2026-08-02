@@ -172,6 +172,32 @@
 .quiz-feedback>svg{width:20px}
 .quiz-feedback p{margin:4px 0 0;font-size:9px;line-height:1.6}
 .quiz-reset{margin-top:12px;padding:9px 12px;border:1px solid var(--line);color:#255dcc;background:#fff}
+.lesson-assessment,.lesson-assessment-result{padding:32px;color:#17243b}
+.lesson-assessment>header,.lesson-assessment-result>header{display:flex;align-items:flex-start;justify-content:space-between;gap:24px}
+.lesson-assessment>header small,.lesson-assessment-result>header small{color:#2563eb;font-size:8px;font-weight:900;letter-spacing:.1em}
+.lesson-assessment>header h2,.lesson-assessment-result>header h2{margin:8px 0!important;color:#14213a!important;font-size:23px!important;line-height:1.3}
+.lesson-assessment>header p,.lesson-assessment-result>header p{margin:0;color:#718096;font-size:10px}
+.lesson-assessment>header>span{min-width:46px;padding:9px;border-radius:5px;color:#1d55bb;text-align:center;background:#edf4ff;font-size:13px;font-weight:900}
+.assessment-progress{position:relative;height:26px;margin:21px 0 15px;overflow:hidden;border-radius:4px;background:#e8eef6}
+.assessment-progress i{display:block;height:100%;background:#2563eb;transition:width .25s}
+.assessment-progress span{position:absolute;inset:0;display:grid;place-items:center;color:#17345d;font-size:8px;font-weight:900}
+.assessment-options{display:grid;gap:8px}
+.assessment-options button{width:100%;display:grid;grid-template-columns:32px 1fr;align-items:center;gap:11px;padding:13px;border:1px solid #dce4ef;border-radius:5px;color:#40516a;text-align:left;background:#fff}
+.assessment-options button:hover:not(:disabled){border-color:#8bacf0;background:#f5f8ff}
+.assessment-options button>span{width:27px;height:27px;display:grid;place-items:center;border-radius:4px;background:#eef3fa;font-size:9px;font-weight:900}
+.assessment-options button strong{font-size:10px;line-height:1.5}
+.assessment-options button.correct{border-color:#69c8a7;color:#176b50;background:#effbf7}
+.assessment-options button.wrong{border-color:#e3a3af;color:#9d3047;background:#fff3f5}
+.assessment-feedback{display:flex;gap:12px;margin-top:17px;padding:17px;border-radius:5px}
+.assessment-feedback.correct{color:#176b50;background:#eaf9f4}.assessment-feedback.wrong{color:#92324a;background:#fff0f3}
+.assessment-feedback>svg{flex:0 0 auto;width:20px}.assessment-feedback>div{display:grid;gap:5px}.assessment-feedback p{margin:0;font-size:10px;line-height:1.55}.assessment-feedback small{display:flex;align-items:flex-start;gap:5px;font-size:9px}.assessment-feedback small svg{width:14px}
+.lesson-assessment>footer{display:flex;align-items:center;justify-content:space-between;margin-top:18px;padding-top:16px;border-top:1px solid #e1e7ef}
+.lesson-assessment>footer span{color:#6e7c90;font-size:9px}.lesson-assessment>footer button,.assessment-restart{display:flex;align-items:center;gap:7px;padding:11px 14px;border:0;border-radius:5px;color:#fff;background:#2563eb;font-size:9px;font-weight:900}.lesson-assessment>footer button:disabled{opacity:.45}.lesson-assessment>footer svg{width:15px}
+.lesson-assessment-result>header{padding:23px;border-radius:7px;color:#fff;background:#0d2447}.lesson-assessment-result>header h2,.lesson-assessment-result>header small,.lesson-assessment-result>header p{color:#fff!important}.lesson-assessment-result>header>strong{font-size:43px}.lesson-assessment-result>header>strong span{font-size:14px}
+.assessment-result-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:15px 0}.assessment-result-kpis article{display:grid;gap:6px;padding:15px;border:1px solid #dce4ef;background:#f8fafc}.assessment-result-kpis span{color:#77869b;font-size:8px}.assessment-result-kpis strong{font-size:14px}
+.assessment-review{display:grid;gap:8px;margin-top:20px}.assessment-review>h3{margin:0 0 5px}.assessment-review article{display:grid;grid-template-columns:30px 1fr;gap:11px;padding:16px;border:1px solid #e0e7f0;border-radius:6px;background:#fff}.assessment-review article>span{width:27px;height:27px;display:grid;place-items:center;border-radius:50%;color:#fff;background:#d14d69;font-size:9px;font-weight:900}.assessment-review article>div{display:grid;gap:5px}.assessment-review p{margin:0;color:#596a81;font-size:9px;line-height:1.5}.assessment-review .student-error{color:#a1354e}.assessment-review small{display:flex;align-items:flex-start;gap:5px;padding:9px;color:#194e9d;background:#edf4ff}.assessment-review small svg{width:14px}
+.assessment-recommendation,.assessment-perfect{display:flex;gap:11px;margin-top:15px;padding:17px;border-left:3px solid #2563eb;background:#edf4ff}.assessment-recommendation>svg,.assessment-perfect>svg{width:20px;color:#2563eb}.assessment-recommendation p,.assessment-perfect p{margin:4px 0 0;color:#526680;font-size:10px;line-height:1.55}.assessment-restart{margin-top:15px}
+.lesson-resource-body.professional .resource-wide{grid-column:1/-1}.lesson-resource-body .resource-script blockquote{display:grid;gap:7px}
 .lesson-mentor{min-height:480px;display:grid;grid-template-columns:100px 1fr;align-content:center;gap:22px}
 .bot-face{position:relative;width:86px;height:86px;display:grid;place-items:center;border:1px solid #a7c0f5;border-radius:20px;color:#2563eb;background:#eaf2ff}
 .bot-face>svg{width:40px}
@@ -233,4 +259,5 @@ to{opacity:1;transform:none}
 .lesson-footer{align-items:stretch;flex-direction:column;margin:0 18px}
 .lesson-footer>button{justify-content:center}
 .lesson-resource-backdrop{padding:8px}.lesson-resource-modal{max-height:96vh}.lesson-resource-modal>header,.lesson-resource-body,.lesson-resource-modal>footer{padding-right:17px;padding-left:17px}.lesson-resource-body{grid-template-columns:1fr}.lesson-resource-body section:first-child,.lesson-resource-body .resource-script{grid-column:auto}.lesson-resource-modal>footer{align-items:stretch;flex-direction:column}.lesson-resource-modal>footer button{justify-content:center}
+.lesson-assessment,.lesson-assessment-result{padding:20px}.lesson-assessment>header,.lesson-assessment-result>header{flex-direction:column}.assessment-result-kpis{grid-template-columns:1fr 1fr}.lesson-assessment>footer{align-items:stretch;flex-direction:column;gap:12px}.lesson-assessment>footer button{justify-content:center}.lesson-resource-body.professional .resource-wide{grid-column:auto}
 }

@@ -44,7 +44,7 @@ export function LandingPage({ onEnter }: { onEnter: () => void }) {
       <div className="landing-glow-top" />
       <div className="landing-badge"><i /> Inteligencia comercial para equipes de alta performance</div>
       <h1>Desenvolva vendedores. Acelere resultados. Evolua com IA.</h1>
-      <p className="landing-lede">Treinamentos inteligentes, IA Coach, analise automatica de ligacoes, gamificacao e certificacoes em uma unica plataforma.</p>
+      <p className="landing-lede">Treinamentos inteligentes, Coach Comercial, analise automatica de ligacoes, gamificacao e certificacoes em uma unica plataforma.</p>
       <div className="landing-hero-ctas">
         <button className="landing-btn landing-btn-solid" onClick={onEnter}>Comecar gratuitamente <ChevronRight /></button>
         <button className="landing-btn landing-btn-ghost" onClick={() => scrollTo("como-funciona")}>Ver demonstracao</button>
@@ -121,7 +121,7 @@ export function LandingPage({ onEnter }: { onEnter: () => void }) {
 
     <section className="landing-logo-strip">
       <p>Uma operacao comercial completa, organizada em um unico ambiente</p>
-      <div><span>Treinamento</span><span>IA Coach</span><span>Calls</span><span>Equipe</span><span>Certificacao</span></div>
+      <div><span>Treinamento</span><span>Coach Comercial</span><span>Calls</span><span>Equipe</span><span>Certificacao</span></div>
     </section>
 
     <section className="landing-block landing-benefits" id="beneficios">
@@ -131,7 +131,7 @@ export function LandingPage({ onEnter }: { onEnter: () => void }) {
         <p className="landing-sub">Menos ferramentas desconectadas. Mais clareza sobre o que treinar, como praticar e onde melhorar.</p>
         <div className="landing-benefit-grid">
           {[
-            ["IA Coach", "Conversa, orienta e simula situacoes comerciais em tempo real.", Bot],
+            ["Coach Comercial", "Orienta, explica e ajuda a resolver situacoes comerciais em uma conversa contextual.", Bot],
             ["Treinamentos", "Aulas, materiais, exercicios, quizzes e certificacao.", GraduationCap],
             ["Analise de Calls", "Avalia ligacoes e transforma erros em um plano pratico.", FileAudio],
             ["Gamificacao", "Ranking, XP, medalhas e desafios que estimulam constancia.", Trophy],
