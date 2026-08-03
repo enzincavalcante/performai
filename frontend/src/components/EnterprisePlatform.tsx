@@ -50,6 +50,7 @@ import "./premium-home.css";
 import "./operational-home.css";
 import "./functional-upgrades.css";
 import { PremiumTrainingAcademy } from "./PremiumTraining";
+import { IntelligenceHome } from "./IntelligenceHome";
 
 export type EnterpriseView =
   | "dashboard"
@@ -477,7 +478,7 @@ function MarketingEnterpriseDashboard({ onNavigate }: { onNavigate: Navigate }) 
   </div>;
 }
 
-export function EnterpriseDashboard({ onNavigate }: { onNavigate: Navigate }) {
+function LegacyOperationalDashboard({ onNavigate }: { onNavigate: Navigate }) {
   const quickActions = [
     ["Treinar uma ligacao", "Pratique com um cliente de IA antes da proxima conversa real.", "Melhor para: ganhar confianca e testar seu discurso.", Mic, "simulation", "Iniciar treino"],
     ["Analisar uma call", "Envie uma gravacao e descubra onde acertou, errou e perdeu oportunidades.", "Melhor para: transformar uma ligacao real em plano de evolucao.", FileAudio, "calls", "Enviar gravacao"],
@@ -537,6 +538,10 @@ export function EnterpriseDashboard({ onNavigate }: { onNavigate: Navigate }) {
       <article className="ops-recent"><header><div><small>ATIVIDADE RECENTE</small><h2>Sua evolucao continua</h2></div></header><ul><li><FileAudio /><span><strong>Call de fechamento analisada</strong><small>Nota 8,7 · ha 2 horas</small></span></li><li><Award /><span><strong>Certificado conquistado</strong><small>Vendas Consultivas · ontem</small></span></li><li><Trophy /><span><strong>Subiu no ranking semanal</strong><small>Agora na 2a posicao · ha 2 dias</small></span></li></ul></article>
     </section>
   </div>;
+}
+
+export function EnterpriseDashboard({ onNavigate }: { onNavigate: Navigate }) {
+  return <IntelligenceHome onNavigate={onNavigate} />;
 }
 
 const COURSE_DATA = [

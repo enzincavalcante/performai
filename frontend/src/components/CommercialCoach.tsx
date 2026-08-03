@@ -1,7 +1,8 @@
 "use client";
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
-import { Bot, CheckCircle2, Lightbulb, RotateCcw, Send, Sparkles, Target } from "lucide-react";
+import { Bot, CheckCircle2, Lightbulb, Mic, RotateCcw, Send, Sparkles, Target } from "lucide-react";
+import { useSpeechToText } from "@/hooks/useSpeechToText";
 import "./commercial-coach.css";
 
 type Message = { role: "coach" | "seller"; text: string };
@@ -51,6 +52,7 @@ export function CommercialCoach({ profile }: { profile: CoachProfile }) {
   const [messages, setMessages] = useState<Message[]>([START_MESSAGE]);
   const [question, setQuestion] = useState("");
   const [context, setContext] = useState({ product: profile.offer, customer: profile.audience, stage: "Descoberta", objective: profile.goal });
+  const speech = useSpeechToText((text) => setQuestion((current) => `${current} ${text}`.trim()));
 
   useEffect(() => {
     queueMicrotask(() => {
@@ -88,7 +90,14 @@ export function CommercialCoach({ profile }: { profile: CoachProfile }) {
         <div className="coach-chat-heading"><div><Sparkles /><span><strong>Sessao de orientacao</strong><small>Conte a situacao como aconteceu</small></span></div><button onClick={() => setMessages([START_MESSAGE])}><RotateCcw /> Nova conversa</button></div>
         <div className="commercial-chat">{messages.map((message, index) => <article className={message.role} key={`${message.role}-${index}`}><small>{message.role === "coach" ? "Coach Comercial" : "Voce"}</small><p>{message.text}</p></article>)}</div>
         <div className="coach-suggestions">{suggestions.map((item) => <button onClick={() => setQuestion(item)} key={item}>{item}</button>)}</div>
-        <form onSubmit={send}><textarea value={question} onChange={(event) => setQuestion(event.target.value)} placeholder="Ex.: o cliente pediu desconto depois da proposta. O que devo perguntar antes de responder?" aria-label="Mensagem para o Coach Comercial" /><button disabled={!question.trim()}><Send /> Enviar</button></form>
+        <form onSubmit={send}>
+          <textarea value={question} onChange={(event) => setQuestion(event.target.value)} placeholder="Ex.: o cliente pediu desconto depois da proposta. O que devo perguntar antes de responder?" aria-label="Mensagem para o Coach Comercial" />
+          <div className="commercial-coach-actions">
+            <button type="button" className={`coach-voice-button ${speech.status}`} onClick={speech.toggle} disabled={speech.status === "processing"} aria-label={speech.status === "recording" ? "Parar gravacao" : "Falar com o Coach Comercial"}><Mic /> {speech.label}</button>
+            <button type="submit" disabled={!question.trim()}><Send /> Enviar</button>
+          </div>
+          {(speech.error || speech.status === "recording" || speech.status === "processing") && <p className={`coach-voice-status ${speech.status}`}><i />{speech.error || speech.label}</p>}
+        </form>
       </main>
       <aside><div className="coach-context-title"><Target /><span><strong>Contexto da conversa</strong><small>Deixe a orientacao mais precisa</small></span></div><label>O que voce vende?<input value={context.product} onChange={(event) => setContext({ ...context, product: event.target.value })} /></label><label>Para quem?<input value={context.customer} onChange={(event) => setContext({ ...context, customer: event.target.value })} /></label><label>Etapa da venda<select value={context.stage} onChange={(event) => setContext({ ...context, stage: event.target.value })}><option>Prospeccao</option><option>Descoberta</option><option>Apresentacao</option><option>Negociacao</option><option>Fechamento</option><option>Follow-up</option></select></label><label>Objetivo<input value={context.objective} onChange={(event) => setContext({ ...context, objective: event.target.value })} /></label><div className="coach-context-note"><Lightbulb /><span><strong>Como receber uma resposta melhor</strong><small>Inclua a frase exata do cliente, o que voce respondeu e o resultado que deseja.</small></span></div><ul><li><CheckCircle2 /> Explicacao da estrategia</li><li><CheckCircle2 /> Exemplo pronto para adaptar</li><li><CheckCircle2 /> Erros comuns</li><li><CheckCircle2 /> Proximo passo pratico</li></ul></aside>
     </section>

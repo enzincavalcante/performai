@@ -23,6 +23,10 @@ type ReviewReport = {
     sellerConduction?: string;
     overallDiagnosis?: string;
     professionalConclusion?: string;
+    missedOpportunities?: string;
+    missingQuestions?: string;
+    objectionsAnalysis?: string;
+    betterApproach?: string;
   };
   competencies: Array<{ name: string; score?: number; feedback?: string; impact?: string; level?: string; gap?: string; nextStep?: string }>;
   excerpts: Array<{ timestamp?: string; text: string; insight?: string; type?: string }>;
@@ -170,6 +174,10 @@ function normalizeReport(payload: unknown): ReviewReport {
       sellerConduction: firstString(rawDiagnosis, ["seller_conduction"]),
       overallDiagnosis: firstString(rawDiagnosis, ["overall_diagnosis"]),
       professionalConclusion: firstString(rawDiagnosis, ["professional_conclusion"]),
+      missedOpportunities: firstString(rawDiagnosis, ["missed_opportunities"]),
+      missingQuestions: firstString(rawDiagnosis, ["missing_questions"]),
+      objectionsAnalysis: firstString(rawDiagnosis, ["objections_analysis"]),
+      betterApproach: firstString(rawDiagnosis, ["better_approach"]),
     },
     competencies,
     excerpts,
@@ -485,6 +493,10 @@ export function CallReview() {
       ["Contexto da conversa", report.diagnosis.conversationContext],
       ["Conducao do vendedor", report.diagnosis.sellerConduction],
       ["Diagnostico geral", report.diagnosis.overallDiagnosis],
+      ["Oportunidades perdidas", report.diagnosis.missedOpportunities],
+      ["Perguntas que faltaram", report.diagnosis.missingQuestions],
+      ["Objecoes e tratamento", report.diagnosis.objectionsAnalysis],
+      ["Como conduzir melhor", report.diagnosis.betterApproach],
       ["Conclusao profissional", report.diagnosis.professionalConclusion],
     ].filter((item) => item[1]).map(([title,text]) => <article key={title}><h3>{title}</h3><p>{text}</p></article>)}</div></section>}
     {report.evaluationBlocks.length > 0 && <section className="review-section evaluation-blocks"><div className="review-section-title"><Target /><div><p className="eyebrow">AVALIACAO COMPLETA</p><h2>Analise criteriosa em {report.evaluationBlocks.length} criterios</h2></div></div><div>{report.evaluationBlocks.map((block,index)=><article key={block.name}><header><span>{String(index+1).padStart(2,"0")}</span><h3>{block.name}</h3><strong>{block.score ?? "--"}<small>/100</small></strong></header><div>{block.reason && <p className="evaluation-reason"><b>Motivo da nota</b>{block.reason}</p>}<p><b>O que funcionou</b>{block.worked ?? "A IA nao encontrou evidencia segura deste comportamento."}</p><p><b>O que precisa melhorar</b>{block.improve ?? "A IA nao encontrou evidencia segura deste comportamento."}</p>{block.how && <p><b>Como melhorar</b>{block.how}</p>}{block.example && <p><b>Exemplo pratico</b>{block.example}</p>}{block.excerpt && <blockquote>&ldquo;{block.excerpt}&rdquo;</blockquote>}</div></article>)}</div></section>}

@@ -75,9 +75,50 @@ function buildRubricReport(transcript: string) {
     discoveryScore * 0.3 + valueScore * 0.25 + closingScore * 0.25 + communicationScore * 0.2,
   );
 
+  const skill = (name: string, score: number, explanation: string, nextStep: string) => ({
+    name,
+    score: Math.max(0, Math.min(100, Math.round(score))),
+    explanation,
+    impact: `Esta habilidade influencia diretamente a qualidade da oportunidade e a previsibilidade do proximo passo.`,
+    level: score >= 85 ? "Elite" : score >= 72 ? "Avancado" : score >= 58 ? "Intermediario" : "Iniciante",
+    gap: score >= 75 ? "Transformar o comportamento em um padrao consistente." : nextStep,
+    next_step: nextStep,
+  });
+  const competencyScores = [
+    skill("Abertura", communicationScore, "A nota considera clareza e organizacao observadas no inicio da transcricao.", "Abra com contexto, objetivo e uma pergunta de permissao."),
+    skill("Rapport", communicationScore - 2, "Avaliacao baseada na presenca de acolhimento, adaptacao e participacao do cliente.", "Reconheca uma fala do cliente antes de avancar para a agenda."),
+    skill("Clareza", communicationScore + 3, "Mede objetividade, encadeamento e facilidade de entendimento da mensagem.", "Use frases curtas e uma ideia principal por vez."),
+    skill("Comunicacao", communicationScore, "Mede estrutura, objetividade e capacidade de sustentar a conversa.", "Resuma cada bloco antes de fazer a proxima pergunta."),
+    skill("Confianca", communicationScore + 1, "Estimada pela firmeza da conducao e ausencia de desvios na argumentacao.", "Use evidencia concreta e evite promessas que nao possam ser provadas."),
+    skill("Descoberta", discoveryScore, "Mede perguntas, aprofundamento e entendimento da situacao atual.", "Explore problema, impacto, urgencia e custo de nao agir."),
+    skill("Qualificacao", discoveryScore - 5, "Mede sinais de prioridade, autoridade, prazo e capacidade de decisao.", "Confirme decisores, processo, prazo e criterio de investimento."),
+    skill("Perguntas", discoveryScore + Math.min(8, questionCount * 2), `Foram identificados ${questionCount} sinais de pergunta na transcricao.`, "Transforme respostas vagas em perguntas de aprofundamento."),
+    skill("Escuta ativa", discoveryScore - 2, "Mede confirmacoes, parafrases e continuidade baseada no que o cliente disse.", "Parafraseie a resposta e valide antes de mudar de assunto."),
+    skill("Identificacao de dores", discoveryScore + discoverySignals * 2, "Mede a capacidade de sair do sintoma e chegar ao impacto real.", "Quantifique o efeito da dor em tempo, receita, risco ou produtividade."),
+    skill("Construcao de valor", valueScore, "Mede a conexao entre a solucao e um resultado relevante para o cliente.", "Conecte cada capacidade a um impacto mencionado pelo cliente."),
+    skill("Pitch", valueScore - 2, "Mede relevancia, concisao e personalizacao da apresentacao.", "Apresente apenas o que responde a dor confirmada."),
+    skill("Argumentacao", valueScore + 2, "Mede logica, evidencia e capacidade de sustentar a recomendacao.", "Use problema, impacto, prova e pergunta de validacao."),
+    skill("Objecoes", Math.round((valueScore + discoveryScore) / 2), "Mede diagnostico da resistencia antes da resposta comercial.", "Valide, investigue, responda com evidencia e confirme entendimento."),
+    skill("Negociacao", Math.round((valueScore + closingScore) / 2), "Mede troca de valor, protecao de margem e alinhamento de interesses.", "Negocie contrapartidas antes de qualquer concessao."),
+    skill("Fechamento", closingScore, "Mede capacidade de transformar valor em compromisso claro.", "Confirme decisao, responsavel e data sem criar pressao artificial."),
+    skill("Proximo passo", closingScore + 2, "Mede existencia de uma acao objetiva e verificavel ao final da conversa.", "Encerre com acao, responsavel, data e objetivo do proximo encontro."),
+  ];
+
   return {
     overall_score: overallScore,
     summary: `A ligação recebeu nota ${overallScore}/100. A análise identificou a estrutura comercial presente na conversa e priorizou descoberta, construção de valor, clareza da comunicação e definição do próximo passo. Use o plano abaixo como roteiro para a próxima call.`,
+    diagnosis: {
+      executive_summary: `A call apresentou uma base comercial mensuravel, com nota ${overallScore}/100. O principal equilibrio a desenvolver esta entre descoberta, valor e compromisso final.`,
+      call_objective: "O objetivo exato deve ser confirmado pela transcricao e pelo contexto informado no envio.",
+      conversation_context: `Foram identificados ${questionCount} sinais de perguntas, ${discoverySignals} sinais de descoberta, ${valueSignals} sinais de valor e ${closingSignals} sinais de fechamento.`,
+      seller_conduction: discoveryScore >= valueScore ? "A conducao priorizou investigacao antes da proposta." : "A conversa apresentou valor mais cedo do que aprofundou o diagnostico.",
+      overall_diagnosis: "A maior oportunidade e transformar cada resposta do cliente em aprofundamento, evidencia de valor e um compromisso verificavel.",
+      missed_opportunities: discoverySignals < 3 ? "Faltou aprofundar impacto, urgencia e consequencia de nao agir antes de apresentar a solucao." : "Havia espaco para quantificar melhor o impacto e validar os criterios de decisao.",
+      missing_questions: "Perguntas recomendadas: como funciona hoje, onde mais trava, quanto isso custa, quem participa da decisao e o que precisa acontecer para avancar?",
+      objections_analysis: "A objecao deve ser validada e investigada antes da resposta. Sem evidencia explicita, nao e seguro afirmar que houve tratamento completo.",
+      better_approach: "Conduza a proxima call em cinco movimentos: agenda, descoberta, impacto, valor contextual e proximo passo com data.",
+      professional_conclusion: "Use o plano de melhoria como rotina de preparacao e compare a evolucao nas proximas tres ligacoes.",
+    },
     strengths: [
       questionCount > 0
         ? "Houve iniciativa de investigação por meio de perguntas, criando espaço para o cliente participar."
@@ -97,12 +138,7 @@ function buildRubricReport(transcript: string) {
         ? "Finalize com um próximo passo específico, responsável e data. Evite encerrar apenas com 'eu retorno depois'."
         : "Confirme no fechamento quem participa, qual decisão será tomada e o que precisa estar pronto.",
     ],
-    competency_scores: [
-      { name: "Descoberta e qualificação", score: discoveryScore, feedback: "Mede perguntas, aprofundamento e entendimento da necessidade." },
-      { name: "Pitch e construção de valor", score: valueScore, feedback: "Mede a conexão entre solução, impacto e resultado esperado." },
-      { name: "Fechamento e próximo passo", score: closingScore, feedback: "Mede clareza do compromisso e avanço da oportunidade." },
-      { name: "Comunicação e postura", score: communicationScore, feedback: "Mede clareza, objetividade e organização da mensagem." },
-    ],
+    competency_scores: competencyScores,
     next_actions: [
       "Prepare cinco perguntas de descoberta sobre cenário atual, impacto, urgência, decisão e orçamento.",
       "Reescreva o pitch em três partes: problema confirmado, impacto mensurável e prova de valor.",
@@ -250,14 +286,15 @@ Analise integralmente esta call em portugues brasileiro. Entregue um diagnostico
 Considere os metadados: ${metadata.slice(0, 4000)}.
 Retorne SOMENTE JSON valido com:
 - overall_score de 0 a 100 e summary;
-- diagnosis com executive_summary, call_objective, conversation_context, seller_conduction, overall_diagnosis e professional_conclusion. Cada campo deve ter 2 a 5 frases especificas;
+- diagnosis com executive_summary, call_objective, conversation_context, seller_conduction, overall_diagnosis, missed_opportunities, missing_questions, objections_analysis, better_approach e professional_conclusion. Cada campo deve ter 2 a 5 frases especificas, com evidencias e orientacao pratica;
 - strengths com 3 objetos contendo title, evidence, why_it_worked e how_to_repeat;
 - improvements com 3 objetos contendo title, error, impact, how_to_fix, prevention e practical_example;
-- competency_scores com objetos contendo name, score de 0 a 100, explanation, impact, level (Iniciante, Intermediario, Avancado ou Elite), gap e next_step;
+- competency_scores com EXATAMENTE estas 17 habilidades: Abertura; Rapport; Clareza; Comunicacao; Confianca; Descoberta; Qualificacao; Perguntas; Escuta ativa; Identificacao de dores; Construcao de valor; Pitch; Argumentacao; Objecoes; Negociacao; Fechamento; Proximo passo. Cada objeto deve conter name, score de 0 a 100, explanation (o que aconteceu), impact, level (Iniciante, Intermediario, Avancado ou Elite), gap (o que precisa melhorar) e next_step (como melhorar);
 - next_actions com EXATAMENTE 3 objetos contendo priority, objective, practical_action, exercise, target e expected_result;
 - evaluation_blocks com EXATAMENTE 28 itens. Cada item deve ter name, score de 0 a 100, reason, what_worked, what_to_improve, how_to_improve, practical_example e excerpt;
 - use estes 28 criterios, nesta ordem: Abertura da ligacao; Rapport; Descoberta de necessidades; Qualificacao; Comunicacao; Clareza; Escuta ativa; Controle da conversa; Autoridade; Confianca; Tom de voz; Ritmo da conversa; Argumentacao; Pitch de vendas; Demonstracao de valor; Tratamento de objecoes; Contorno de objecoes; Negociacao; Fechamento; Proximos passos; Follow-up; Uso de gatilhos mentais; Inteligencia emocional; Postura consultiva; Capacidade de gerar urgencia; Capacidade de gerar desejo; Persuasao; Organizacao da conversa.
 - critical_moments com timestamp real, speaker, quote, issue, recommendation e type (acerto, risco ou oportunidade).
+- No diagnostico, identifique explicitamente os principais acertos, principais erros, oportunidades perdidas, objecoes, perguntas que faltaram e como conduzir melhor. Use timestamps somente quando existirem na transcricao.
 - Cada explicacao deve citar comportamento ou fala concreta. Explique impacto comercial, motivo da recomendacao, exemplo pratico, erro a evitar e proximo passo. Evite qualquer texto generico.
 - crm_report com esta estrutura exata:
   callData (data_hora, duracao, vendedor, lead, empresa, cargo, produto_servico, segmento, objetivo_ligacao, etapa_funil, origem_lead, situacao_cliente, resultado_ligacao);

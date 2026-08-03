@@ -25,7 +25,9 @@ import {
 } from "lucide-react";
 import "./next-gen-coach.css";
 import "./next-gen-coach-premium.css";
+import "./next-gen-upgrades.css";
 import { CallReview } from "./CallReview";
+import { useSpeechToText } from "@/hooks/useSpeechToText";
 
 type HubTab = "training" | "battle" | "replay" | "twin" | "doctor" | "career";
 type ConversationMessage = { speaker: "coach" | "seller"; text: string };
@@ -73,11 +75,11 @@ const tabs: Array<{ id: HubTab; label: string; icon: typeof Bot }> = [
 ];
 
 const missions = [
-  ["Fechamento com decisor", "Conquiste um proximo passo com data, pauta e participantes.", "600 XP", "Elite", "Fechamento sem urgencia", "Sem urgencia", "Confirmar decisao e compromisso sem pressao artificial.", "Nota 85, resumo final e proximo passo completo."],
-  ["Cliente indeciso", "Conduza um comprador inseguro ate um criterio claro de decisao.", "440 XP", "Avancado", "Cliente interessado e indeciso", "Sem urgencia", "Descobrir o medo real e construir seguranca sem pressionar.", "Nota 80 em escuta, clareza e compromisso."],
-  ["Objecao de preco", "Proteja margem e reconstrua valor sem oferecer desconto.", "520 XP", "Dificil", "Negociacao de preco", "Preco", "Diagnosticar a causa real antes de argumentar.", "Nota 82 em objecoes e nenhuma concessao prematura."],
-  ["Prospeccao em 60 segundos", "Ganhe permissao para continuar sem usar um pitch generico.", "420 XP", "Avancado", "Primeiro contato com executivo", "Sem urgencia", "Gerar relevancia e curiosidade em uma abertura curta.", "Nota 80 em clareza, autoridade e proximo passo."],
-  ["Negociacao com concorrente", "Crie contraste sem atacar a solucao atual do cliente.", "480 XP", "Avancado", "Concorrente ja contratado", "Concorrente", "Reenquadrar criterios de decisao e custo de permanencia.", "Nota 82 em valor, negociacao e postura consultiva."],
+  ["Salve o negocio", "O cliente estava quase fechando, mas recebeu uma proposta 25% mais barata. Recupere a oportunidade sem guerra de preco.", "500 XP", "Dificil", "Concorrente 25% mais barato", "Concorrente", "Defender valor e reduzir risco sem conceder desconto.", "Nota 85 em valor, negociacao e protecao de margem."],
+  ["Descubra a verdadeira objecao", "O cliente gostou, mas disse que vai pensar. Descubra o que realmente impede a compra.", "350 XP", "Medio", "Cliente quer pensar", "Sem urgencia", "Revelar a objecao oculta e construir um criterio de decisao.", "Nota 80 em escuta, descoberta e compromisso."],
+  ["Chegue ao decisor", "Seu contato apoia a solucao, mas nao pode aprovar. Avance ate o decisor sem perder o aliado atual.", "450 XP", "Dificil", "Contato sem autoridade", "Sem autoridade", "Construir uma ponte segura ate quem decide.", "Nota 82 em qualificacao, influencia e proximo passo."],
+  ["Venda sem dar desconto", "O cliente quer comprar, mas exige 20% de desconto. Preserve margem e mantenha a oportunidade viva.", "500 XP", "Dificil", "Exigencia de desconto", "Preco", "Negociar escopo, prazo e valor antes de mexer no preco.", "Nota 85 em negociacao e nenhuma concessao prematura."],
+  ["Recupere o cliente", "O lead parou de responder depois da proposta. Crie um follow-up que reabra a conversa sem parecer insistente.", "400 XP", "Medio", "Silencio depois da proposta", "Sem urgencia", "Gerar uma resposta e definir se a oportunidade continua ativa.", "Nota 80 em relevancia, empatia e proximo passo."],
   ["Recuperacao de cliente perdido", "Reconstrua confianca depois de uma experiencia ruim e recupere a oportunidade.", "540 XP", "Dificil", "Cliente perdido por falha no atendimento", "Concorrente", "Reconhecer o erro, diagnosticar impacto e propor recuperacao segura.", "Nota 84 em empatia, responsabilidade e plano de recuperacao."],
   ["Cliente sem orcamento", "Crie valor e um caminho viavel sem empurrar desconto.", "550 XP", "Dificil", "Necessidade confirmada sem verba disponivel", "Preco", "Separar falta de verba, prioridade e percepcao de retorno.", "Nota 85 em qualificacao, valor e protecao de margem."],
   ["Inteligencia emocional", "Mantenha clareza diante de interrupcoes e respostas hostis.", "500 XP", "Dificil", "Cliente agressivo e impaciente", "Preco", "Regular o ritmo e recuperar uma conversa tensa.", "Nota 84 em postura, tom e controle da conversa."],
@@ -96,6 +98,27 @@ const missionProfiles = [
   { client: "Sergio Matos · Dono de rede varejista", psychology: "Hostil, emocional e pouco paciente", story: "Sergio teve uma experiencia ruim com outro fornecedor. Ele interrompe e testa a calma do vendedor." },
   { client: "Beatriz Melo · Gerente de Marketing", psychology: "Satisfeita, criteriosa e orientada a resultado", story: "Beatriz ja usa o produto basico e obteve resultado. Ela so amplia o contrato se a nova capacidade resolver uma prioridade comprovada." },
   { client: "Daniel Faria · Diretor de Operacoes", psychology: "Pratico, estrategico e avesso a venda forcada", story: "Daniel e cliente atual e tem outro problema operacional. A oferta complementar precisa surgir do diagnostico, nao de uma lista de produtos." },
+];
+
+const missionOpeners = [
+  "Gostei da sua solucao, mas recebi uma proposta 25% mais barata. Sinceramente, nao sei como justificar essa diferenca para a diretoria.",
+  "A apresentacao foi boa. Vou pensar com calma e depois te retorno.",
+  "Eu gosto da ideia, mas quem aprova esse investimento e a diretora. Nao quero envolver ela antes de ter certeza.",
+  "Podemos fechar, desde que voce reduza 20% do valor. Sem isso, nao consigo avancar.",
+  "Recebi sua proposta. Agora estou sem tempo para olhar isso e prefiro retomar mais para frente.",
+  "Eu ja tive uma experiencia ruim com voces. Por que deveria acreditar que desta vez sera diferente?",
+  "A necessidade existe, mas nao temos verba neste trimestre. Nao adianta insistir.",
+  "Se for demorar para explicar, pode encerrar. Eu quero saber o preco e pronto.",
+  "O plano atual funciona. O que exatamente eu ganharia ampliando o contrato agora?",
+  "Nao quero receber uma lista de outros produtos. Qual problema real voce acha que ainda existe aqui?",
+];
+
+const missionDecisions = [
+  "Investigar quais criterios, alem do preco, definem a decisao",
+  "Perguntar o que exatamente o cliente precisa pensar",
+  "Construir com o contato uma pauta de valor para envolver o decisor",
+  "Negociar escopo e contrapartidas antes de discutir preco",
+  "Retomar a prioridade com uma evidencia curta e uma pergunta simples",
 ];
 
 const replayMoments = [
@@ -153,39 +176,31 @@ export function NextGenCoach() {
   const [missionMessage, setMissionMessage] = useState("");
   const [missionConversation, setMissionConversation] = useState<ConversationMessage[]>([]);
   const [trainingConfig, setTrainingConfig] = useState({
-    clientName: "",
-    company: "",
-    segment: "Tecnologia B2B",
-    size: "51 a 200 funcionarios",
-    role: "CEO",
-    profile: "CEO impaciente",
-    scenario: "Descoberta com decisor cetico",
-    difficulty: "Avancado",
-    sellerCompany: "",
-    offer: "",
-    objective: "Entender a necessidade e conquistar um proximo passo",
-    objection: "Preco",
+    clientName: "Ricardo",
+    role: "Diretor Comercial",
+    segment: "Tecnologia",
+    difficulty: "Medio",
     context: "",
   });
+  const inferredProfile = trainingConfig.difficulty === "Dificil" ? "Exigente e resistente" : trainingConfig.difficulty === "Facil" ? "Aberto e colaborativo" : "Criterioso e objetivo";
+  const inferredObjection = trainingConfig.difficulty === "Dificil" ? "Concorrente" : trainingConfig.difficulty === "Facil" ? "Sem urgencia" : "Preco";
+  const trainingSpeech = useSpeechToText((text) => setMessage((current) => `${current} ${text}`.trim()));
+  const missionSpeech = useSpeechToText((text) => setMissionMessage((current) => `${current} ${text}`.trim()));
   const customer = useMemo(
     () => ({
       name: trainingConfig.clientName || ["Roberto Almeida", "Camila Nunes", "Marcos Ferraz"][seed % 3],
       role: trainingConfig.role || ["CEO", "Diretora Financeira", "Gerente de Operacoes"][seed % 3],
-      company: trainingConfig.company || ["Atlas Logistica", "Nexa Tecnologia", "Grupo Horizonte"][seed % 3],
-      personality: [
-        "Direto e impaciente",
-        "Analitica e desconfiada",
-        "Competitivo e exigente",
-      ][seed % 3],
+      company: `Empresa de ${trainingConfig.segment}`,
+      personality: inferredProfile,
     }),
-    [seed, trainingConfig.clientName, trainingConfig.company, trainingConfig.role],
+    [seed, trainingConfig.clientName, trainingConfig.role, trainingConfig.segment, inferredProfile],
   );
 
   const startSession = () => {
     setConversation([
       {
         speaker: "coach",
-        text: `Sou ${customer.name}, ${customer.role} da ${customer.company}. ${trainingConfig.context ? `${trainingConfig.context} ` : ""}Tenho poucos minutos. Voce quer conversar sobre ${trainingConfig.offer}. Por que isso merece minha atencao agora e como isso se conecta ao meu contexto?`,
+        text: `Sou ${customer.name}, ${customer.role} no segmento de ${trainingConfig.segment}. ${trainingConfig.context ? `Entendi o contexto: ${trainingConfig.context}. ` : ""}Tenho poucos minutos. Comece a conversa e me mostre por que vale a pena continuar.`,
       },
     ]);
     setStep("session");
@@ -202,9 +217,9 @@ export function NextGenCoach() {
         text: createBuyerReply(
           sellerMessage,
           turn,
-          trainingConfig.scenario,
-          trainingConfig.objection,
-          trainingConfig.profile,
+          trainingConfig.context || "Conversa comercial",
+          inferredObjection,
+          inferredProfile,
         ),
       },
     ]);
@@ -243,14 +258,14 @@ export function NextGenCoach() {
         : questions
           ? "Voce investigou o contexto, mas encerrou sem combinar responsavel, data e objetivo da proxima conversa."
           : "Voce apresentou a solucao antes de investigar o impacto e o criterio de decisao do cliente.",
-      best: trainingConfig.objection === "Preco"
+      best: inferredObjection === "Preco"
         ? "Quando voce diz caro, esta comparando com o orcamento, com outra proposta ou com o retorno que espera gerar?"
-        : `Antes de responder sobre ${trainingConfig.objection.toLowerCase()}, qual risco ou criterio esta por tras dessa preocupacao?`,
+        : `Antes de responder sobre ${inferredObjection.toLowerCase()}, qual risco ou criterio esta por tras dessa preocupacao?`,
       next: hasNextStep
         ? "Repita com dificuldade maior e valide o compromisso sem oferecer desconto."
         : "Repita o treino e termine com um proximo passo que tenha data, participantes e pauta.",
     };
-  }, [conversation, trainingConfig.objection]);
+  }, [conversation, inferredObjection]);
 
   const missionEvaluation = useMemo(() => {
     const seller = missionConversation.filter((item) => item.speaker === "seller");
@@ -263,17 +278,24 @@ export function NextGenCoach() {
     const discovery = Math.min(96, 52 + questions * 10);
     const value = Math.min(96, 54 + valueSignals * 7 - (discount ? 12 : 0));
     const objections = Math.min(96, 57 + questions * 5 + valueSignals * 4 - (discount ? 15 : 0));
+    const negotiation = Math.min(96, 55 + valueSignals * 5 + (nextStep ? 9 : 0) - (discount ? 18 : 0));
     const closing = Math.min(96, 55 + (nextStep ? 28 : 0));
-    const overall = Math.round((communication + discovery + value + objections + closing) / 5);
-    return { overall, communication, discovery, value, objections, closing, questions, nextStep, discount };
+    const overall = Math.round((communication + discovery + value + objections + negotiation + closing) / 6);
+    const decisive = seller.reduce((best, item) => item.text.length > best.length ? item.text : best, "");
+    return { overall, communication, discovery, value, objections, negotiation, closing, questions, nextStep, discount, decisive };
   }, [missionConversation]);
 
-  const sendMissionMessage = () => {
-    if (!missionMessage.trim() || selectedMission === null) return;
-    const text = missionMessage.trim();
+  const sendMissionMessage = (suggested?: string) => {
+    const text = (suggested ?? missionMessage).trim();
+    if (!text || selectedMission === null) return;
     const mission = missions[selectedMission];
     const turn = missionConversation.filter((item) => item.speaker === "seller").length;
-    const reply = createBuyerReply(text, turn, mission[4], mission[5], missionProfiles[selectedMission].psychology);
+    const baseReply = createBuyerReply(text, turn, mission[4], mission[5], missionProfiles[selectedMission].psychology);
+    const reply = turn === 0
+      ? `${baseReply} Ainda preciso de uma razao que eu consiga defender internamente.`
+      : turn === 1
+        ? `${baseReply} Seja especifico: o que voce propoe que eu faca agora?`
+        : baseReply;
     setMissionConversation((current) => [...current, { speaker: "seller", text }, { speaker: "coach", text: reply }]);
     setMissionMessage("");
   };
@@ -329,132 +351,49 @@ export function NextGenCoach() {
                   </span>
                   <p>CLIENTE GERADO</p>
                   <h2>{customer.name}</h2>
-                  <strong>
-                    {trainingConfig.profile} · {customer.company}
-                  </strong>
+                  <strong>{customer.role} · {trainingConfig.segment}</strong>
                   <dl>
                     <div>
                       <dt>Personalidade</dt>
-                      <dd>{trainingConfig.profile}</dd>
+                      <dd>{customer.personality}</dd>
                     </div>
                     <div>
-                      <dt>Experiencia</dt>
-                      <dd>Comprador experiente</dd>
+                      <dt>Dificuldade</dt>
+                      <dd>{trainingConfig.difficulty}</dd>
                     </div>
                     <div>
-                      <dt>Orcamento</dt>
-                      <dd>Restrito e nao confirmado</dd>
-                    </div>
-                    <div>
-                      <dt>Objetivo oculto</dt>
-                      <dd>Reduzir risco da decisao</dd>
+                      <dt>A IA cria automaticamente</dt>
+                      <dd>Objecoes, prioridades e comportamento</dd>
                     </div>
                   </dl>
                 </article>
-                <div className="coach-config">
+                <div className="coach-config quick-training-config">
+                  <header><span>CONFIGURACAO RAPIDA</span><h3>So o essencial para comecar.</h3><p>A IA infere personalidade, objecoes e criterios de decisao.</p></header>
                   <label>
                     Nome do cliente
-                    <input value={trainingConfig.clientName} onChange={(event) => setTrainingConfig((current) => ({ ...current, clientName: event.target.value }))} placeholder="Ex.: Roberto Almeida" />
+                    <input value={trainingConfig.clientName} onChange={(event) => setTrainingConfig((current) => ({ ...current, clientName: event.target.value }))} placeholder="Ex.: Ricardo" />
                   </label>
                   <label>
-                    Empresa do cliente
-                    <input value={trainingConfig.company} onChange={(event) => setTrainingConfig((current) => ({ ...current, company: event.target.value }))} placeholder="Ex.: Atlas Logistica" />
+                    Cargo
+                    <input value={trainingConfig.role} onChange={(event) => setTrainingConfig((current) => ({ ...current, role: event.target.value }))} placeholder="Ex.: Diretor Comercial" />
                   </label>
                   <label>
                     Segmento
                     <select value={trainingConfig.segment} onChange={(event) => setTrainingConfig((current) => ({ ...current, segment: event.target.value }))}>
-                      <option>Tecnologia B2B</option>
-                      <option>Servicos</option>
-                      <option>Varejo</option>
-                      <option>Industria</option>
-                      <option>Saude</option>
-                    </select>
-                  </label>
-                  <label>
-                    Porte da empresa
-                    <select value={trainingConfig.size} onChange={(event) => setTrainingConfig((current) => ({ ...current, size: event.target.value }))}>
-                      <option>51 a 200 funcionarios</option>
-                      <option>Pequena empresa</option>
-                      <option>Enterprise</option>
-                    </select>
-                  </label>
-                  <label>
-                    Quem estara do outro lado?
-                    <select value={trainingConfig.profile} onChange={(event) => setTrainingConfig((current) => ({ ...current, profile: event.target.value }))}>
-                      <option>CEO impaciente</option>
-                      <option>CFO rigoroso com orcamento</option>
-                      <option>Diretor comercial cetico</option>
-                      <option>Comprador agressivo</option>
-                      <option>Cliente mal-educado</option>
-                      <option>Gestor indeciso</option>
-                      <option>Cliente fiel ao concorrente</option>
-                    </select>
-                  </label>
-                  <label>
-                    Cargo
-                    <input value={trainingConfig.role} onChange={(event) => setTrainingConfig((current) => ({ ...current, role: event.target.value }))} placeholder="Ex.: Diretor Financeiro" />
-                  </label>
-                  <label>
-                    Cenario
-                    <select value={trainingConfig.scenario} onChange={(event) => setTrainingConfig((current) => ({ ...current, scenario: event.target.value }))}>
-                      <option>Descoberta com decisor cetico</option>
-                      <option>Negociacao de preco</option>
-                      <option>Concorrente ja contratado</option>
-                      <option>Fechamento sem urgencia</option>
+                      <option>Tecnologia</option><option>Servicos</option><option>Varejo</option><option>Industria</option><option>Saude</option><option>Financeiro</option><option>Outro</option>
                     </select>
                   </label>
                   <label>
                     Dificuldade
                     <select value={trainingConfig.difficulty} onChange={(event) => setTrainingConfig((current) => ({ ...current, difficulty: event.target.value }))}>
-                      <option>Avancado</option>
-                      <option>Intermediario</option>
-                      <option>Elite</option>
+                      <option>Facil</option><option>Medio</option><option>Dificil</option>
                     </select>
                   </label>
                   <label className="wide">
-                    O que sua empresa vende?
-                    <input
-                      value={trainingConfig.sellerCompany}
-                      onChange={(event) => setTrainingConfig((current) => ({ ...current, sellerCompany: event.target.value }))}
-                      placeholder="Ex.: software para gestao de equipes"
-                    />
+                    Contexto <small>Opcional</small>
+                    <textarea value={trainingConfig.context} onChange={(event) => setTrainingConfig((current) => ({ ...current, context: event.target.value }))} placeholder="Conte rapidamente o que voce quer treinar. Ex.: quero vender meu software para um diretor que acha a solucao cara." />
                   </label>
-                  <label className="wide">
-                    Produto que quero vender
-                    <input
-                      value={trainingConfig.offer}
-                      onChange={(event) => setTrainingConfig((current) => ({ ...current, offer: event.target.value }))}
-                      placeholder="Ex.: plataforma de gestao comercial B2B"
-                    />
-                  </label>
-                  <label className="wide">
-                    Objetivo da conversa
-                    <input value={trainingConfig.objective} onChange={(event) => setTrainingConfig((current) => ({ ...current, objective: event.target.value }))} placeholder="Ex.: conquistar reuniao com o decisor" />
-                  </label>
-                  <label className="wide">
-                    Descreva o cliente que voce quer simular
-                    <textarea value={trainingConfig.context} onChange={(event) => setTrainingConfig((current) => ({ ...current, context: event.target.value }))} placeholder="Ex.: Diretor financeiro de uma empresa com 200 funcionarios, usa um concorrente e acha nossa solucao cara." />
-                  </label>
-                  <div className="coach-objections">
-                    <span>Objecoes ativas</span>
-                    {[
-                      "Preco",
-                      "Concorrente",
-                      "Sem urgencia",
-                      "Sem autoridade",
-                    ].map((item) => (
-                      <button
-                        type="button"
-                        className={trainingConfig.objection === item ? "selected" : ""}
-                        aria-pressed={trainingConfig.objection === item}
-                        onClick={() => setTrainingConfig((current) => ({ ...current, objection: item }))}
-                        key={item}
-                      >
-                        {item}
-                      </button>
-                    ))}
-                  </div>
-                  <button className="start-coaching" onClick={startSession} disabled={!trainingConfig.offer.trim()}>
+                  <button className="start-coaching" onClick={startSession}>
                     <Play /> Iniciar treino <ArrowRight />
                   </button>
                 </div>
@@ -469,9 +408,7 @@ export function NextGenCoach() {
                 </span>
                 <p>CLIENTE EM SIMULACAO</p>
                 <h2>{customer.name}</h2>
-                <strong>
-                  {trainingConfig.profile} · {customer.company}
-                </strong>
+                <strong>{customer.role} · {customer.personality}</strong>
                 <div>
                   <i />
                   <span>Conversa ativa</span>
@@ -500,7 +437,7 @@ export function NextGenCoach() {
                   </span>
                 </div>
                 <form className="coach-composer" onSubmit={(event) => { event.preventDefault(); sendMessage(); }}>
-                  <button type="button" aria-label="Entrada por voz indisponivel nesta demonstracao" title="Entrada por voz em breve" disabled>
+                  <button type="button" className={`speech-composer-button ${trainingSpeech.status}`} onClick={trainingSpeech.toggle} disabled={trainingSpeech.status === "processing"} aria-label={trainingSpeech.status === "recording" ? "Parar gravacao" : "Falar sua resposta"} title={trainingSpeech.label}>
                     <Mic />
                   </button>
                   <input
@@ -513,6 +450,7 @@ export function NextGenCoach() {
                     <Send />
                   </button>
                 </form>
+                {(trainingSpeech.error || trainingSpeech.status === "recording" || trainingSpeech.status === "processing") && <p className={`speech-composer-status ${trainingSpeech.status}`}><i />{trainingSpeech.error || trainingSpeech.label}</p>}
                 <button
                   className="finish-session"
                   onClick={() => setStep("result")}
@@ -602,14 +540,26 @@ export function NextGenCoach() {
               {missionStep === "brief" && <><div className="mission-story"><div><UserRound /><span><small>CLIENTE EXCLUSIVO</small><strong>{missionProfiles[selectedMission].client}</strong><p>{missionProfiles[selectedMission].psychology}</p></span></div><p>{missionProfiles[selectedMission].story}</p></div>
               <div className="mission-briefing"><article><Target /><h3>Objetivo exclusivo</h3><p>{missions[selectedMission][6]}</p></article><article><Gauge /><h3>Criterio de aprovacao</h3><p>{missions[selectedMission][7]}</p></article><article><Brain /><h3>Decisoes avaliadas</h3><p>Perguntas, construcao de valor, tratamento da resistencia e proximo passo.</p></article><article><Award /><h3>Recompensas</h3><p>{missions[selectedMission][2]}, moedas, medalha e pontos no ranking.</p></article></div>
               <button className="mission-start" onClick={() => {
-                const mission = missions[selectedMission];
-                const profile = missionProfiles[selectedMission];
-                const [clientName, role = "Decisor"] = profile.client.split(" · ");
-                setMissionConversation([{ speaker: "coach", text: `Sou ${clientName}, ${role}. ${profile.story} ${mission[1]} Voce esta dentro deste desafio. Comece a conversa e conduza a decisao.` }]);
+                setMissionConversation([{ speaker: "coach", text: missionOpeners[selectedMission] }]);
                 setMissionStep("session");
-              }}><Play /> Iniciar este desafio</button></>}
-              {missionStep === "session" && <div className="mission-session"><aside><UserRound /><small>CLIENTE DO DESAFIO</small><strong>{missionProfiles[selectedMission].client}</strong><p>{missionProfiles[selectedMission].psychology}</p><dl><div><dt>Objetivo</dt><dd>{missions[selectedMission][6]}</dd></div><div><dt>Dificuldade</dt><dd>{missions[selectedMission][3]}</dd></div><div><dt>Recompensa</dt><dd>{missions[selectedMission][2]}</dd></div></dl></aside><main><div className="mission-transcript">{missionConversation.map((item, index) => <article className={item.speaker} key={index}><small>{item.speaker === "coach" ? missionProfiles[selectedMission].client.split(" · ")[0] : "Voce"}</small><p>{item.text}</p></article>)}</div><div className="mission-decision-tip"><Lightbulb /><span><strong>Decisao do turno</strong>Use a resposta do cliente para escolher entre aprofundar, construir valor ou pedir compromisso.</span></div><form onSubmit={(event) => { event.preventDefault(); sendMissionMessage(); }}><input value={missionMessage} onChange={(event) => setMissionMessage(event.target.value)} placeholder="Responda ao cliente deste desafio..." /><button disabled={!missionMessage.trim()}><Send /></button></form><button className="mission-finish" disabled={missionConversation.filter((item) => item.speaker === "seller").length < 3} onClick={() => setMissionStep("result")}>Finalizar desafio e receber nota</button></main></div>}
-              {missionStep === "result" && <div className="mission-result"><header><div><small>DESAFIO CONCLUIDO</small><h2>{missionEvaluation.overall >= 80 ? "Missao cumprida" : "Missao concluida com pontos para evoluir"}</h2><p>{missions[selectedMission][0]} · avaliacao exclusiva desta experiencia</p></div><strong>{missionEvaluation.overall}<span>/100</span></strong></header><div className="mission-result-scores">{[["Comunicacao", missionEvaluation.communication], ["Descoberta", missionEvaluation.discovery], ["Construcao de valor", missionEvaluation.value], ["Objecoes", missionEvaluation.objections], ["Fechamento", missionEvaluation.closing]].map(([label, value]) => <article key={label}><span>{label}</span><strong>{value}</strong><i><b style={{ width: `${value}%` }} /></i></article>)}</div><div className="mission-result-feedback"><article><CheckCircle2 /><div><strong>Pontos fortes</strong><p>{missionEvaluation.questions > 1 ? "Voce usou perguntas para entender a resistencia antes de responder." : "Voce manteve a conversa ativa e apresentou sua linha de raciocinio."}</p></div></article><article><ShieldAlert /><div><strong>Pontos a melhorar</strong><p>{missionEvaluation.discount ? "Houve concessao de preco antes de esgotar a construcao de valor." : !missionEvaluation.nextStep ? "Faltou transformar a conversa em um proximo passo com responsavel e data." : "Aprofunde impacto e criterio de decisao antes da proposta final."}</p></div></article><article><Sparkles /><div><strong>Melhor abordagem</strong><p>Valide a resistencia, investigue a causa, conecte valor a uma evidencia e confirme uma acao verificavel.</p></div></article><article><Award /><div><strong>XP conquistado</strong><p>{missionEvaluation.overall >= 80 ? missions[selectedMission][2] : "60% do XP · repita para conquistar a recompensa completa"}</p></div></article></div><footer><button onClick={() => { setMissionStep("brief"); setMissionConversation([]); }}>Rever contexto</button><button onClick={() => { setMissionStep("session"); setMissionConversation([]); const profile = missionProfiles[selectedMission]; setMissionConversation([{ speaker: "coach", text: `${profile.story} Vamos recomecar. Conduza esta conversa com uma abordagem melhor.` }]); }}><RefreshCw /> Tentar novamente</button></footer></div>}
+              }}><Play /> Aceitar missao</button></>}
+              {missionStep === "session" && <div className="mission-session">
+                <aside><UserRound /><small>CLIENTE DO DESAFIO</small><strong>{missionProfiles[selectedMission].client}</strong><p>{missionProfiles[selectedMission].psychology}</p><dl><div><dt>Objetivo</dt><dd>{missions[selectedMission][6]}</dd></div><div><dt>Dificuldade</dt><dd>{missions[selectedMission][3]}</dd></div><div><dt>Recompensa</dt><dd>{missions[selectedMission][2]}</dd></div></dl></aside>
+                <main>
+                  <div className="mission-transcript">{missionConversation.map((item, index) => <article className={item.speaker} key={index}><small>{item.speaker === "coach" ? missionProfiles[selectedMission].client.split(" · ")[0] : "Voce"}</small><p>{item.text}</p></article>)}</div>
+                  <div className="mission-decision-tip"><Lightbulb /><span><strong>Como voce quer avancar?</strong>Escolha uma estrategia ou escreva sua propria resposta.</span></div>
+                  <div className="mission-decisions">{[
+                    missionDecisions[selectedMission] ?? "Investigar o criterio de decisao antes de argumentar",
+                    "Fazer uma pergunta para quantificar impacto e urgencia",
+                    "Conectar valor a uma evidencia e confirmar entendimento",
+                    "Propor um proximo passo com objetivo e responsavel",
+                  ].map((choice, index) => <button type="button" onClick={() => sendMissionMessage(choice)} key={choice}><b>{String.fromCharCode(65 + index)}</b>{choice}</button>)}</div>
+                  <form onSubmit={(event) => { event.preventDefault(); sendMissionMessage(); }}><button type="button" className={`mission-speech ${missionSpeech.status}`} onClick={missionSpeech.toggle} disabled={missionSpeech.status === "processing"} aria-label={missionSpeech.label}><Mic /></button><input value={missionMessage} onChange={(event) => setMissionMessage(event.target.value)} placeholder="Escreva ou fale sua resposta..." /><button disabled={!missionMessage.trim()}><Send /></button></form>
+                  {(missionSpeech.error || missionSpeech.status === "recording" || missionSpeech.status === "processing") && <p className={`speech-composer-status mission-speech-status ${missionSpeech.status}`}><i />{missionSpeech.error || missionSpeech.label}</p>}
+                  <button className="mission-finish" disabled={missionConversation.filter((item) => item.speaker === "seller").length < 3} onClick={() => setMissionStep("result")}>Finalizar desafio e receber nota</button>
+                </main>
+              </div>}
+              {missionStep === "result" && <div className="mission-result"><header><div><small>MISSAO CONCLUIDA</small><h2>{missionEvaluation.overall >= 80 ? "Missao cumprida" : "Missao concluida com pontos para evoluir"}</h2><p>{missions[selectedMission][0]} · avaliacao exclusiva desta experiencia</p></div><strong>{missionEvaluation.overall}<span>/100</span></strong></header><div className="mission-result-scores">{[["Comunicacao", missionEvaluation.communication], ["Descoberta", missionEvaluation.discovery], ["Argumentacao", missionEvaluation.value], ["Objecoes", missionEvaluation.objections], ["Negociacao", missionEvaluation.negotiation], ["Fechamento", missionEvaluation.closing]].map(([label, value]) => <article key={label}><span>{label}</span><strong>{value}</strong><i><b style={{ width: `${value}%` }} /></i></article>)}</div><div className="mission-result-feedback"><article><CheckCircle2 /><div><strong>O que voce fez bem</strong><p>{missionEvaluation.questions > 1 ? "Voce usou perguntas para entender a resistencia antes de responder." : "Voce manteve a conversa ativa e apresentou sua linha de raciocinio."}</p></div></article><article><ShieldAlert /><div><strong>Onde voce perdeu pontos</strong><p>{missionEvaluation.discount ? "Houve concessao de preco antes de esgotar a construcao de valor." : !missionEvaluation.nextStep ? "Faltou transformar a conversa em um proximo passo com responsavel e data." : "Aprofunde impacto e criterio de decisao antes da proposta final."}</p></div></article><article><Target /><div><strong>Momento decisivo</strong><p>{missionEvaluation.decisive ? `Sua resposta com maior impacto foi: “${missionEvaluation.decisive}”` : "Faltou uma resposta completa que mudasse o rumo da negociacao."}</p></div></article><article><Sparkles /><div><strong>O que um vendedor de alta performance faria</strong><p>Validaria a resistencia, investigaria a causa, conectaria valor a uma evidencia e confirmaria uma acao verificavel.</p></div></article><article><Lightbulb /><div><strong>Proximo passo</strong><p>{missionEvaluation.nextStep ? "Repita a missao em nivel maior e preserve a mesma clareza no compromisso." : "Treine um fechamento com data, responsavel e objetivo da proxima conversa."}</p></div></article><article><Award /><div><strong>Recompensa</strong><p>{missionEvaluation.overall >= 80 ? `${missions[selectedMission][2]} · Missao concluida` : "60% do XP · repita para conquistar a recompensa completa"}</p></div></article></div><footer><button onClick={() => { setMissionStep("brief"); setMissionConversation([]); }}>Rever contexto</button><button onClick={() => { setMissionStep("session"); setMissionConversation([{ speaker: "coach", text: missionOpeners[selectedMission] }]); }}><RefreshCw /> Tentar novamente</button></footer></div>}
             </div>
           )}
           {selectedMission === null && <div className="battle-grid">
@@ -627,7 +577,7 @@ export function NextGenCoach() {
                   <button
                     onClick={() => { setSelectedMission(index); setMissionStep("brief"); setMissionConversation([]); }}
                   >
-                    Abrir missao <ChevronRight />
+                    Aceitar missao <ChevronRight />
                   </button>
                 </footer>
               </article>
