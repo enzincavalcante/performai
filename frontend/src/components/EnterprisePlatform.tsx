@@ -2356,7 +2356,6 @@ function CertificatesModule({ onNavigate }: { onNavigate: Navigate }) {
   const [showPreview, setShowPreview] = useState(false);
   const [demoMode, setDemoMode] = useState(false);
   const [demoCertificateId] = useState(() => `PERFORMA-DEMO-${new Date().getFullYear()}-${crypto.randomUUID().slice(0, 8).toUpperCase()}`);
-  const [demoDate] = useState(() => new Date().toLocaleDateString("pt-BR"));
   const [participantName, setParticipantName] = useState(() =>
     typeof window === "undefined"
       ? ""
@@ -2392,7 +2391,7 @@ function CertificatesModule({ onNavigate }: { onNavigate: Navigate }) {
             {showPreview ? "Proteger previa" : "Visualizar certificado"}
           </button>
           <button onClick={() => { setDemoMode(true); setShowPreview(true); }}>
-            <Sparkles /> Certificado de demonstracao
+            <Sparkles /> Gerar certificado de teste
           </button>
           {showPreview && (
             <button onClick={() => window.print()}>
@@ -2489,12 +2488,6 @@ function CertificatesModule({ onNavigate }: { onNavigate: Navigate }) {
             <b>Especialista em Vendas Consultivas</b>, demonstrando dominio
             teorico e pratico das competencias comerciais avaliadas.
           </p>
-          <section className="certificate-meta">
-            <span><small>CURSO</small><strong>Especialista em Vendas Consultivas</strong></span>
-            <span><small>CARGA HORARIA</small><strong>20 horas</strong></span>
-            <span><small>DATA DE EMISSAO</small><strong>{demoDate}</strong></span>
-            <span><small>IDENTIFICACAO</small><strong>{demoMode ? demoCertificateId : "PERFORMA-2026-0001"}</strong></span>
-          </section>
           <footer>
             <div>
               <Image
