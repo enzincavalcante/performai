@@ -42,6 +42,17 @@ type SimulationPersona = {
   objective: string;
 };
 
+const CLIENT_POOL = [
+  { name: "Helena Prado", role: "CEO", company: "Norte Cloud", segment: "Tecnologia", personality: "Objetiva e orientada a ROI", difficulty: "Dificil", objection: "Retorno", visible: "Decisora final, pouco tempo e foco em impacto financeiro", hidden: "Precisa reduzir churn, mas so revela isso se o vendedor investigar consequencias e prioridade." },
+  { name: "Camila Torres", role: "CFO", company: "Grupo Arco", segment: "Servicos", personality: "Racional e protetora de margem", difficulty: "Dificil", objection: "Preco", visible: "Controla o orcamento e exige previsibilidade", hidden: "Tem verba, mas testa se o vendedor concede desconto antes de construir valor." },
+  { name: "Roberto Nunes", role: "Gerente de Operacoes", company: "Logvia", segment: "Logistica", personality: "Interessado, cauteloso e detalhista", difficulty: "Medio", objection: "Autoridade", visible: "Conhece o problema, mas nao aprova sozinho", hidden: "Pode virar aliado se receber uma justificativa segura para levar ao diretor." },
+  { name: "Patricia Gomes", role: "Empresaria", company: "Vitta Mais", segment: "Saude", personality: "Desconfiada por uma experiencia ruim", difficulty: "Dificil", objection: "Risco", visible: "Interrompe promessas vagas e pede provas", hidden: "Quer mudar de fornecedor, mas teme outra implantacao fracassada." },
+  { name: "Marcos Vieira", role: "Diretor Comercial", company: "Atlas Vendas", segment: "Educacao", personality: "Impaciente e competitivo", difficulty: "Extremo", objection: "Concorrente", visible: "Pressiona por preco e respostas curtas", hidden: "A prioridade real e padronizar o time; aceita pagar mais se o risco de adocao for reduzido." },
+  { name: "Beatriz Melo", role: "Head de Marketing", company: "Onda Digital", segment: "Marketing", personality: "Receptiva e tecnica", difficulty: "Medio", objection: "Integracao", visible: "Faz muitas perguntas sobre implantacao", hidden: "Tem urgencia de 45 dias, mas so compartilha o prazo depois de uma pergunta de impacto." },
+  { name: "Daniel Faria", role: "Fundador", company: "Prisma Tech", segment: "SaaS", personality: "Direto e avesso a conversa decorada", difficulty: "Dificil", objection: "Prioridade", visible: "Conhece solucoes concorrentes e questiona diferenciais", hidden: "O caixa permite a compra, mas a equipe esta sobrecarregada e teme a mudanca." },
+  { name: "Ana Luiza Costa", role: "Gerente de Compras", company: "Nova Industria", segment: "Industria", personality: "Firme e orientada a processo", difficulty: "Medio", objection: "Condicoes", visible: "Compara propostas e exige criterios objetivos", hidden: "Nao e usuaria da solucao; precisa de evidencias para defender a escolha internamente." },
+];
+
 const normalizeText = (value: string) =>
   value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 
@@ -91,7 +102,6 @@ async function requestBuyerReply(mode: "training" | "mission", message: string, 
 const tabs: Array<{ id: HubTab; label: string; icon: typeof Bot }> = [
   { id: "training", label: "Treinar uma Venda", icon: Bot },
   { id: "battle", label: "Desafios Comerciais", icon: Trophy },
-  { id: "doctor", label: "Estrategia de Negociacao", icon: BriefcaseBusiness },
   { id: "career", label: "Minha Evolucao", icon: BarChart3 },
 ];
 
@@ -169,8 +179,8 @@ const replayMoments = [
   },
 ];
 
-export function NextGenCoach() {
-  const [tab, setTab] = useState<HubTab>("training");
+export function NextGenCoach({ initialTab = "training" }: { initialTab?: HubTab }) {
+  const [tab, setTab] = useState<HubTab>(initialTab);
   const [step, setStep] = useState<"setup" | "session" | "result">("setup");
   const [message, setMessage] = useState("");
   const [conversation, setConversation] = useState<ConversationMessage[]>([]);
@@ -200,6 +210,7 @@ export function NextGenCoach() {
   const [missionMessage, setMissionMessage] = useState("");
   const [missionConversation, setMissionConversation] = useState<ConversationMessage[]>([]);
   const [buyerThinking, setBuyerThinking] = useState(false);
+  const [clientLoading, setClientLoading] = useState(false);
   const [missionThinking, setMissionThinking] = useState(false);
   const [trainingConfig, setTrainingConfig] = useState({
     sellerName: "",
@@ -215,23 +226,23 @@ export function NextGenCoach() {
     difficulty: "Medio",
     context: "",
   });
-  const inferredProfile = trainingConfig.difficulty === "Dificil" ? "Exigente e resistente" : trainingConfig.difficulty === "Facil" ? "Aberto e colaborativo" : "Criterioso e objetivo";
-  const inferredObjection = trainingConfig.difficulty === "Dificil" ? "Concorrente" : trainingConfig.difficulty === "Facil" ? "Sem urgencia" : "Preco";
-  const customer = useMemo(
-    () => ({
-      name: trainingConfig.clientName || ["Roberto Almeida", "Camila Nunes", "Marcos Ferraz"][seed % 3],
-      role: trainingConfig.role || ["CEO", "Diretora Financeira", "Gerente de Operacoes"][seed % 3],
-      company: `Empresa de ${trainingConfig.segment}`,
-      personality: inferredProfile,
-    }),
-    [seed, trainingConfig.clientName, trainingConfig.role, trainingConfig.segment, inferredProfile],
-  );
+  const customer = useMemo(() => CLIENT_POOL[seed % CLIENT_POOL.length], [seed]);
+  const inferredProfile = customer.personality;
+  const inferredObjection = customer.objection;
+
+  const generateCustomer = () => {
+    setClientLoading(true);
+    setConversation([]);
+    setMessage("");
+    setStep("setup");
+    window.setTimeout(() => { setSeed((value) => value + 1); setClientLoading(false); }, 420);
+  };
 
   const startSession = () => {
     setConversation([
       {
         speaker: "coach",
-        text: `Sou ${customer.name}, ${customer.role} no segmento de ${trainingConfig.segment}. ${trainingConfig.context ? `Entendi o contexto: ${trainingConfig.context}. ` : ""}Tenho poucos minutos. Comece a conversa e me mostre por que vale a pena continuar.`,
+        text: `Sou ${customer.name}, ${customer.role} da ${customer.company}. Tenho poucos minutos. Comece a conversa e me mostre por que vale a pena continuar.`,
       },
     ]);
     setStep("session");
@@ -248,10 +259,10 @@ export function NextGenCoach() {
       const reply = await requestBuyerReply("training", sellerMessage, history, {
         name: customer.name,
         role: customer.role,
-        segment: trainingConfig.segment,
+        segment: customer.segment,
         personality: inferredProfile,
-        difficulty: trainingConfig.difficulty,
-        context: `${trainingConfig.context || "Conversa comercial de descoberta"}. Produto: ${trainingConfig.product || "nao informado"}. Vendedor: ${trainingConfig.sellerName || "nao informado"}, ${trainingConfig.sellerRole}, experiencia ${trainingConfig.sellerExperience || "nao informada"}, pontos fortes ${trainingConfig.sellerStrengths || "nao informados"}, pontos a desenvolver ${trainingConfig.sellerWeaknesses || "nao informados"}.`,
+        difficulty: customer.difficulty,
+        context: `${customer.hidden} Produto: ${trainingConfig.product || "nao informado"}. Vendedor: ${trainingConfig.sellerRole}, experiencia ${trainingConfig.sellerExperience || "nao informada"}. Objetivo: ${trainingConfig.objective}.`,
         objection: inferredObjection,
         objective: trainingConfig.objective,
       });
@@ -407,8 +418,8 @@ export function NextGenCoach() {
                   <p>CLIENTE INFINITO</p>
                   <h2>Configure o treino. A IA cria o resto.</h2>
                 </div>
-                <button onClick={() => setSeed((value) => value + 1)}>
-                  <RefreshCw /> Gerar outro cliente
+                <button onClick={generateCustomer} disabled={clientLoading}>
+                  <RefreshCw className={clientLoading ? "spin" : ""} /> {clientLoading ? "Criando novo cliente..." : "Gerar outro cliente"}
                 </button>
               </div>
               <div className="customer-builder">
@@ -417,8 +428,8 @@ export function NextGenCoach() {
                     <UserRound />
                   </span>
                   <p>CLIENTE GERADO</p>
-                  <h2>{customer.name}</h2>
-                  <strong>{customer.role} · {trainingConfig.segment}</strong>
+                  <h2>{clientLoading ? "Criando novo cliente..." : customer.name}</h2>
+                  <strong>{customer.role} · {customer.company}</strong>
                   <dl>
                     <div>
                       <dt>Personalidade</dt>
@@ -426,48 +437,21 @@ export function NextGenCoach() {
                     </div>
                     <div>
                       <dt>Dificuldade</dt>
-                      <dd>{trainingConfig.difficulty}</dd>
+                      <dd>{customer.difficulty}</dd>
                     </div>
                     <div>
                       <dt>A IA cria automaticamente</dt>
-                      <dd>Objecoes, prioridades e comportamento</dd>
+                      <dd>Necessidades, intencoes e objecoes ocultas</dd>
                     </div>
                   </dl>
                 </article>
                 <div className="coach-config quick-training-config">
-                  <header><span>CONFIGURACAO DO CENARIO</span><h3>Prepare uma conversa que pareca com a sua realidade.</h3><p>O perfil do vendedor, a oferta e o comprador orientam cada resposta da simulacao.</p></header>
-                  <label>Seu nome<input value={trainingConfig.sellerName} onChange={(event) => setTrainingConfig((current) => ({ ...current, sellerName: event.target.value }))} placeholder="Nome do vendedor" /></label>
-                  <label>Seu cargo<input value={trainingConfig.sellerRole} onChange={(event) => setTrainingConfig((current) => ({ ...current, sellerRole: event.target.value }))} /></label>
-                  <label>Experiencia<input value={trainingConfig.sellerExperience} onChange={(event) => setTrainingConfig((current) => ({ ...current, sellerExperience: event.target.value }))} placeholder="Ex.: 2 anos em vendas B2B" /></label>
-                  <label>Produto ou servico<input value={trainingConfig.product} onChange={(event) => setTrainingConfig((current) => ({ ...current, product: event.target.value }))} placeholder="O que voce vende" /></label>
-                  <label>Pontos fortes<input value={trainingConfig.sellerStrengths} onChange={(event) => setTrainingConfig((current) => ({ ...current, sellerStrengths: event.target.value }))} placeholder="Ex.: rapport e clareza" /></label>
-                  <label>Pontos a desenvolver<input value={trainingConfig.sellerWeaknesses} onChange={(event) => setTrainingConfig((current) => ({ ...current, sellerWeaknesses: event.target.value }))} placeholder="Ex.: objecoes de preco" /></label>
-                  <label className="wide">Objetivo do treino<input value={trainingConfig.objective} onChange={(event) => setTrainingConfig((current) => ({ ...current, objective: event.target.value }))} /></label>
-                  <label>
-                    Nome do cliente
-                    <input value={trainingConfig.clientName} onChange={(event) => setTrainingConfig((current) => ({ ...current, clientName: event.target.value }))} placeholder="Ex.: Ricardo" />
-                  </label>
-                  <label>
-                    Cargo
-                    <input value={trainingConfig.role} onChange={(event) => setTrainingConfig((current) => ({ ...current, role: event.target.value }))} placeholder="Ex.: Diretor Comercial" />
-                  </label>
-                  <label>
-                    Segmento
-                    <select value={trainingConfig.segment} onChange={(event) => setTrainingConfig((current) => ({ ...current, segment: event.target.value }))}>
-                      <option>Tecnologia</option><option>Servicos</option><option>Varejo</option><option>Industria</option><option>Saude</option><option>Financeiro</option><option>Outro</option>
-                    </select>
-                  </label>
-                  <label>
-                    Dificuldade
-                    <select value={trainingConfig.difficulty} onChange={(event) => setTrainingConfig((current) => ({ ...current, difficulty: event.target.value }))}>
-                      <option>Facil</option><option>Medio</option><option>Dificil</option>
-                    </select>
-                  </label>
-                  <label className="wide">
-                    Contexto <small>Opcional</small>
-                    <textarea value={trainingConfig.context} onChange={(event) => setTrainingConfig((current) => ({ ...current, context: event.target.value }))} placeholder="Conte rapidamente o que voce quer treinar. Ex.: quero vender meu software para um diretor que acha a solucao cara." />
-                  </label>
-                  <button className="start-coaching" onClick={startSession}>
+                  <header><span>CONFIGURACAO RAPIDA</span><h3>Escolha tres pontos e comece.</h3><p>O restante do cliente fica oculto para voce descobrir durante a conversa.</p></header>
+                  <fieldset className="quick-choice"><legend>Seu cargo</legend><div>{["SDR", "BDR", "Closer", "Executivo de Vendas", "Vendedor", "Gerente Comercial", "Outro"].map((item) => <button type="button" className={trainingConfig.sellerRole === item ? "active" : ""} onClick={() => setTrainingConfig((current) => ({ ...current, sellerRole: item }))} key={item}>{item}</button>)}</div></fieldset>
+                  <fieldset className="quick-choice"><legend>Experiencia</legend><div>{["Iniciante", "Intermediario", "Avancado"].map((item) => <button type="button" className={trainingConfig.sellerExperience === item ? "active" : ""} onClick={() => setTrainingConfig((current) => ({ ...current, sellerExperience: item }))} key={item}>{item}</button>)}</div></fieldset>
+                  <fieldset className="quick-choice wide"><legend>O que voce vende?</legend><div>{["SaaS", "Servico", "Produto fisico", "Consultoria", "Imoveis", "Educacao", "Financeiro", "Outro"].map((item) => <button type="button" className={trainingConfig.product === item ? "active" : ""} onClick={() => setTrainingConfig((current) => ({ ...current, product: item }))} key={item}>{item}</button>)}</div></fieldset>
+                  {(trainingConfig.sellerRole === "Outro" || trainingConfig.product === "Outro") && <label className="wide">Outro - escrever resposta<input value={trainingConfig.context} onChange={(event) => setTrainingConfig((current) => ({ ...current, context: event.target.value }))} placeholder="Escreva seu cargo ou o que voce vende" /></label>}
+                  <button className="start-coaching" onClick={startSession} disabled={!trainingConfig.sellerExperience || !trainingConfig.product || clientLoading}>
                     <Play /> Iniciar treino <ArrowRight />
                   </button>
                 </div>
@@ -792,8 +776,9 @@ export function NextGenCoach() {
         <section>
           <div className="coach-section-title">
             <div>
-              <p>ESTRATEGIA DE NEGOCIACAO</p>
-              <h2>Entre em cada reuniao com um plano personalizado.</h2>
+              <p>ESTRATEGIAS COMERCIAIS</p>
+              <h2>Diagnostique o gargalo e transforme analise em execucao.</h2>
+              <span>Desenvolve a operacao comercial. Para desenvolver uma habilidade pessoal, use o Coach Comercial.</span>
             </div>
           </div>
           <div className="doctor-layout">

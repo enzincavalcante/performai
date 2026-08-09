@@ -19,7 +19,6 @@ import {
   FileAudio,
   FileText,
   FolderOpen,
-  Gift,
   GraduationCap,
   LayoutDashboard,
   Library,
@@ -62,7 +61,7 @@ export type EnterpriseView =
   | "calls"
   | "paths"
   | "assessments"
-  | "bonuses"
+  | "strategies"
   | "performance"
   | "reports"
   | "teams"
@@ -87,7 +86,7 @@ const NAVIGATION: {
   { id: "simulation", label: "Treino de Vendas IA", icon: Brain },
   { id: "coach", label: "Coach Comercial", icon: Bot },
   { id: "calls", label: "Analisar Ligacao", icon: FileAudio },
-  { id: "bonuses", label: "Bonus", icon: Gift },
+  { id: "strategies", label: "Estrategias Comerciais", icon: BriefcaseBusiness },
   { id: "teams", label: "Minha Equipe", icon: Users },
   { id: "certificates", label: "Certificados", icon: Award },
   { id: "settings", label: "Configuracoes", icon: Settings },
@@ -412,7 +411,7 @@ function LegacyDarkEnterpriseDashboard({ onNavigate }: { onNavigate: Navigate })
       </div>
     </section>
     <section className="internal-metric-strip">{[["+850","Vendedores ativos",Users],["+3.200","Treinamentos concluidos",GraduationCap],["94%","Aumento de performance",Trophy],["+12.000","Certificados emitidos",Award],["+37%","Aumento medio em vendas",LineChart]].map(([value,label,Icon])=>{const Component=Icon as typeof Users;return <article key={label as string}><Component/><div><strong>{value as string}</strong><span>{label as string}</span></div></article>;})}</section>
-    <section className="internal-home-tools"><header><h2>Tudo que seu time <b>comercial</b> precisa<br/>em um so lugar</h2></header><div>{[["Treinamentos","Trilhas completas com conteudo pratico e certificacao.",GraduationCap,"learning"],["Treino de Vendas IA","Pratique com clientes simulados e receba feedback.",Brain,"simulation"],["Coach Comercial","Tire duvidas e receba orientacao contextual.",Bot,"coach"],["Analisar Ligacao","Envie calls reais e transforme erros em evolucao.",FileAudio,"calls"],["Bonus","Materiais profissionais liberados por evolucao comprovada.",Gift,"bonuses"]].map(([title,text,Icon,target])=>{const Component=Icon as typeof Users;return <button onClick={()=>onNavigate(target as EnterpriseView)} key={title as string}><span><Component/></span><strong>{title as string}</strong><small>{text as string}</small><ChevronRight/></button>;})}</div></section>
+    <section className="internal-home-tools"><header><h2>Tudo que seu time <b>comercial</b> precisa<br/>em um so lugar</h2></header><div>{[["Treinamentos","Trilhas completas com conteudo pratico e certificacao.",GraduationCap,"learning"],["Treino de Vendas IA","Pratique com clientes simulados e receba feedback.",Brain,"simulation"],["Coach Comercial","Desenvolva a pessoa com orientacao e pratica.",Bot,"coach"],["Estrategias Comerciais","Diagnostique gargalos e crie um plano de crescimento.",BriefcaseBusiness,"strategies"],["Analisar Ligacao","Envie calls reais e transforme erros em evolucao.",FileAudio,"calls"]].map(([title,text,Icon,target])=>{const Component=Icon as typeof Users;return <button onClick={()=>onNavigate(target as EnterpriseView)} key={title as string}><span><Component/></span><strong>{title as string}</strong><small>{text as string}</small><ChevronRight/></button>;})}</div></section>
   </div>;
 }
 
@@ -422,7 +421,7 @@ function MarketingEnterpriseDashboard({ onNavigate }: { onNavigate: Navigate }) 
     ["Feedback em tempo real", "Orientacao objetiva durante e depois da conversa.", MessageSquareText, "simulation"],
     ["Simulacoes", "Cargos, objecoes e niveis de pressao diferentes.", Mic, "simulation"],
     ["Performance", "Evolucao e consistencia de cada vendedor.", LineChart, "performance"],
-    ["Bonus", "Beneficios profissionais liberados por evolucao consistente.", Gift, "bonuses"],
+    ["Estrategias Comerciais", "Diagnostico, prioridades e plano de execucao para o comercial.", BriefcaseBusiness, "strategies"],
     ["Relatorios", "Dados claros para o gestor decidir onde agir.", BarChart3, "reports"],
     ["Coach Comercial", "Tire duvidas e receba orientacao para vender melhor.", Bot, "coach"],
     ["Certificados", "Conquistas profissionais para cada etapa concluida.", Award, "certificates"],
@@ -1948,46 +1947,6 @@ function GamificationModule() {
   );
 }
 
-function BonusesModule() {
-  const bonuses = [
-    {
-      title: "Playbook de objecoes complexas",
-      criterion: "Liberado por evolucao consistente em tratamento de objecoes.",
-      description: "Matriz profissional para diagnosticar preco, prioridade, risco, concorrencia e autoridade antes de responder.",
-      unlocked: true,
-      content: ["Validar sem concordar automaticamente", "Investigar a causa real da resistencia", "Responder com evidencia contextual", "Confirmar se a objecao foi resolvida", "Avancar para um compromisso verificavel"],
-    },
-    {
-      title: "Roteiro executivo de descoberta",
-      criterion: "Libera ao concluir o modulo de descoberta com nota minima 85.",
-      description: "Perguntas para mapear problema, impacto, prioridade, decisao e custo da inacao.",
-      unlocked: false,
-      content: [],
-    },
-    {
-      title: "Checklist de negociacao enterprise",
-      criterion: "Libera apos tres calls com nota de negociacao acima de 8,0.",
-      description: "Preparacao de BATNA, ZOPA, limites, interesses e concessoes condicionais.",
-      unlocked: false,
-      content: [],
-    },
-  ];
-  const [selectedBonus, setSelectedBonus] = useState(0);
-  const selected = bonuses[selectedBonus];
-  const downloadBonus = () => {
-    const content = `PERFORMA AI - BONUS PROFISSIONAL\n\n${selected.title}\n${selected.description}\n\n${selected.content.map((item) => `[ ] ${item}`).join("\n")}`;
-    const url = URL.createObjectURL(new Blob([content], { type: "text/plain;charset=utf-8" }));
-    const link = document.createElement("a"); link.href = url; link.download = "bonus-performa-ai.txt"; link.click(); URL.revokeObjectURL(url);
-  };
-  return <ModuleFrame eyebrow="BENEFICIOS DE PERFORMANCE" title="Bonus" description="Materiais profissionais liberados por evolucao comprovada, conclusao de treinamentos e qualidade nas calls.">
-    <section className="bonus-performance-note"><Gift /><div><small>BONUS DE PERFORMANCE ATIVO</small><h2>Evolucao consistente em tratamento de objecoes</h2><p>Suas ultimas avaliacoes mostram melhora na investigacao da resistencia antes da argumentacao.</p></div></section>
-    <div className="bonus-professional-layout">
-      <div className="bonus-professional-list">{bonuses.map((bonus,index)=><button className={selectedBonus===index?"active":""} onClick={()=>setSelectedBonus(index)} key={bonus.title}><span>{bonus.unlocked?<Gift />:<Lock />}</span><div><strong>{bonus.title}</strong><small>{bonus.criterion}</small></div><ChevronRight /></button>)}</div>
-      <section className="bonus-professional-detail"><small>{selected.unlocked?"BONUS LIBERADO":"CRITERIO PENDENTE"}</small><h2>{selected.title}</h2><p>{selected.description}</p>{selected.unlocked?<><ul>{selected.content.map((item)=><li key={item}><CheckCircle2 /> {item}</li>)}</ul><button onClick={downloadBonus}><Download /> Baixar material</button></>:<div className="bonus-locked"><Lock /><p>{selected.criterion}</p></div>}</section>
-    </div>
-  </ModuleFrame>;
-}
-
 function PerformanceModule() {
   return (
     <ModuleFrame
@@ -2481,14 +2440,14 @@ function CertificatesModule({ onNavigate }: { onNavigate: Navigate }) {
       : window.localStorage.getItem("performai_certificate_name") || "",
   );
   const requirements = [
-    ["Modulos concluidos", "4 de 13", 31],
-    ["Videos obrigatorios", "4 de 13", 31],
-    ["Avaliacoes aprovadas", "1 de 3", 33],
-    ["Desafios praticos", "2 de 6", 33],
-    ["Analises de call", "1 de 3", 33],
-    ["Tempo de estudo", "6 de 20 horas", 30],
-    ["Sequencia de aprendizagem", "4 de 7 dias", 57],
-    ["Nota minima", "8,1 de 8,0", 100],
+    ["Conteudos obrigatorios", "4 de 13 · faltam 9", 31],
+    ["Simulacoes concluidas", "2 de 6 · faltam 4", 33],
+    ["Missoes praticas", "2 de 5 · faltam 3", 40],
+    ["Avaliacoes com 80%", "1 de 3 · faltam 2", 33],
+    ["Analises de call completas", "1 de 3 · faltam 2", 33],
+    ["Dominio em diagnostico", "72 de 80 · faltam 8 pontos", 90],
+    ["Dominio em objecoes", "68 de 80 · faltam 12 pontos", 85],
+    ["Desafio final", "Cliente surpresa · pendente", 0],
   ] as const;
   const readiness = Math.round(
     requirements.reduce((total, item) => total + item[2], 0) /
@@ -2502,7 +2461,7 @@ function CertificatesModule({ onNavigate }: { onNavigate: Navigate }) {
     <ModuleFrame
       eyebrow="MEUS CERTIFICADOS"
       title="Suas conquistas, prontas para compartilhar."
-      description="Cada treinamento libera um certificado apos a conclusao das aulas e aprovacao na nota minima definida pela empresa."
+      description="Tempo libera a etapa; competencia conquista o certificado. Cada nivel exige conteudo, simulacoes, missoes, avaliacao e desafio final."
       action={
         <div className="hub-actions">
           <button onClick={() => { setDemoMode(false); setShowPreview((value) => !value); }}>
@@ -2521,34 +2480,34 @@ function CertificatesModule({ onNavigate }: { onNavigate: Navigate }) {
       }
     >
       <section className="earned-certificates">
-        <article><Award /><div><small>JORNADA EM ANDAMENTO</small><h3>Especialista em Vendas Consultivas</h3><span>O certificado real sera liberado quando os requisitos abaixo forem concluidos.</span></div><button disabled><Lock /> Bloqueado</button></article>
+        <article><Award /><div><small>JORNADA EM ANDAMENTO</small><h3>Fundamentos Comerciais</h3><span>Disponivel depois de 1,5 mes, mas conquistado somente com todos os requisitos e o desafio final.</span></div><button disabled><Lock /> Bloqueado</button></article>
       </section>
       <section className="certificate-levels">
         {[
           [
             "1 MES E MEIO",
-            "Especialista em Vendas Consultivas",
-            "Formacao inicial de 6 semanas · fundamentos, pratica e avaliacao",
+            "Fundamentos Comerciais",
+            "Conteudo, simulacoes, missoes, nota minima e cliente surpresa",
           ],
           [
             "3 MESES",
-            "Sales Professional",
-            "Consistencia comprovada em treino e calls reais",
+            "Vendas Consultivas",
+            "Diagnostico, pitch personalizado e cliente complexo",
           ],
           [
             "6 MESES",
-            "Sales Advanced",
-            "Dominio de diagnostico, objecoes e negociacao",
+            "Negociacao & Objecoes",
+            "Defesa de valor, concorrencia e Sala de Negociacao",
           ],
           [
             "9 MESES",
-            "Sales Expert",
-            "Alta performance, previsibilidade e influencia no time",
+            "Performance Comercial Avancada",
+            "Consistencia comprovada no Sales Gauntlet",
           ],
           [
             "12 MESES",
-            "Performa AI Master",
-            "Nivel maximo · excelencia sustentada e lideranca",
+            "Master em Performance Comercial",
+            "Nivel maximo · competencia completa no The Final Deal",
           ],
         ].map((level, index) => (
           <article className={index === 0 ? "current" : ""} key={level[0]}>
@@ -2565,11 +2524,10 @@ function CertificatesModule({ onNavigate }: { onNavigate: Navigate }) {
             <Lock />
           </span>
           <p>CICLO INICIAL · 1 MES E MEIO</p>
-          <h2>Especialista em Vendas Consultivas</h2>
+          <h2>Fundamentos Comerciais</h2>
           <small>
-            A emissao definitiva em PDF sera liberada somente depois de 6
-            semanas e quando todos os criterios teoricos e praticos chegarem a
-            100%.
+            O marco de 6 semanas apenas libera a avaliacao. A emissao definitiva
+            exige 100% dos criterios de competencia e aprovacao no cliente surpresa.
           </small>
           <label className="certificate-name-field">
             <span>Nome completo no certificado</span>
@@ -2603,8 +2561,8 @@ function CertificatesModule({ onNavigate }: { onNavigate: Navigate }) {
           <p>Certificamos que</p>
           <h2>{participantName.trim() || "Nome do participante"}</h2>
           <p>
-            concluiu 1 mes e meio de formacao{" "}
-            <b>Especialista em Vendas Consultivas</b>, demonstrando dominio
+            concluiu a formacao profissional em{" "}
+            <b>Fundamentos Comerciais</b>, demonstrando dominio
             teorico e pratico das competencias comerciais avaliadas.
           </p>
           <footer>
@@ -2623,6 +2581,7 @@ function CertificatesModule({ onNavigate }: { onNavigate: Navigate }) {
               <ShieldCheck />
               <b>VALIDACAO DIGITAL</b>
               <small>{demoMode ? demoCertificateId : "PERFORMA-2026-0001"}</small>
+              <i className="certificate-qr" style={{ backgroundImage: `url(https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(`https://performai-mvp.vercel.app/certificado/${demoMode ? demoCertificateId : "PERFORMA-2026-0001"}`)})` }} />
             </span>
           </footer>
           {demoMode && <em className="certificate-demo-label">CERTIFICADO DE TESTE · SEM VALIDADE ACADEMICA</em>}
@@ -2887,7 +2846,6 @@ export function EnterpriseModule({
   if (view === "learning") return <PremiumTrainingAcademy onNavigate={onNavigate} />;
   if (view === "paths") return <FixedPathsModule onNavigate={onNavigate} />;
   if (view === "assessments") return <PremiumTrainingAcademy onNavigate={onNavigate} />;
-  if (view === "bonuses") return <BonusesModule />;
   if (view === "performance") return <PerformanceModule />;
   if (view === "reports") return <ReportsModule />;
   if (view === "teams") return <TeamsModule onNavigate={onNavigate} />;

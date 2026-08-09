@@ -3,7 +3,7 @@
 import Image from "next/image";
 import type * as React from "react";
 import {
-  Award, BarChart3, Bot, CheckCircle2, ChevronRight, FileAudio, Gift, GraduationCap,
+  Award, BarChart3, Bot, BriefcaseBusiness, CheckCircle2, ChevronRight, FileAudio, GraduationCap,
   LayoutDashboard, Mic, Play, ShieldCheck, Sparkles, Target, Trophy, Users, Zap,
 } from "lucide-react";
 import "./landing.css";
@@ -132,7 +132,7 @@ export function LandingPage({ onEnter }: { onEnter: () => void }) {
             ["Coach Comercial", "Orienta, explica e ajuda a resolver situacoes comerciais em uma conversa contextual.", Bot],
             ["Treinamentos", "Aulas, materiais, exercicios completos e certificacao.", GraduationCap],
             ["Analise de Calls", "Avalia ligacoes e transforma erros em um plano pratico.", FileAudio],
-            ["Bonus profissionais", "Scripts, checklists e playbooks para aplicar nas vendas reais.", Gift],
+            ["Estrategias Comerciais", "Diagnostico, prioridades e planos de crescimento para a operacao.", BriefcaseBusiness],
             ["Dashboard", "Indicadores claros para vendedores, gestores e equipes.", LayoutDashboard],
             ["Certificados", "Documentos profissionais com progresso e validacao.", Award],
           ].map(([title, text, Icon], index) => { const Component = Icon as typeof Bot; return <article style={{ "--delay": `${index * 65}ms` } as React.CSSProperties} key={title as string}><span><Component /></span><h3>{title as string}</h3><p>{text as string}</p><i><ChevronRight /></i></article>; })}

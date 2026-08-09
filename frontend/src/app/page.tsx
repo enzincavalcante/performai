@@ -12,6 +12,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { type TranscriptMessage, useLiveAudio } from "@/hooks/useLiveAudio";
 import { CallReview } from "@/components/CallReview";
 import { NextGenCoach } from "@/components/NextGenCoach";
+import { CommercialStrategies } from "@/components/CommercialStrategies";
 import { CommercialCoach } from "@/components/CommercialCoach";
 import { LandingPage } from "@/components/LandingPage";
 import { EnterpriseModule, EnterpriseSidebar, type EnterpriseView } from "@/components/EnterprisePlatform";
@@ -378,10 +379,11 @@ function Workspace({ onLogout }: { onLogout: () => void }) {
     </header>
     <section className="workspace-content">
       {profile && view === "simulation" && <NextGenCoach />}
+      {profile && view === "strategies" && <CommercialStrategies />}
       {profile && view === "coach" && <CommercialCoach profile={profile} />}
       {profile && view === "ai" && <FocusCoach profile={profile} />}
       {profile && view === "calls" && <CallReview />}
-      {profile && !["simulation", "coach", "ai", "calls"].includes(view) && <EnterpriseModule view={view} onNavigate={navigate} />}
+      {profile && !["simulation", "strategies", "coach", "ai", "calls"].includes(view) && <EnterpriseModule view={view} onNavigate={navigate} />}
     </section>
     {(!profile || editingProfile) && <Onboarding initial={profile ?? EMPTY_PROFILE} onComplete={saveProfile} />}
     {showTutorial && profile && <Tutorial onClose={closeTutorial} />}
