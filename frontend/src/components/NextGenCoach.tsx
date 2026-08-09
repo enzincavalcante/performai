@@ -31,6 +31,16 @@ import { useSpeechToText } from "@/hooks/useSpeechToText";
 
 type HubTab = "training" | "battle" | "replay" | "twin" | "doctor" | "career";
 type ConversationMessage = { speaker: "coach" | "seller"; text: string };
+type SimulationPersona = {
+  name: string;
+  role: string;
+  segment: string;
+  personality: string;
+  difficulty: string;
+  context: string;
+  objection: string;
+  objective: string;
+};
 
 const normalizeText = (value: string) =>
   value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
@@ -65,6 +75,17 @@ function createBuyerReply(message: string, turn: number, scenario: string, objec
     : turn === 1
       ? "Entendi a proposta, mas ainda nao vi prioridade nem seguranca para mudar. O que voce precisa validar comigo antes de continuar?"
       : "A conversa avancou, mas falta transformar valor em compromisso. Resuma o que entendeu e proponha uma acao concreta.";
+}
+
+async function requestBuyerReply(mode: "training" | "mission", message: string, conversation: ConversationMessage[], persona: SimulationPersona) {
+  const response = await fetch("/api/v1/simulations/respond", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ mode, message, conversation, persona }),
+  });
+  const payload = await response.json() as { reply?: string; detail?: string };
+  if (!response.ok || !payload.reply?.trim()) throw new Error(payload.detail || "A resposta do cliente falhou.");
+  return payload.reply.trim();
 }
 
 const tabs: Array<{ id: HubTab; label: string; icon: typeof Bot }> = [
@@ -175,6 +196,8 @@ export function NextGenCoach() {
   const [missionStep, setMissionStep] = useState<"brief" | "session" | "result">("brief");
   const [missionMessage, setMissionMessage] = useState("");
   const [missionConversation, setMissionConversation] = useState<ConversationMessage[]>([]);
+  const [buyerThinking, setBuyerThinking] = useState(false);
+  const [missionThinking, setMissionThinking] = useState(false);
   const [trainingConfig, setTrainingConfig] = useState({
     clientName: "Ricardo",
     role: "Diretor Comercial",
@@ -184,8 +207,6 @@ export function NextGenCoach() {
   });
   const inferredProfile = trainingConfig.difficulty === "Dificil" ? "Exigente e resistente" : trainingConfig.difficulty === "Facil" ? "Aberto e colaborativo" : "Criterioso e objetivo";
   const inferredObjection = trainingConfig.difficulty === "Dificil" ? "Concorrente" : trainingConfig.difficulty === "Facil" ? "Sem urgencia" : "Preco";
-  const trainingSpeech = useSpeechToText((text) => setMessage((current) => `${current} ${text}`.trim()));
-  const missionSpeech = useSpeechToText((text) => setMissionMessage((current) => `${current} ${text}`.trim()));
   const customer = useMemo(
     () => ({
       name: trainingConfig.clientName || ["Roberto Almeida", "Camila Nunes", "Marcos Ferraz"][seed % 3],
@@ -205,25 +226,34 @@ export function NextGenCoach() {
     ]);
     setStep("session");
   };
-  const sendMessage = () => {
-    if (!message.trim()) return;
-    const sellerMessage = message.trim();
+  const sendMessage = async (providedMessage?: string) => {
+    const sellerMessage = (providedMessage ?? message).trim();
+    if (!sellerMessage || buyerThinking) return;
     const turn = conversation.filter((item) => item.speaker === "seller").length;
-    setConversation((items) => [
-      ...items,
-      { speaker: "seller", text: sellerMessage },
-      {
-        speaker: "coach",
-        text: createBuyerReply(
-          sellerMessage,
-          turn,
-          trainingConfig.context || "Conversa comercial",
-          inferredObjection,
-          inferredProfile,
-        ),
-      },
-    ]);
+    const history = conversation;
+    setConversation((items) => [...items, { speaker: "seller", text: sellerMessage }]);
     setMessage("");
+    setBuyerThinking(true);
+    try {
+      const reply = await requestBuyerReply("training", sellerMessage, history, {
+        name: customer.name,
+        role: customer.role,
+        segment: trainingConfig.segment,
+        personality: inferredProfile,
+        difficulty: trainingConfig.difficulty,
+        context: trainingConfig.context || "Conversa comercial de descoberta",
+        objection: inferredObjection,
+        objective: "Entender a necessidade e conquistar um proximo passo",
+      });
+      setConversation((items) => [...items, { speaker: "coach", text: reply }]);
+    } catch {
+      setConversation((items) => [...items, {
+        speaker: "coach",
+        text: createBuyerReply(sellerMessage, turn, trainingConfig.context || "Conversa comercial", inferredObjection, inferredProfile),
+      }]);
+    } finally {
+      setBuyerThinking(false);
+    }
   };
   const evaluation = useMemo(() => {
     const sellerMessages = conversation.filter((item) => item.speaker === "seller");
@@ -285,20 +315,39 @@ export function NextGenCoach() {
     return { overall, communication, discovery, value, objections, negotiation, closing, questions, nextStep, discount, decisive };
   }, [missionConversation]);
 
-  const sendMissionMessage = (suggested?: string) => {
+  const sendMissionMessage = async (suggested?: string) => {
     const text = (suggested ?? missionMessage).trim();
-    if (!text || selectedMission === null) return;
+    if (!text || selectedMission === null || missionThinking) return;
     const mission = missions[selectedMission];
     const turn = missionConversation.filter((item) => item.speaker === "seller").length;
-    const baseReply = createBuyerReply(text, turn, mission[4], mission[5], missionProfiles[selectedMission].psychology);
-    const reply = turn === 0
-      ? `${baseReply} Ainda preciso de uma razao que eu consiga defender internamente.`
-      : turn === 1
-        ? `${baseReply} Seja especifico: o que voce propoe que eu faca agora?`
-        : baseReply;
-    setMissionConversation((current) => [...current, { speaker: "seller", text }, { speaker: "coach", text: reply }]);
+    const history = missionConversation;
+    const profile = missionProfiles[selectedMission];
+    setMissionConversation((current) => [...current, { speaker: "seller", text }]);
     setMissionMessage("");
+    setMissionThinking(true);
+    try {
+      const reply = await requestBuyerReply("mission", text, history, {
+        name: profile.client.split(" · ")[0],
+        role: profile.client.split(" · ")[1] || "Decisor",
+        segment: mission[4],
+        personality: profile.psychology,
+        difficulty: mission[3],
+        context: `${profile.story} ${mission[1]}`,
+        objection: mission[5],
+        objective: mission[6],
+      });
+      setMissionConversation((current) => [...current, { speaker: "coach", text: reply }]);
+    } catch {
+      setMissionConversation((current) => [...current, {
+        speaker: "coach",
+        text: createBuyerReply(text, turn, mission[4], mission[5], profile.psychology),
+      }]);
+    } finally {
+      setMissionThinking(false);
+    }
   };
+  const trainingSpeech = useSpeechToText((text) => { void sendMessage(text); });
+  const missionSpeech = useSpeechToText((text) => { void sendMissionMessage(text); });
 
   return (
     <div className="coach-hub">
@@ -428,6 +477,7 @@ export function NextGenCoach() {
                       <p>{item.text}</p>
                     </article>
                   ))}
+                  {buyerThinking && <article className="coach ai-thinking" aria-live="polite"><small>{customer.name}</small><p><i /><i /><i /> Analisando o que voce disse...</p></article>}
                 </div>
                 <div className="inline-coach">
                   <Lightbulb />
@@ -437,7 +487,7 @@ export function NextGenCoach() {
                   </span>
                 </div>
                 <form className="coach-composer" onSubmit={(event) => { event.preventDefault(); sendMessage(); }}>
-                  <button type="button" className={`speech-composer-button ${trainingSpeech.status}`} onClick={trainingSpeech.toggle} disabled={trainingSpeech.status === "processing"} aria-label={trainingSpeech.status === "recording" ? "Parar gravacao" : "Falar sua resposta"} title={trainingSpeech.label}>
+                  <button type="button" className={`speech-composer-button ${trainingSpeech.status}`} onClick={trainingSpeech.toggle} disabled={buyerThinking || trainingSpeech.status === "processing"} aria-label={trainingSpeech.status === "recording" ? "Parar gravacao" : "Falar sua resposta"} title={trainingSpeech.label}>
                     <Mic />
                   </button>
                   <input
@@ -445,8 +495,9 @@ export function NextGenCoach() {
                     onChange={(event) => setMessage(event.target.value)}
                     placeholder="Responda por texto ou use o microfone"
                     aria-label="Sua resposta ao cliente"
+                    disabled={buyerThinking}
                   />
-                  <button type="submit" disabled={!message.trim()} aria-label="Enviar">
+                  <button type="submit" disabled={!message.trim() || buyerThinking} aria-label="Enviar">
                     <Send />
                   </button>
                 </form>
@@ -454,7 +505,7 @@ export function NextGenCoach() {
                 <button
                   className="finish-session"
                   onClick={() => setStep("result")}
-                  disabled={conversation.filter((item) => item.speaker === "seller").length < 2}
+                  disabled={buyerThinking || conversation.filter((item) => item.speaker === "seller").length < 2}
                   title={conversation.filter((item) => item.speaker === "seller").length < 2 ? "Responda ao cliente pelo menos duas vezes" : undefined}
                 >
                   Finalizar e receber avaliacao
@@ -546,17 +597,17 @@ export function NextGenCoach() {
               {missionStep === "session" && <div className="mission-session">
                 <aside><UserRound /><small>CLIENTE DO DESAFIO</small><strong>{missionProfiles[selectedMission].client}</strong><p>{missionProfiles[selectedMission].psychology}</p><dl><div><dt>Objetivo</dt><dd>{missions[selectedMission][6]}</dd></div><div><dt>Dificuldade</dt><dd>{missions[selectedMission][3]}</dd></div><div><dt>Recompensa</dt><dd>{missions[selectedMission][2]}</dd></div></dl></aside>
                 <main>
-                  <div className="mission-transcript">{missionConversation.map((item, index) => <article className={item.speaker} key={index}><small>{item.speaker === "coach" ? missionProfiles[selectedMission].client.split(" · ")[0] : "Voce"}</small><p>{item.text}</p></article>)}</div>
+                  <div className="mission-transcript">{missionConversation.map((item, index) => <article className={item.speaker} key={index}><small>{item.speaker === "coach" ? missionProfiles[selectedMission].client.split(" · ")[0] : "Voce"}</small><p>{item.text}</p></article>)}{missionThinking && <article className="coach ai-thinking" aria-live="polite"><small>{missionProfiles[selectedMission].client.split(" · ")[0]}</small><p><i /><i /><i /> Preparando uma resposta realista...</p></article>}</div>
                   <div className="mission-decision-tip"><Lightbulb /><span><strong>Como voce quer avancar?</strong>Escolha uma estrategia ou escreva sua propria resposta.</span></div>
                   <div className="mission-decisions">{[
                     missionDecisions[selectedMission] ?? "Investigar o criterio de decisao antes de argumentar",
                     "Fazer uma pergunta para quantificar impacto e urgencia",
                     "Conectar valor a uma evidencia e confirmar entendimento",
                     "Propor um proximo passo com objetivo e responsavel",
-                  ].map((choice, index) => <button type="button" onClick={() => sendMissionMessage(choice)} key={choice}><b>{String.fromCharCode(65 + index)}</b>{choice}</button>)}</div>
-                  <form onSubmit={(event) => { event.preventDefault(); sendMissionMessage(); }}><button type="button" className={`mission-speech ${missionSpeech.status}`} onClick={missionSpeech.toggle} disabled={missionSpeech.status === "processing"} aria-label={missionSpeech.label}><Mic /></button><input value={missionMessage} onChange={(event) => setMissionMessage(event.target.value)} placeholder="Escreva ou fale sua resposta..." /><button disabled={!missionMessage.trim()}><Send /></button></form>
+                  ].map((choice, index) => <button type="button" disabled={missionThinking} onClick={() => sendMissionMessage(choice)} key={choice}><b>{String.fromCharCode(65 + index)}</b>{choice}</button>)}</div>
+                  <form onSubmit={(event) => { event.preventDefault(); sendMissionMessage(); }}><button type="button" className={`mission-speech ${missionSpeech.status}`} onClick={missionSpeech.toggle} disabled={missionThinking || missionSpeech.status === "processing"} aria-label={missionSpeech.label}><Mic /></button><input value={missionMessage} onChange={(event) => setMissionMessage(event.target.value)} placeholder="Escreva ou fale sua resposta..." disabled={missionThinking} /><button disabled={!missionMessage.trim() || missionThinking}><Send /></button></form>
                   {(missionSpeech.error || missionSpeech.status === "recording" || missionSpeech.status === "processing") && <p className={`speech-composer-status mission-speech-status ${missionSpeech.status}`}><i />{missionSpeech.error || missionSpeech.label}</p>}
-                  <button className="mission-finish" disabled={missionConversation.filter((item) => item.speaker === "seller").length < 3} onClick={() => setMissionStep("result")}>Finalizar desafio e receber nota</button>
+                  <button className="mission-finish" disabled={missionThinking || missionConversation.filter((item) => item.speaker === "seller").length < 3} onClick={() => setMissionStep("result")}>Finalizar desafio e receber nota</button>
                 </main>
               </div>}
               {missionStep === "result" && <div className="mission-result"><header><div><small>MISSAO CONCLUIDA</small><h2>{missionEvaluation.overall >= 80 ? "Missao cumprida" : "Missao concluida com pontos para evoluir"}</h2><p>{missions[selectedMission][0]} · avaliacao exclusiva desta experiencia</p></div><strong>{missionEvaluation.overall}<span>/100</span></strong></header><div className="mission-result-scores">{[["Comunicacao", missionEvaluation.communication], ["Descoberta", missionEvaluation.discovery], ["Argumentacao", missionEvaluation.value], ["Objecoes", missionEvaluation.objections], ["Negociacao", missionEvaluation.negotiation], ["Fechamento", missionEvaluation.closing]].map(([label, value]) => <article key={label}><span>{label}</span><strong>{value}</strong><i><b style={{ width: `${value}%` }} /></i></article>)}</div><div className="mission-result-feedback"><article><CheckCircle2 /><div><strong>O que voce fez bem</strong><p>{missionEvaluation.questions > 1 ? "Voce usou perguntas para entender a resistencia antes de responder." : "Voce manteve a conversa ativa e apresentou sua linha de raciocinio."}</p></div></article><article><ShieldAlert /><div><strong>Onde voce perdeu pontos</strong><p>{missionEvaluation.discount ? "Houve concessao de preco antes de esgotar a construcao de valor." : !missionEvaluation.nextStep ? "Faltou transformar a conversa em um proximo passo com responsavel e data." : "Aprofunde impacto e criterio de decisao antes da proposta final."}</p></div></article><article><Target /><div><strong>Momento decisivo</strong><p>{missionEvaluation.decisive ? `Sua resposta com maior impacto foi: “${missionEvaluation.decisive}”` : "Faltou uma resposta completa que mudasse o rumo da negociacao."}</p></div></article><article><Sparkles /><div><strong>O que um vendedor de alta performance faria</strong><p>Validaria a resistencia, investigaria a causa, conectaria valor a uma evidencia e confirmaria uma acao verificavel.</p></div></article><article><Lightbulb /><div><strong>Proximo passo</strong><p>{missionEvaluation.nextStep ? "Repita a missao em nivel maior e preserve a mesma clareza no compromisso." : "Treine um fechamento com data, responsavel e objetivo da proxima conversa."}</p></div></article><article><Award /><div><strong>Recompensa</strong><p>{missionEvaluation.overall >= 80 ? `${missions[selectedMission][2]} · Missao concluida` : "60% do XP · repita para conquistar a recompensa completa"}</p></div></article></div><footer><button onClick={() => { setMissionStep("brief"); setMissionConversation([]); }}>Rever contexto</button><button onClick={() => { setMissionStep("session"); setMissionConversation([{ speaker: "coach", text: missionOpeners[selectedMission] }]); }}><RefreshCw /> Tentar novamente</button></footer></div>}

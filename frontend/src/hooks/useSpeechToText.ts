@@ -35,7 +35,15 @@ export function useSpeechToText(onTranscript: (text: string) => void) {
   const [status, setStatus] = useState<SpeechStatus>("idle");
   const [error, setError] = useState("");
   const recognitionRef = useRef<Recognition | null>(null);
-  const transcriptRef = useRef("");
+  const onTranscriptRef = useRef(onTranscript);
+  const finalSegmentsRef = useRef(new Map<number, string>());
+  const interimRef = useRef("");
+  const deliveredRef = useRef(false);
+  const failedRef = useRef(false);
+
+  useEffect(() => {
+    onTranscriptRef.current = onTranscript;
+  }, [onTranscript]);
 
   useEffect(() => () => recognitionRef.current?.abort(), []);
 
@@ -48,32 +56,47 @@ export function useSpeechToText(onTranscript: (text: string) => void) {
     }
 
     setError("");
-    transcriptRef.current = "";
+    finalSegmentsRef.current.clear();
+    interimRef.current = "";
+    deliveredRef.current = false;
+    failedRef.current = false;
     const recognition = new Constructor();
     recognition.lang = "pt-BR";
-    recognition.continuous = true;
+    recognition.continuous = false;
     recognition.interimResults = true;
     recognition.onstart = () => setStatus("recording");
     recognition.onresult = (event) => {
-      let fullText = "";
+      const interimParts: string[] = [];
       for (let index = event.resultIndex; index < event.results.length; index += 1) {
-        fullText += `${event.results[index][0]?.transcript ?? ""} `;
+        const result = event.results[index];
+        const text = (result[0]?.transcript ?? "").replace(/\s+/g, " ").trim();
+        if (!text) continue;
+        if (result.isFinal) finalSegmentsRef.current.set(index, text);
+        else interimParts.push(text);
       }
-      if (fullText.trim()) transcriptRef.current = `${transcriptRef.current} ${fullText}`.trim();
+      interimRef.current = interimParts.join(" ").trim();
     };
     recognition.onerror = (event) => {
+      failedRef.current = true;
       setStatus("error");
       setError(event.error === "not-allowed" ? "Permita o uso do microfone para falar." : "Nao foi possivel entender o audio. Tente novamente.");
     };
     recognition.onend = () => {
-      if (transcriptRef.current) {
+      const finalText = [...finalSegmentsRef.current.entries()]
+        .sort(([left], [right]) => left - right)
+        .map(([, text]) => text)
+        .join(" ")
+        .replace(/\s+/g, " ")
+        .trim() || interimRef.current;
+
+      if (finalText && !deliveredRef.current && !failedRef.current) {
+        deliveredRef.current = true;
         setStatus("processing");
-        const finalText = transcriptRef.current.replace(/\s+/g, " ").trim();
         window.setTimeout(() => {
-          onTranscript(finalText);
+          onTranscriptRef.current(finalText);
           setStatus("idle");
-        }, 450);
-      } else if (status !== "error") {
+        }, 180);
+      } else if (!failedRef.current) {
         setStatus("idle");
       }
       recognitionRef.current = null;
