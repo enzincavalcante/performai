@@ -58,6 +58,7 @@ function formatDeepgramTranscript(payload: DeepgramPayload) {
 }
 
 function buildRubricReport(transcript: string) {
+  if (process.env.CALL_REVIEW_ENGINE !== "legacy") return buildEvidenceRubricReport(transcript);
   const normalized = transcript.toLocaleLowerCase("pt-BR");
   const questionCount = (transcript.match(/\?/g) ?? []).length;
   const discoverySignals = ["desafio", "problema", "objetivo", "prioridade", "hoje", "impacto"]
@@ -173,6 +174,76 @@ function buildRubricReport(transcript: string) {
   };
 }
 
+function buildEvidenceRubricReport(transcript: string) {
+  const clean = transcript.trim();
+  const normalized = clean.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  const parsed = clean.split(/\r?\n/).flatMap((line) => {
+    const match = line.match(/^\[(\d{2,}:\d{2})\]\s*(Pessoa\s+\d+):\s*(.+)$/i);
+    return match ? [{ timestamp: match[1], speaker: match[2], text: match[3].trim() }] : [];
+  });
+  const rows = parsed.length ? parsed : [{ timestamp: "00:00", speaker: "Pessoa nao identificada", text: clean }];
+  const sellerCandidates = [...new Set(rows.map((row) => row.speaker))].map((speaker) => {
+    const speakerRows = rows.filter((row) => row.speaker === speaker);
+    const joined = speakerRows.map((row) => row.text).join(" ").toLowerCase();
+    const commercial = (joined.match(/\b(nossa|solucao|proposta|contrato|investimento|agenda|produto|servico|resultado)\b/g) ?? []).length;
+    return { speaker, rows: speakerRows, signal: commercial * 2 + speakerRows.filter((row) => row.text.includes("?")).length };
+  }).sort((a, b) => b.signal - a.signal);
+  const seller = sellerCandidates[0];
+  const sellerRows = seller?.rows ?? rows;
+  const enoughEvidence = clean.length >= 120 && sellerRows.length >= 2;
+  const insufficient = "Nao foi possivel avaliar este criterio com evidencia suficiente nesta ligacao.";
+  type Criterion = { name: string; weight: number; signals: RegExp; negative?: RegExp; improve: string; example: string };
+  const criteria: Criterion[] = [
+    { name: "Abertura", weight: 5, signals: /bom dia|boa tarde|tudo bem|obrigad|prazer|tempo disponivel/, improve: "Abra com contexto, objetivo e confirmacao de tempo.", example: "Obrigado pelo tempo. Proponho entender o cenario, avaliar aderencia e combinar um proximo passo. Funciona para voce?" },
+    { name: "Rapport e adaptacao", weight: 5, signals: /entendo|faz sentido|voce comentou|pelo que disse|obrigad/, improve: "Reconheca uma fala concreta do cliente antes de avancar.", example: "Entendi o ponto que voce trouxe. Quero aprofundar isso antes de falar da solucao." },
+    { name: "Agenda e controle", weight: 5, signals: /agenda|objetivo da conversa|primeiro.*depois|combinado|proponho/, improve: "Defina agenda e transicoes claras.", example: "Primeiro entendo o contexto, depois avaliamos aderencia e definimos o proximo passo." },
+    { name: "Descoberta do contexto", weight: 10, signals: /como funciona|como fazem|cenario atual|hoje|processo|desafio|problema/, improve: "Investigue processo, problema e causa antes de apresentar.", example: "Como esse processo funciona hoje e em qual etapa ele mais trava?" },
+    { name: "Impacto e custo da inacao", weight: 10, signals: /impacto|quanto custa|perde|receita|meta|se nada mudar|consequencia|urgencia/, improve: "Quantifique a dor em receita, tempo, risco ou produtividade.", example: "Se nada mudar neste trimestre, qual impacto isso gera na meta?" },
+    { name: "Qualificacao", weight: 8, signals: /orcamento|investimento|decisor|quem decide|prazo|prioridade|criterio|aprova/, improve: "Confirme autoridade, decisao, prazo, prioridade e investimento.", example: "Quem participa da decisao e quais criterios precisam ser atendidos?" },
+    { name: "Escuta ativa", weight: 7, signals: /entao.*voce|pelo que entendi|se entendi|voce disse|correto|faz sentido/, improve: "Parafraseie e valide antes de mudar de tema.", example: "Pelo que entendi, o impacto principal e a falta de previsibilidade. Correto?" },
+    { name: "Qualidade das perguntas", weight: 7, signals: /\?/, improve: "Use perguntas abertas e aprofunde respostas vagas.", example: "O que torna isso prioritario agora e como voces medem o impacto?" },
+    { name: "Pitch contextual", weight: 8, signals: /por isso|com base|nesse cenario|para resolver|resultado|beneficio/, negative: /temos dashboard|temos automacao|varias funcionalidades/, improve: "Conecte somente capacidades relevantes as dores confirmadas.", example: "Como voce relatou perda de previsibilidade, a proposta e reduzir esse ponto com acompanhamento mensuravel." },
+    { name: "Construcao de valor e prova", weight: 8, signals: /case|cliente semelhante|dados|resultado|retorno|roi|econom|prova/, improve: "Use evidencia verificavel e numeros do cliente.", example: "Qual indicador seria valido para comprovar resultado neste projeto?" },
+    { name: "Tratamento de objecoes", weight: 8, signals: /entendo a preocupacao|o que esta por tras|alem do preco|se resolvermos|objecao|resistencia/, improve: "Valide, esclareca, responda com evidencia e confirme.", example: "Alem do valor, existe algum risco ou criterio que ainda impede a decisao?" },
+    { name: "Negociacao e protecao de margem", weight: 6, signals: /contrapartida|condicionado|escopo|volume|prazo de pagamento|troca/, negative: /desconto.*(agora|hoje)|posso dar.*desconto/, improve: "Nao conceda preco antes de diagnosticar valor e obter contrapartida.", example: "Posso avaliar uma condicao se alinharmos prazo, escopo e compromisso. O que voces assumem em contrapartida?" },
+    { name: "Fechamento", weight: 6, signals: /faz sentido avancar|podemos fechar|o que falta|decisao|compromisso/, improve: "Teste compromisso e confirme o que impede a decisao.", example: "O que ainda precisa estar claro para avancarmos?" },
+    { name: "Proximo passo", weight: 5, signals: /proximo passo|agendar|data|quinta|sexta|responsavel|enviar ate/, improve: "Finalize com acao, responsavel, data e objetivo.", example: "Eu envio o resumo hoje e nos reunimos quinta com o decisor. Correto?" },
+    { name: "Tom, postura e compliance", weight: 2, signals: /transparente|nao consigo prometer|limite|condicao|confirmar/, negative: /garantido|certeza absoluta|sem risco/, improve: "Use linguagem clara e sem promessas nao comprovadas.", example: "Vou separar o que e comprovado, os limites e como o resultado sera medido." },
+  ];
+  const blocks = criteria.map((criterion) => {
+    const matches = sellerRows.filter((row) => criterion.signals.test(row.text));
+    const negatives = criterion.negative ? sellerRows.filter((row) => criterion.negative!.test(row.text)) : [];
+    const questionBonus = criterion.name === "Qualidade das perguntas" ? Math.min(4, sellerRows.filter((row) => row.text.includes("?")).length) : 0;
+    const score = enoughEvidence ? Math.max(1, Math.min(10, 3 + matches.length * 2 + questionBonus - negatives.length * 3)) : null;
+    const evidence = matches[0] ?? negatives[0];
+    return { name: criterion.name, weight: criterion.weight, score, reason: score === null ? insufficient : matches.length ? `Foram encontradas ${matches.length} evidencia(s) explicita(s) deste comportamento.` : "A transcricao integral nao mostrou evidencia explicita deste comportamento.", what_worked: matches.length ? `Comportamento observado em ${matches.map((row) => row.timestamp).slice(0, 3).join(", ")}.` : insufficient, what_to_improve: criterion.improve, how_to_improve: "Pratique o exemplo, aplique em simulacao e compare o mesmo criterio na proxima call.", practical_example: criterion.example, excerpt: evidence ? `[${evidence.timestamp}] ${evidence.text}` : insufficient };
+  });
+  const evaluable = blocks.filter((block): block is typeof block & { score: number } => typeof block.score === "number");
+  const totalWeight = evaluable.reduce((sum, block) => sum + block.weight, 0);
+  const overall10 = totalWeight ? evaluable.reduce((sum, block) => sum + block.score * block.weight, 0) / totalWeight : 0;
+  const descending = [...evaluable].sort((a, b) => b.score - a.score);
+  const ascending = [...descending].reverse();
+  const strengths = descending.filter((block) => block.score >= 6).slice(0, 3).map((block) => ({ title: block.name, evidence: block.excerpt, why_it_worked: block.reason, how_to_repeat: "Repita o comportamento e conecte-o ao proximo movimento da conversa." }));
+  const improvements = ascending.slice(0, 3).map((block) => ({ title: block.name, error: block.reason, impact: "Esta lacuna reduz conversao e previsibilidade comercial.", how_to_fix: block.how_to_improve, prevention: block.what_to_improve, practical_example: block.practical_example }));
+  const criticalMoments = blocks.filter((block) => block.excerpt !== insufficient).slice(0, 6).map((block) => ({ timestamp: block.excerpt.match(/^\[(\d{2,}:\d{2})\]/)?.[1] ?? "00:00", text: block.excerpt.replace(/^\[[^\]]+\]\s*/, ""), type: Number(block.score) >= 6 ? "positive" : "improvement", insight: `${block.name}: ${block.reason}`, recommendation: block.practical_example }));
+  const topStrength = descending[0];
+  const topGap = ascending[0];
+  const questionCount = sellerRows.filter((row) => row.text.includes("?")).length;
+  return {
+    overall_score: Math.round(overall10 * 10),
+    summary: enoughEvidence ? `A call recebeu ${overall10.toFixed(1)}/10 na matriz ponderada de 15 competencias, usando a transcricao integral e evidencias por criterio.` : insufficient,
+    diagnosis: { executive_summary: enoughEvidence ? `Desempenho de ${overall10.toFixed(1)}/10. Principal forca: ${topStrength?.name}. Prioridade: ${topGap?.name}.` : insufficient, call_objective: "Nao identificado de forma segura na transcricao.", conversation_context: `${rows.length} falas processadas e ${questionCount} perguntas atribuidas ao vendedor.`, seller_conduction: seller ? `${seller.speaker} foi tratado como vendedor por concentrar perguntas e sinais comerciais.` : insufficient, overall_diagnosis: topGap ? `${topGap.name} e a prioridade de desenvolvimento.` : insufficient, missed_opportunities: topGap?.what_to_improve ?? insufficient, missing_questions: "Investigue impacto, custo da inacao, decisao, prazo e compromisso final.", objections_analysis: blocks.find((block) => block.name === "Tratamento de objecoes")?.reason ?? insufficient, better_approach: topGap?.practical_example ?? insufficient, professional_conclusion: "Compare os mesmos 15 criterios nas proximas calls para medir evolucao real." },
+    strengths,
+    improvements,
+    competency_scores: blocks.map((block) => ({ name: block.name, score: block.score, explanation: block.reason, impact: `Peso de ${block.weight}% na nota.`, level: block.score === null ? "Nao avaliado" : block.score >= 8 ? "Avancado" : block.score >= 6 ? "Intermediario" : "Em desenvolvimento", gap: block.what_to_improve, next_step: block.practical_example })),
+    next_actions: improvements.map((item, index) => ({ priority: `Prioridade ${index + 1}`, objective: item.title, practical_action: item.how_to_fix, exercise: item.practical_example, target: "Aplicar na proxima call", expected_result: "Gerar evidencia melhor no mesmo criterio." })),
+    critical_moments: criticalMoments,
+    evaluation_blocks: blocks,
+    crm_report: { callData: { vendedor: seller?.speaker ?? "Nao identificado", lead_empresa: "Nao identificado", produto_servico: "Nao identificado", etapa_funil: "Nao identificada" }, temperature: { classification: "NAO IDENTIFICADA", justification: "Exige sinais concretos de urgencia, orcamento, autoridade e engajamento." }, conversationSummary: enoughEvidence ? `A transcricao integral foi processada em ${rows.length} falas. O relatorio preserva somente informacoes sustentadas pela conversa.` : insufficient, pains: /dor|problema|desafio|dificuldade/.test(normalized) ? ["Existe referencia explicita a problema ou desafio; consulte o trecho correspondente."] : ["Nao identificado"], objections: [], qualification: { orcamento: normalized.includes("orcamento") ? "Mencionado na call." : "Nao identificado", autoridade: /decisor|quem decide|aprova/.test(normalized) ? "Mencionada na call." : "Nao identificada", necessidade: /problema|desafio|dor/.test(normalized) ? "Sinalizada na call." : "Nao identificada", prazo_urgencia: /prazo|urgencia|data|trimestre/.test(normalized) ? "Sinalizado na call." : "Nao identificado" }, nextSteps: [], sellerObservations: "Nenhum dado foi inventado; ausencias foram marcadas como nao identificadas.", quickEvaluation: { score: Number(overall10.toFixed(1)), verdict: topGap ? `Prioridade de desenvolvimento: ${topGap.name}.` : insufficient } },
+    transcript,
+  };
+}
+
 export async function POST(request: Request) {
   const formData = await request.formData();
   const audio = formData.get("audio");
@@ -201,7 +272,7 @@ export async function POST(request: Request) {
 
   const apiKey = process.env.GEMINI_API_KEY;
   const deepgramKey = process.env.DEEPGRAM_API_KEY;
-  if (!apiKey && !deepgramKey) {
+  if (!apiKey && !deepgramKey && !suppliedTranscript) {
     return NextResponse.json({
       detail: "O modulo de analise precisa de uma chave Deepgram ou Gemini configurada.",
       code: "call_review_not_configured",
@@ -289,10 +360,10 @@ Retorne SOMENTE JSON valido com:
 - diagnosis com executive_summary, call_objective, conversation_context, seller_conduction, overall_diagnosis, missed_opportunities, missing_questions, objections_analysis, better_approach e professional_conclusion. Cada campo deve ter 2 a 5 frases especificas, com evidencias e orientacao pratica;
 - strengths com 3 objetos contendo title, evidence, why_it_worked e how_to_repeat;
 - improvements com 3 objetos contendo title, error, impact, how_to_fix, prevention e practical_example;
-- competency_scores com EXATAMENTE estas 17 habilidades: Abertura; Rapport; Clareza; Comunicacao; Confianca; Descoberta; Qualificacao; Perguntas; Escuta ativa; Identificacao de dores; Construcao de valor; Pitch; Argumentacao; Objecoes; Negociacao; Fechamento; Proximo passo. Cada objeto deve conter name, score de 0 a 100, explanation (o que aconteceu), impact, level (Iniciante, Intermediario, Avancado ou Elite), gap (o que precisa melhorar) e next_step (como melhorar);
+- competency_scores com EXATAMENTE as mesmas 15 competencias de evaluation_blocks. Cada objeto deve conter name, score de 0 a 10, explanation, impact, level, gap e next_step;
 - next_actions com EXATAMENTE 3 objetos contendo priority, objective, practical_action, exercise, target e expected_result;
-- evaluation_blocks com EXATAMENTE 28 itens. Cada item deve ter name, score de 0 a 100, reason, what_worked, what_to_improve, how_to_improve, practical_example e excerpt;
-- use estes 28 criterios, nesta ordem: Abertura da ligacao; Rapport; Descoberta de necessidades; Qualificacao; Comunicacao; Clareza; Escuta ativa; Controle da conversa; Autoridade; Confianca; Tom de voz; Ritmo da conversa; Argumentacao; Pitch de vendas; Demonstracao de valor; Tratamento de objecoes; Contorno de objecoes; Negociacao; Fechamento; Proximos passos; Follow-up; Uso de gatilhos mentais; Inteligencia emocional; Postura consultiva; Capacidade de gerar urgencia; Capacidade de gerar desejo; Persuasao; Organizacao da conversa.
+- evaluation_blocks com EXATAMENTE 15 itens. Cada item deve ter name, weight, score de 0 a 10, reason, what_worked, what_to_improve, how_to_improve, practical_example e excerpt;
+- use estes 15 criterios, nesta ordem e com estes pesos: Abertura (5); Rapport e adaptacao (5); Agenda e controle (5); Descoberta do contexto (10); Impacto e custo da inacao (10); Qualificacao (8); Escuta ativa (7); Qualidade das perguntas (7); Pitch contextual (8); Construcao de valor e prova (8); Tratamento de objecoes (8); Negociacao e protecao de margem (6); Fechamento (6); Proximo passo (5); Tom, postura e compliance (2).
 - critical_moments com timestamp real, speaker, quote, issue, recommendation e type (acerto, risco ou oportunidade).
 - No diagnostico, identifique explicitamente os principais acertos, principais erros, oportunidades perdidas, objecoes, perguntas que faltaram e como conduzir melhor. Use timestamps somente quando existirem na transcricao.
 - Cada explicacao deve citar comportamento ou fala concreta. Explique impacto comercial, motivo da recomendacao, exemplo pratico, erro a evitar e proximo passo. Evite qualquer texto generico.
@@ -308,7 +379,7 @@ Retorne SOMENTE JSON valido com:
   quickEvaluation (score de 0 a 10 e verdict).
 Cada critical_moment deve conter timestamp, speaker, quote, issue e recommendation.
 Identifique vendedor, lead, empresa, produto, segmento e objetivo automaticamente. Voce pode inferir apenas quando houver evidencias contextuais suficientes e deve sinalizar a inferencia com "(inferido pelo contexto)".
-Baseie-se SOMENTE na transcricao. Nunca invente dados, valores, combinacoes, falas ou timestamps. Quando realmente nao houver evidencia, escreva "Informacao nao mencionada durante a ligacao.".
+Baseie-se SOMENTE na transcricao. Nunca invente dados, valores, combinacoes, falas ou timestamps. Quando nao houver evidencia suficiente para pontuar um criterio, use score null e escreva exatamente "Nao foi possivel avaliar este criterio com evidencia suficiente nesta ligacao.". Calcule a nota geral apenas com criterios avaliaveis, renormalizando os pesos.
 A resposta deve ter profundidade de consultoria profissional, linguagem corporativa clara e recomendacoes executaveis.
 
 TRANSCRICAO:

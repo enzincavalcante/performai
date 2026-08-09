@@ -38,6 +38,8 @@
 .team-empty h3 { margin: 7px 0 0; }
 .team-empty p { max-width: 620px; margin: 0; color: #899fbd; font-size: 10px; line-height: 1.6; }
 .team-close-detail { justify-self: end; color: #a7b9cf !important; background: transparent !important; }
+.team-generate-invite { display:flex; align-items:center; gap:7px; margin-top:15px; padding:10px 12px; border:1px solid #4d74ad; border-radius:5px; color:#fff; background:#174bf3; font-weight:800; }
+.team-generate-invite svg { width:15px; }
 
 .certificate-paper.certificate-demo { position: relative; border-color: #e0b74e; }
 .certificate-paper.certificate-demo::before {
@@ -59,6 +61,35 @@
   .team-member-panel > header { flex-direction: column; }
   .team-member-panel > header button { width: 100%; }
 }
+
+.seller-directory { display:grid; gap:12px; margin-top:20px; }
+.seller-directory article { display:grid; grid-template-columns:48px minmax(180px,.7fr) 1.3fr; align-items:center; gap:16px; padding:18px; border:1px solid #294c78; border-radius:7px; background:#081d3b; }
+.seller-avatar { width:44px; height:44px; display:grid; place-items:center; border-radius:50%; color:#fff; background:#245fea; font-weight:900; }
+.seller-directory h3 { margin:0 0 5px; color:#f3f7fd; font-size:14px; }
+.seller-directory p,.seller-directory small { margin:0; color:#91a6c3; font-size:9px; }
+.seller-directory dl { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin:0; }
+.seller-directory dl div { min-height:62px; padding:10px; border:1px solid #23456f; background:#0c264b; }
+.seller-directory dt { color:#65dce5; font-size:7px; font-weight:900; text-transform:uppercase; }
+.seller-directory dd { margin:6px 0 0; color:#d8e5f5; font-size:9px; line-height:1.45; }
+.seller-form-backdrop { position:fixed; z-index:90; inset:0; display:grid; place-items:center; padding:24px; background:rgba(2,9,23,.78); backdrop-filter:blur(7px); }
+.seller-form-modal { width:min(920px,100%); max-height:90vh; overflow:auto; padding:28px; border:1px solid #31598c; border-radius:8px; color:#edf5ff; background:#081c39; box-shadow:0 28px 80px rgba(0,0,0,.48); }
+.seller-form-modal>header { display:flex; align-items:start; justify-content:space-between; gap:18px; margin-bottom:22px; }
+.seller-form-modal>header p { margin:0; color:#63dce5; font-size:8px; font-weight:900; }
+.seller-form-modal>header h2 { margin:6px 0; font-size:24px; }
+.seller-form-modal>header span { color:#91a6c3; font-size:10px; }
+.seller-form-modal>header button { width:36px; height:36px; display:grid; place-items:center; border:1px solid #31527d; border-radius:5px; color:#dbe7f7; background:#0d294e; }
+.seller-form-modal>header svg { width:17px; }
+.seller-form-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.seller-form-grid label { display:grid; gap:7px; color:#c8d6e9; font-size:9px; font-weight:800; }
+.seller-form-grid input,.seller-form-grid textarea { width:100%; min-height:42px; padding:10px 12px; border:1px solid #31557f; border-radius:5px; color:#f1f6fd; background:#06172f; outline:0; }
+.seller-form-grid textarea { min-height:88px; resize:vertical; }
+.seller-form-grid input:focus,.seller-form-grid textarea:focus { border-color:#62dce5; box-shadow:0 0 0 3px rgba(98,220,229,.12); }
+.seller-form-wide { grid-column:1/-1; }
+.seller-form-modal>footer { display:flex; justify-content:flex-end; gap:9px; margin-top:22px; }
+.seller-form-modal>footer button { min-height:42px; display:flex; align-items:center; gap:7px; padding:0 16px; border:1px solid #355985; border-radius:5px; color:#dbe7f5; background:#0d294e; font-weight:800; }
+.seller-form-modal>footer button[type="submit"] { border-color:#245fea; color:#fff; background:#245fea; }
+.seller-form-modal>footer svg { width:16px; }
+@media(max-width:760px){.seller-directory article{grid-template-columns:44px 1fr}.seller-directory dl{grid-column:1/-1;grid-template-columns:1fr}.seller-form-grid{grid-template-columns:1fr}.seller-form-wide{grid-column:auto}.seller-form-modal{padding:20px}.seller-form-modal>footer{align-items:stretch;flex-direction:column}}
 
 @media print {
   .certificate-demo::after {

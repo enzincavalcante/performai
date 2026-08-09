@@ -52,6 +52,7 @@ type TrainingModule = {
 };
 
 type LessonQuestion = {
+  difficulty: "Facil" | "Dificil" | "Impossivel";
   type: string;
   prompt: string;
   options: string[];
@@ -140,19 +141,20 @@ function lessonResource(module: TrainingModule, lessonTitle: string) {
   };
 }
 
-function buildLessonQuestions(module: TrainingModule, lessonTitle: string, mode: "exercise" | "quiz"): LessonQuestion[] {
+function buildLessonQuestions(module: TrainingModule, lessonTitle: string): LessonQuestion[] {
   const resource = lessonResource(module, lessonTitle);
-  const prefix = mode === "exercise" ? "Atividade aplicada" : "Teste rapido";
   return [
     {
+      difficulty: "Facil",
       type: "Situacao comercial real",
-      prompt: `${prefix}: durante uma conversa sobre ${lessonTitle}, o cliente responde de forma vaga. Qual e a melhor proxima acao?`,
+      prompt: `Durante uma conversa sobre ${lessonTitle}, o cliente responde de forma vaga. Qual e a melhor proxima acao?`,
       options: ["Apresentar todas as funcionalidades", "Aprofundar com uma pergunta ligada ao impacto", "Oferecer desconto", "Encerrar e enviar um PDF"],
       correct: 1,
       explanation: `A tecnica de ${lessonTitle.toLowerCase()} exige contexto antes de recomendacao. Aprofundar evita uma resposta generica.`,
       application: "Na venda real, use a ultima frase do cliente como ponto de partida para a proxima pergunta.",
     },
     {
+      difficulty: "Facil",
       type: "Identificacao de erro",
       prompt: `Qual comportamento mais prejudica a aplicacao de ${lessonTitle}?`,
       options: ["Confirmar o entendimento", resource.avoid[0], "Registrar o proximo passo", "Adaptar a linguagem ao comprador"],
@@ -161,6 +163,7 @@ function buildLessonQuestions(module: TrainingModule, lessonTitle: string, mode:
       application: "Prepare pontos de apoio, mas construa a resposta usando o que o cliente acabou de dizer.",
     },
     {
+      difficulty: "Facil",
       type: "Tomada de decisao",
       prompt: `O comprador pede objetividade no meio da conversa. O que voce faria ao aplicar ${lessonTitle}?`,
       options: ["Acelerar e omitir o diagnostico", "Ignorar o pedido", "Resumir o que entendeu e fazer uma pergunta decisiva", "Reiniciar o pitch"],
@@ -169,6 +172,7 @@ function buildLessonQuestions(module: TrainingModule, lessonTitle: string, mode:
       application: `Diga: "Pelo que entendi, o ponto central e X. Para aplicar ${lessonTitle.toLowerCase()}, preciso confirmar Y. Correto?"`,
     },
     {
+      difficulty: "Facil",
       type: "Construcao de argumento",
       prompt: `Qual argumento demonstra melhor dominio do objetivo desta aula?`,
       options: ["Somos lideres e temos muitos recursos", module.outcome, "Nosso preco termina hoje", "Todo cliente precisa desta solucao"],
@@ -177,6 +181,7 @@ function buildLessonQuestions(module: TrainingModule, lessonTitle: string, mode:
       application: "Troque adjetivos por problema, impacto, evidencia e resultado esperado.",
     },
     {
+      difficulty: "Facil",
       type: "Objecao do cliente",
       prompt: `O cliente diz: "nao vejo prioridade nisso agora". Qual resposta usa melhor o principio de ${lessonTitle}?`,
       options: ["Se fechar hoje, consigo desconto", "Entendo. O que precisaria acontecer para isso virar prioridade?", "Voce esta errado", "Vou mandar a proposta novamente"],
@@ -185,6 +190,7 @@ function buildLessonQuestions(module: TrainingModule, lessonTitle: string, mode:
       application: "Investigue evento, impacto e custo da inacao antes de defender urgencia.",
     },
     {
+      difficulty: "Facil",
       type: "O que voce faria?",
       prompt: `Voce percebe que falou por dois minutos sem validar o cliente. Qual deve ser sua correcao imediata?`,
       options: ["Continuar para nao perder a linha", "Perguntar se o preco cabe no orcamento", "Resumir em uma frase e devolver a conversa ao cliente", "Encerrar a reuniao"],
@@ -193,6 +199,7 @@ function buildLessonQuestions(module: TrainingModule, lessonTitle: string, mode:
       application: "Use uma pergunta de validacao a cada bloco importante da conversa.",
     },
     {
+      difficulty: "Facil",
       type: "Aplicacao da tecnica",
       prompt: `Qual sequencia representa uma aplicacao profissional de ${lessonTitle}?`,
       options: ["Pitch, desconto, urgencia", "Contexto, tecnica, confirmacao e proximo passo", "Funcionalidades, proposta e silencio", "Historia pessoal, preco e follow-up"],
@@ -201,6 +208,7 @@ function buildLessonQuestions(module: TrainingModule, lessonTitle: string, mode:
       application: `Use o checklist da aula antes de praticar ${lessonTitle.toLowerCase()} em uma call real.`,
     },
     {
+      difficulty: "Dificil",
       type: "Boas praticas",
       prompt: "O que um vendedor de alta performance faria diferente?",
       options: [resource.bestPractices[0], "Usaria o mesmo texto em todas as conversas", "Evitaria perguntas para ganhar tempo", "Prometeria resultado sem dados"],
@@ -209,6 +217,7 @@ function buildLessonQuestions(module: TrainingModule, lessonTitle: string, mode:
       application: "Anote duas expressoes usadas pelo cliente e reutilize-as no resumo de valor.",
     },
     {
+      difficulty: "Dificil",
       type: "Analise de conversa",
       prompt: `No exemplo "${resource.script}", qual e o principal objetivo da frase?`,
       options: ["Pressionar uma decisao", "Mostrar superioridade", "Conectar contexto e validar entendimento", "Mudar de assunto"],
@@ -217,12 +226,103 @@ function buildLessonQuestions(module: TrainingModule, lessonTitle: string, mode:
       application: "Nao trate o script como frase decorada; substitua os campos pelo contexto verdadeiro.",
     },
     {
+      difficulty: "Dificil",
       type: "Fechamento da atividade",
       prompt: `Como saber se ${lessonTitle} foi bem aplicada?`,
       options: ["O vendedor falou mais", "A reuniao ficou mais longa", "Existe evidencia de entendimento e um proximo passo coerente", "O cliente recebeu muitos materiais"],
       correct: 2,
       explanation: "Competencia comercial aparece em evidencias: entendimento confirmado, resistencia esclarecida e avancos verificaveis.",
       application: "Ao final, registre o que mudou na percepcao do cliente e qual compromisso foi assumido.",
+    },
+    {
+      difficulty: "Dificil",
+      type: "Diagnostico versus pitch",
+      prompt: `O cliente demonstra interesse em ${lessonTitle}, mas ainda nao explicou impacto nem urgencia. Qual decisao preserva a qualidade da venda?`,
+      options: ["Enviar a proposta imediatamente", "Apresentar um case e pedir assinatura", "Quantificar impacto, urgencia e criterio de decisao antes da recomendacao", "Oferecer um teste sem definir sucesso"],
+      correct: 2,
+      explanation: "Interesse nao equivale a qualificacao. Sem impacto, urgencia e criterio, a proposta nasce sem base para decisao.",
+      application: "Confirme problema, impacto, urgencia, decisor e proximo passo antes de considerar a descoberta concluida.",
+    },
+    {
+      difficulty: "Dificil",
+      type: "Escuta aplicada",
+      prompt: "O cliente diz que a equipe nao adere ao processo. Qual resposta demonstra escuta ativa e investigacao?",
+      options: ["Nossa plataforma e muito facil de usar", "Entendi que o problema e tecnologia", "Quando voce diz falta de adesao, em qual etapa isso acontece e qual impacto gera?", "Podemos dar desconto na implantacao"],
+      correct: 2,
+      explanation: "A resposta reutiliza a linguagem do cliente, evita assumir a causa e abre uma investigacao observavel.",
+      application: "Parafraseie a frase principal e aprofunde um termo antes de apresentar a solucao.",
+    },
+    {
+      difficulty: "Dificil",
+      type: "Protecao de margem",
+      prompt: "O comprador pede 15% de desconto antes de validar valor. Qual e a resposta mais profissional?",
+      options: ["Conceder 10% para manter a oportunidade", "Recusar sem explicar", "Entender a referencia de preco, retomar o impacto e negociar mediante contrapartida", "Reduzir o escopo sem avisar"],
+      correct: 2,
+      explanation: "Negociacao profissional separa objecao de valor, restricao de caixa e tatica de compra antes de discutir concessao.",
+      application: "Toda concessao deve ter contrapartida explicita de prazo, volume, escopo ou compromisso.",
+    },
+    {
+      difficulty: "Dificil",
+      type: "Processo de decisao",
+      prompt: "Seu contato gosta da proposta, mas nao assina. Qual pergunta produz o melhor mapa de decisao?",
+      options: ["Voce gostou da apresentacao?", "Posso mandar o contrato?", "Alem de voce, quem valida, quais criterios usara e o que precisa ocorrer antes da assinatura?", "Qual desconto faria voce comprar?"],
+      correct: 2,
+      explanation: "A pergunta revela autoridade, criterios e processo, reduzindo o risco de confundir apoiador com decisor.",
+      application: "Mapeie decisor economico, criterios, processo e etapa documental antes de prever fechamento.",
+    },
+    {
+      difficulty: "Impossivel",
+      type: "Caso executivo complexo",
+      prompt: `Em uma negociacao sobre ${lessonTitle}, o CFO exige retorno em seis meses, o usuario teme a implantacao e o diretor quer decidir nesta semana. Qual sequencia e mais solida?`,
+      options: ["Responder ao diretor e ignorar os demais", "Dar desconto para compensar o risco", "Separar criterios por stakeholder, quantificar valor, definir prova de sucesso e alinhar um processo comum", "Enviar tres propostas diferentes"],
+      correct: 2,
+      explanation: "Vendas complexas exigem consenso entre valor economico, risco operacional e processo de decisao.",
+      application: "Crie um mapa com stakeholder, criterio, evidencia, risco e compromisso para cada envolvido.",
+    },
+    {
+      difficulty: "Impossivel",
+      type: "Inferencia comercial",
+      prompt: "O lead diz que precisa pensar, participou ativamente e perguntou sobre implantacao, mas evita falar de decisao. Qual hipotese deve ser validada primeiro?",
+      options: ["Ele nao tem interesse", "O preco esta alto", "Existe risco ou stakeholder nao mapeado impedindo compromisso", "Ele quer mais funcionalidades"],
+      correct: 2,
+      explanation: "Engajamento sem compromisso pode indicar risco percebido, criterio oculto ou processo decisorio incompleto; a hipotese precisa ser testada.",
+      application: "Pergunte o que exatamente precisa ser pensado e qual pessoa, criterio ou risco ainda impede o avancar.",
+    },
+    {
+      difficulty: "Impossivel",
+      type: "Construcao de consenso",
+      prompt: "Dois decisores discordam: um prioriza velocidade e outro seguranca. Como o vendedor deve conduzir?",
+      options: ["Escolher o decisor mais influente", "Defender que velocidade e mais importante", "Transformar prioridades em criterios mensuraveis e construir uma validacao que proteja ambos", "Adiar sem proximo passo"],
+      correct: 2,
+      explanation: "O vendedor transforma interesses em criterios verificaveis e cria um caminho de decisao compartilhado.",
+      application: "Proponha validacao com prazo, risco controlado, indicador de sucesso e responsavel por criterio.",
+    },
+    {
+      difficulty: "Impossivel",
+      type: "Custo da inacao",
+      prompt: "O cliente reconhece a dor, mas diz que pode conviver com ela por mais um ano. Qual abordagem evita urgencia artificial?",
+      options: ["Informar que o preco aumenta amanha", "Afirmar que o concorrente vai avancar", "Quantificar o custo acumulado, relacionar a um evento real e comparar agir versus manter o cenario", "Repetir os beneficios"],
+      correct: 2,
+      explanation: "Urgencia genuina nasce da consequencia comprovada e de um evento do negocio, nunca de pressao inventada.",
+      application: "Calcule com o cliente impacto mensal, probabilidade, horizonte e evento que altera a prioridade.",
+    },
+    {
+      difficulty: "Impossivel",
+      type: "Negociacao multivariavel",
+      prompt: "Para manter preco, o cliente pede prazo maior, implantacao completa e cancelamento flexivel. Qual resposta protege valor e relacao?",
+      options: ["Aceitar tudo para fechar", "Negar todos os pedidos", "Priorizar interesses, calcular o custo de cada termo e trocar concessoes por compromissos equivalentes", "Reduzir preco e manter os termos"],
+      correct: 2,
+      explanation: "Negociacao multivariavel compara custo e valor de cada termo, permitindo trocas equivalentes sem concessao unilateral.",
+      application: "Monte uma matriz de pedido, interesse, custo, alternativa e contrapartida minima.",
+    },
+    {
+      difficulty: "Impossivel",
+      type: "Decisao sob ambiguidade",
+      prompt: `Nao ha dados suficientes para provar o retorno de ${lessonTitle}, mas o problema e relevante. Qual proximo passo e eticamente mais forte?`,
+      options: ["Prometer o retorno medio do mercado", "Usar um case como garantia", "Propor uma validacao limitada com linha de base, criterio de sucesso e decisao posterior", "Pressionar pelo contrato anual"],
+      correct: 2,
+      explanation: "Quando a evidencia e insuficiente, o vendedor reduz a incerteza com um experimento mensuravel em vez de fabricar certeza.",
+      application: "Defina linha de base, escopo, prazo, indicador, responsavel e regra de decisao antes do piloto.",
     },
   ];
 }
@@ -233,51 +333,52 @@ function readProgress(): Record<string, number[]> {
 }
 
 function LessonAssessment({
-  mode,
   questions,
   state,
   onChange,
 }: {
-  mode: "exercise" | "quiz";
   questions: LessonQuestion[];
   state: AssessmentState;
   onChange: (state: AssessmentState) => void;
 }) {
   const score = state.answers.reduce((total, answer, index) => total + (answer === questions[index]?.correct ? 1 : 0), 0);
-  const percentage = score * 10;
+  const percentage = Math.round((score / questions.length) * 100);
   const performance = percentage >= 90 ? "Excelente" : percentage >= 70 ? "Bom" : percentage >= 50 ? "Regular" : "Precisa melhorar";
   const current = questions[state.index];
   const answer = state.answers[state.index];
+  const difficultyScore = (difficulty: LessonQuestion["difficulty"]) => {
+    const indexes = questions.map((question, index) => ({ question, index })).filter((item) => item.question.difficulty === difficulty);
+    return { correct: indexes.filter((item) => state.answers[item.index] === item.question.correct).length, total: indexes.length };
+  };
 
   if (state.finished) {
     const mistakes = questions.map((question, index) => ({ question, index, answer: state.answers[index] })).filter((item) => item.answer !== item.question.correct);
     return <section className="lesson-assessment-result">
-      <header><div><small>{mode === "exercise" ? "RESULTADO DO EXERCICIO" : "RESULTADO DO QUIZ"}</small><h2>{performance}</h2><p>{percentage >= 70 ? "Voce demonstrou dominio do conteudo. Revise os pontos abaixo para consolidar a aplicacao." : "Revise os erros antes de concluir a aula e refaca a atividade para transformar teoria em pratica."}</p></div><strong>{percentage}<span>/100</span></strong></header>
-      <div className="assessment-result-kpis"><article><span>Nota</span><strong>{percentage}/100</strong></article><article><span>Acertos</span><strong>{score}/10</strong></article><article><span>Erros</span><strong>{10 - score}/10</strong></article><article><span>Desempenho</span><strong>{performance}</strong></article></div>
-      {mistakes.length > 0 ? <div className="assessment-review"><h3>Questoes para revisar</h3>{mistakes.map(({ question, index, answer: selectedAnswer }) => <article key={question.prompt}><span>{index + 1}</span><div><strong>{question.prompt}</strong><p className="student-error">Sua resposta: {question.options[selectedAnswer] ?? "Nao respondida"}</p><p><b>Resposta correta:</b> {question.options[question.correct]}</p><p>{question.explanation}</p><small><Lightbulb /> Como aplicar: {question.application}</small></div></article>)}</div> : <div className="assessment-perfect"><CheckCircle2 /><div><strong>Dominio completo</strong><p>Voce acertou todas as questoes e pode seguir para a proxima etapa.</p></div></div>}
+      <header><div><small>RESULTADO DO EXERCICIO</small><h2>{performance}</h2><p>{percentage >= 70 ? "Voce demonstrou dominio do conteudo. Revise os pontos abaixo para consolidar a aplicacao." : "Revise os erros antes de concluir a aula e refaca a atividade para transformar teoria em pratica."}</p></div><strong>{percentage}<span>/100</span></strong></header>
+      <div className="assessment-result-kpis"><article><span>Nota final</span><strong>{percentage}/100</strong></article><article><span>Faceis</span><strong>{difficultyScore("Facil").correct}/{difficultyScore("Facil").total}</strong></article><article><span>Dificeis</span><strong>{difficultyScore("Dificil").correct}/{difficultyScore("Dificil").total}</strong></article><article><span>Impossiveis</span><strong>{difficultyScore("Impossivel").correct}/{difficultyScore("Impossivel").total}</strong></article></div>
+      {mistakes.length > 0 ? <div className="assessment-review"><h3>Questoes para revisar</h3>{mistakes.map(({ question, index, answer: selectedAnswer }) => <article key={question.prompt}><span>{index + 1}</span><div><small>{question.difficulty} · Competencia: {question.type}</small><strong>{question.prompt}</strong><p className="student-error"><b>Sua resposta:</b> {question.options[selectedAnswer] ?? "Nao respondida"}</p><p><b>Resposta correta:</b> {question.options[question.correct]}</p><p><b>Erro identificado:</b> A decisao escolhida nao protegeu o diagnostico, o valor ou o proximo passo exigido pelo contexto.</p><p><b>Justificativa:</b> {question.explanation}</p><small><Lightbulb /> Recomendacao: {question.application}</small></div></article>)}</div> : <div className="assessment-perfect"><CheckCircle2 /><div><strong>Dominio completo</strong><p>Voce acertou todas as questoes e pode seguir para a proxima etapa.</p></div></div>}
       <div className="assessment-recommendation"><Target /><div><strong>Recomendacao personalizada</strong><p>{mistakes.length ? `Revise ${mistakes.slice(0, 2).map((item) => item.question.type.toLowerCase()).join(" e ")}. Depois, repita a atividade buscando justificar cada decisao com contexto, impacto e evidencia.` : "Aplique o checklist em uma conversa real nas proximas 48 horas e registre o resultado."}</p></div></div>
-      <button className="assessment-restart" onClick={() => onChange(EMPTY_ASSESSMENT)}>Refazer {mode === "exercise" ? "exercicio" : "quiz"}</button>
+      <button className="assessment-restart" onClick={() => onChange(EMPTY_ASSESSMENT)}>Refazer exercicio</button>
     </section>;
   }
 
-  return <section className={`lesson-assessment ${mode}`}>
-    <header><div><small>{mode === "exercise" ? "EXERCICIO COMPLETO" : "QUIZ DA AULA"} · PERGUNTA {state.index + 1} DE 10</small><h2>{current.prompt}</h2><p>{current.type} · Conteudo especifico desta aula</p></div><span>{Math.round((state.answers.length / 10) * 100)}%</span></header>
-    <div className="assessment-progress"><i style={{ width: `${(state.answers.length / 10) * 100}%` }} /><span>{state.answers.length} de 10 respondidas</span></div>
+  return <section className="lesson-assessment exercise">
+    <header><div><small>EXERCICIO COMPLETO · PERGUNTA {state.index + 1} DE {questions.length}</small><h2>{current.prompt}</h2><p>{current.difficulty} · {current.type}</p></div><span>{Math.round((state.answers.length / questions.length) * 100)}%</span></header>
+    <div className="assessment-progress"><i style={{ width: `${(state.answers.length / questions.length) * 100}%` }} /><span>{state.answers.length} de {questions.length} respondidas</span></div>
     <div className="assessment-options">{current.options.map((option, index) => <button className={state.revealed ? index === current.correct ? "correct" : answer === index ? "wrong" : "" : ""} disabled={state.revealed} onClick={() => onChange({ ...state, answers: [...state.answers.slice(0, state.index), index], revealed: true })} key={option}><span>{String.fromCharCode(65 + index)}</span><strong>{option}</strong></button>)}</div>
     {state.revealed && <div className={`assessment-feedback ${answer === current.correct ? "correct" : "wrong"}`}>{answer === current.correct ? <CheckCircle2 /> : <Target />}<div><strong>{answer === current.correct ? "Resposta correta" : "Resposta incorreta"}</strong>{answer !== current.correct && <p><b>Resposta correta:</b> {current.options[current.correct]}</p>}<p>{current.explanation}</p><small><Lightbulb /> Por que e melhor na venda real: {current.application}</small></div></div>}
-    <footer><span>Nota parcial: {score * 10}/{Math.max(10, state.answers.length * 10)}</span><button disabled={!state.revealed} onClick={() => state.index === 9 ? onChange({ ...state, finished: true }) : onChange({ ...state, index: state.index + 1, revealed: false })}>{state.index === 9 ? "Ver resultado" : "Proxima pergunta"}<ArrowRight /></button></footer>
+    <footer><span>Nota parcial: {score}/{Math.max(1, state.answers.length)} acertos</span><button disabled={!state.revealed} onClick={() => state.index === questions.length - 1 ? onChange({ ...state, finished: true }) : onChange({ ...state, index: state.index + 1, revealed: false })}>{state.index === questions.length - 1 ? "Ver resultado" : "Proxima pergunta"}<ArrowRight /></button></footer>
   </section>;
 }
 
 export function PremiumTrainingAcademy({ onNavigate }: { onNavigate: (view: EnterpriseView) => void }) {
   const [selected, setSelected] = useState<TrainingModule | null>(null);
   const [lesson, setLesson] = useState(0);
-  const [panel, setPanel] = useState<"content" | "exercise" | "quiz" | "mentor">("content");
+  const [panel, setPanel] = useState<"content" | "exercise" | "mentor">("content");
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState("Todos");
   const [progress, setProgress] = useState<Record<string, number[]>>({});
   const [exerciseState, setExerciseState] = useState<AssessmentState>(EMPTY_ASSESSMENT);
-  const [quizState, setQuizState] = useState<AssessmentState>(EMPTY_ASSESSMENT);
   const [notice, setNotice] = useState("");
   const [resourceView, setResourceView] = useState<"material" | "summary" | null>(null);
 
@@ -292,14 +393,13 @@ export function PremiumTrainingAcademy({ onNavigate }: { onNavigate: (view: Ente
 
   const resetActivities = () => {
     setExerciseState(EMPTY_ASSESSMENT);
-    setQuizState(EMPTY_ASSESSMENT);
   };
   const openModule = (module: TrainingModule) => { setSelected(module); setLesson(0); setPanel("content"); resetActivities(); setResourceView(null); window.scrollTo({ top: 0, behavior: "smooth" }); };
   const markLesson = () => {
     if (!selected) return;
     const completed = new Set(progress[selected.id] ?? []); completed.add(lesson);
     saveProgress({ ...progress, [selected.id]: [...completed] });
-    setNotice("Aula concluida: +120 XP e 30 moedas");
+    setNotice("Aula concluida e registrada no seu historico profissional.");
     window.setTimeout(() => setNotice(""), 2800);
     if (lesson < selected.lessons.length - 1) { setLesson(lesson + 1); setPanel("content"); resetActivities(); }
   };
@@ -316,30 +416,28 @@ export function PremiumTrainingAcademy({ onNavigate }: { onNavigate: (view: Ente
     const completed = progress[selected.id]?.includes(lesson) ?? false;
     const percent = moduleProgress(selected);
     const resource = lessonResource(selected, selected.lessons[lesson]);
-    const exerciseQuestions = buildLessonQuestions(selected, selected.lessons[lesson], "exercise");
-    const quizQuestions = buildLessonQuestions(selected, selected.lessons[lesson], "quiz");
+    const exerciseQuestions = buildLessonQuestions(selected, selected.lessons[lesson]);
     return <div className="premium-academy lesson-workspace">
       {notice && <div className="academy-toast"><Award /> {notice}</div>}
       {resourceView && <div className="lesson-resource-backdrop" role="presentation" onClick={() => setResourceView(null)}><article className="lesson-resource-modal" role="dialog" aria-modal="true" aria-label={resourceView === "material" ? "Material da aula" : "Resumo pratico"} onClick={(event) => event.stopPropagation()}><header><div><small>{resourceView === "material" ? "MATERIAL PROFISSIONAL" : "RESUMO PRATICO"}</small><h2>{selected.lessons[lesson]}</h2><p>{selected.title}</p></div><button onClick={() => setResourceView(null)} aria-label="Fechar"><X /></button></header>{resourceView === "material" ? <div className="lesson-resource-body professional"><section className="resource-wide"><h3>Objetivo da aula</h3><p>{resource.objective}</p></section><section className="resource-wide"><h3>O que o vendedor aprendera</h3><p>{selected.outcome}</p></section><section className="resource-wide"><h3>Conteudo principal</h3><p>{resource.deepDive}</p></section><section><h3>Conceitos fundamentais</h3><ul>{resource.concepts.map((item) => <li key={item}>{item}</li>)}</ul></section><section><h3>Tecnica comercial</h3><p>{resource.technique}</p></section><section><h3>Exemplos de aplicacao</h3><ul>{resource.examples.map((item) => <li key={item}>{item}</li>)}</ul></section><section className="resource-script"><h3>Exemplo de conversa</h3><blockquote>{resource.dialogue.map((line) => <span key={line}>{line}</span>)}</blockquote></section><section><h3>Erros comuns</h3><ul>{resource.avoid.map((item) => <li key={item}>{item}</li>)}</ul></section><section><h3>Boas praticas</h3><ul>{resource.bestPractices.map((item) => <li key={item}>{item}</li>)}</ul></section><section><h3>Checklist de campo</h3><ul>{resource.checklist.map((item) => <li key={item}>{item}</li>)}</ul></section><section><h3>Exercicio pratico</h3><p>{resource.practice}</p></section><section className="resource-wide"><h3>Resumo da aula</h3><p>{resource.summary}</p></section></div> : <div className="lesson-resource-body summary"><section><h3>O que foi ensinado</h3><p>{selected.outcome}</p></section><section><h3>Pontos principais</h3><ul>{resource.concepts.map((item) => <li key={item}>{item}</li>)}</ul></section><section><h3>O que fazer</h3><ul>{resource.checklist.map((item) => <li key={item}>{item}</li>)}</ul></section><section><h3>O que evitar e erros comuns</h3><ul>{resource.avoid.map((item) => <li key={item}>{item}</li>)}</ul></section><section><h3>Exemplo melhor</h3><blockquote>{resource.script}</blockquote></section><section><h3>Proximo passo recomendado</h3><p>Pratique esta situacao no Treino de Vendas IA, conclua o quiz e aplique a tecnica em uma conversa real nas proximas 48 horas.</p></section></div>}<footer><button onClick={downloadMaterial}><Download /> Baixar material</button><button onClick={() => { setResourceView(null); onNavigate("simulation"); }}><Mic /> Praticar agora</button></footer></article></div>}
       <header className="lesson-topbar"><button onClick={() => setSelected(null)}><ArrowLeft /> Voltar para trilhas</button><div><span>{selected.title}</span><strong>{percent}% concluido</strong><i><b style={{ width: `${percent}%` }} /></i></div></header>
-      <section className="lesson-hero"><div className={`academy-icon ${selected.color}`}><Icon /></div><div><small>MODULO {selected.number} · AULA {lesson + 1} DE {selected.lessons.length}</small><h1>{selected.lessons[lesson]}</h1><p>{selected.outcome}</p></div><aside><span><Clock3 /> 35 minutos</span><span><Star /> 120 XP</span><span><Trophy /> 30 moedas</span></aside></section>
-      <nav className="lesson-tabs"><button className={panel === "content" ? "active" : ""} onClick={() => setPanel("content")}><Play /> Aula</button><button className={panel === "exercise" ? "active" : ""} onClick={() => setPanel("exercise")}><Target /> Exercicio · 10 questoes</button><button className={panel === "quiz" ? "active" : ""} onClick={() => setPanel("quiz")}><Lightbulb /> Quiz · 10 questoes</button><button className={panel === "mentor" ? "active" : ""} onClick={() => setPanel("mentor")}><Sparkles /> Tirar duvidas</button></nav>
+      <section className="lesson-hero"><div className={`academy-icon ${selected.color}`}><Icon /></div><div><small>MODULO {selected.number} · AULA {lesson + 1} DE {selected.lessons.length}</small><h1>{selected.lessons[lesson]}</h1><p>{selected.outcome}</p></div><aside><span><Clock3 /> 35 minutos</span><span><Star /> Evidencia pratica</span><span><Trophy /> Avaliacao ao final</span></aside></section>
+      <nav className="lesson-tabs"><button className={panel === "content" ? "active" : ""} onClick={() => setPanel("content")}><Play /> Aula</button><button className={panel === "exercise" ? "active" : ""} onClick={() => setPanel("exercise")}><Target /> Exercicio · 20 questoes</button><button className={panel === "mentor" ? "active" : ""} onClick={() => setPanel("mentor")}><Sparkles /> Tirar duvidas</button></nav>
       <div className="lesson-layout">
         <main>
           {panel === "content" && <div className="lesson-content"><div className="academy-video"><iframe src={`https://www.youtube-nocookie.com/embed/${selected.videoId}`} title={selected.lessons[lesson]} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen /></div><section><small>CONCEITO APLICADO</small><h2>O que voce precisa dominar</h2><p>{selected.outcome} Nesta aula, voce aprende o conceito, reconhece os erros mais comuns e transforma o conhecimento em uma acao observavel na rotina comercial.</p><div className="lesson-summary"><Lightbulb /><span><strong>Resumo executivo</strong><p>Use o metodo em uma situacao real, confirme o entendimento do cliente e registre o resultado. Conhecimento comercial so vira competencia quando aparece no comportamento.</p></span></div><h3>Aplicacao em campo</h3><ol><li>Prepare o objetivo antes da conversa.</li><li>Use uma pergunta para validar o contexto.</li><li>Aplique a tecnica sem parecer decorado.</li><li>Registre o que funcionou e o que precisa mudar.</li></ol></section></div>}
-          {panel === "exercise" && <LessonAssessment mode="exercise" questions={exerciseQuestions} state={exerciseState} onChange={setExerciseState} />}
-          {panel === "quiz" && <LessonAssessment mode="quiz" questions={quizQuestions} state={quizState} onChange={setQuizState} />}
+          {panel === "exercise" && <LessonAssessment questions={exerciseQuestions} state={exerciseState} onChange={setExerciseState} />}
           {panel === "mentor" && <section className="lesson-mentor"><BotFace /><div><small>COACH COMERCIAL COM CONTEXTO</small><h2>Tire duvidas sobre {selected.lessons[lesson]}</h2><p>O Coach Comercial ajuda a aplicar o conteudo em uma situacao real, explica o motivo das recomendacoes e continua a conversa com voce.</p><div>{["Explique com outro exemplo", "Corrija minha abordagem", "Mostre os erros comuns", "Prepare uma conversa real"].map((item) => <button onClick={() => onNavigate("coach")} key={item}>{item}<ChevronRight /></button>)}</div><button className="mentor-main" onClick={() => onNavigate("coach")}><Sparkles /> Abrir Coach Comercial</button></div></section>}
         </main>
-        <aside className="lesson-sidebar"><header><small>CONTEUDO DO MODULO</small><h2>{selected.lessons.length} aulas</h2></header>{selected.lessons.map((item, index) => <button className={lesson === index ? "active" : progress[selected.id]?.includes(index) ? "completed" : ""} onClick={() => { setLesson(index); setPanel("content"); resetActivities(); setResourceView(null); }} key={item}><span>{progress[selected.id]?.includes(index) ? <Check /> : index + 1}</span><div><strong>{item}</strong><small>{progress[selected.id]?.includes(index) ? "Concluida · revisar" : "35 min · 120 XP"}</small></div><ChevronRight /></button>)}<div className="lesson-tools"><button onClick={() => setResourceView("material")}><BookOpen /> Material da aula</button><button onClick={() => setResourceView("summary")}><Lightbulb /> Resumo pratico</button><button onClick={downloadMaterial}><Download /> Baixar material</button><button onClick={() => onNavigate("assessments")}><Target /> Avaliacao final</button></div></aside>
+        <aside className="lesson-sidebar"><header><small>CONTEUDO DO MODULO</small><h2>{selected.lessons.length} aulas</h2></header>{selected.lessons.map((item, index) => <button className={lesson === index ? "active" : progress[selected.id]?.includes(index) ? "completed" : ""} onClick={() => { setLesson(index); setPanel("content"); resetActivities(); setResourceView(null); }} key={item}><span>{progress[selected.id]?.includes(index) ? <Check /> : index + 1}</span><div><strong>{item}</strong><small>{progress[selected.id]?.includes(index) ? "Concluida · revisar" : "35 min · pratica aplicada"}</small></div><ChevronRight /></button>)}<div className="lesson-tools"><button onClick={() => setResourceView("material")}><BookOpen /> Material da aula</button><button onClick={() => setResourceView("summary")}><Lightbulb /> Resumo pratico</button><button onClick={downloadMaterial}><Download /> Baixar material</button><button onClick={() => setPanel("exercise")}><Target /> Exercicio de 20 questoes</button></div></aside>
       </div>
       <footer className="lesson-footer"><div>{completed ? <><CheckCircle2 /><span><strong>Aula concluida</strong><small>Voce pode revisar e refazer as atividades quando quiser.</small></span></> : <><Target /><span><strong>Conclua sua jornada</strong><small>Assista, pratique e valide o conhecimento.</small></span></>}</div><button onClick={markLesson}>{completed ? "Continuar evolucao" : "Concluir aula"}<ArrowRight /></button></footer>
     </div>;
   }
 
   return <div className="premium-academy">
-    <section className="academy-hero"><Image src="/brand/sales-academy-cover.png" alt="Equipe comercial em treinamento" fill priority sizes="(max-width: 900px) 100vw, 1200px" /><div className="academy-hero-overlay" /><div className="academy-hero-copy"><span><Sparkles /> ACADEMIA DE ALTA PERFORMANCE</span><h1>Desenvolva vendedores.<br />Construa resultados.</h1><p>Uma jornada completa de vendas, da mentalidade ao fechamento, com pratica, IA, desafios e evolucao mensuravel.</p><div><button onClick={() => openModule(MODULES.find((module) => moduleProgress(module) < 100) ?? MODULES[0])}><Play /> Continuar treinamento</button><button onClick={() => onNavigate("teams")}><Users /> Visao do gestor</button></div></div><aside><div><strong>{overall}%</strong><span>Progresso geral</span></div><div><strong>{completedLessons}</strong><span>Aulas concluidas</span></div><div><strong>{completedLessons * 120}</strong><span>XP conquistado</span></div></aside></section>
-    <section className="academy-status"><div><span><Flame /></span><strong>7 dias</strong><small>sequencia atual</small></div><div><span><Trophy /></span><strong>Nivel 12</strong><small>Closer intermediario</small></div><div><span><Award /></span><strong>{completedModules}</strong><small>certificados liberados</small></div><div className="academy-week"><header><span>Meta semanal</span><strong>72 de 120 min</strong></header><i><b style={{ width: "60%" }} /></i><small>Mais 48 minutos para ganhar +300 XP</small></div></section>
+    <section className="academy-hero"><Image src="/brand/sales-academy-cover.png" alt="Equipe comercial em treinamento" fill priority sizes="(max-width: 900px) 100vw, 1200px" /><div className="academy-hero-overlay" /><div className="academy-hero-copy"><span><Sparkles /> ACADEMIA DE ALTA PERFORMANCE</span><h1>Desenvolva vendedores.<br />Construa resultados.</h1><p>Uma jornada completa de vendas, da mentalidade ao fechamento, com pratica, IA, desafios e evolucao mensuravel.</p><div><button onClick={() => openModule(MODULES.find((module) => moduleProgress(module) < 100) ?? MODULES[0])}><Play /> Continuar treinamento</button><button onClick={() => onNavigate("teams")}><Users /> Visao do gestor</button></div></div><aside><div><strong>{overall}%</strong><span>Progresso geral</span></div><div><strong>{completedLessons}</strong><span>Aulas concluidas</span></div><div><strong>{completedModules}</strong><span>Competencias validadas</span></div></aside></section>
+    <section className="academy-status"><div><span><Flame /></span><strong>72 min</strong><small>treinados esta semana</small></div><div><span><Trophy /></span><strong>Intermediario</strong><small>nivel de dominio atual</small></div><div><span><Award /></span><strong>{completedModules}</strong><small>certificados liberados</small></div><div className="academy-week"><header><span>Meta semanal</span><strong>72 de 120 min</strong></header><i><b style={{ width: "60%" }} /></i><small>Faltam 48 minutos para concluir a meta profissional.</small></div></section>
     <section className="academy-intro"><div><small>TRILHA MASTER</small><h2>12 modulos para dominar a operacao comercial.</h2><p>Avance no seu ritmo. Aulas concluidas continuam abertas para revisao, novos exercicios e melhoria de nota.</p></div><button onClick={() => onNavigate("certificates")}><Award /> Ver certificados</button></section>
     <section className="academy-toolbar"><label><Search /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Pesquisar aula, tecnica ou habilidade" /></label><div>{["Todos", "Essencial", "Intermediario", "Avancado"].map((item) => <button className={filter === item ? "active" : ""} onClick={() => setFilter(item)} key={item}>{item}</button>)}</div></section>
     <section className="academy-grid">{visible.map((module) => { const Icon = module.icon; const percent = moduleProgress(module); return <button className="academy-card" onClick={() => openModule(module)} key={module.id}><header><span className={`academy-icon ${module.color}`}><Icon /></span><b>MODULO {String(module.number).padStart(2, "0")}</b><em>{module.level}</em></header><h3>{module.title}</h3><p>{module.description}</p><div className="academy-card-meta"><span><BookOpen /> {module.lessons.length} aulas</span><span><Clock3 /> {module.hours}</span></div><footer><div><span>{percent}% concluido</span><i><b style={{ width: `${percent}%` }} /></i></div><strong>{percent === 100 ? "Revisar modulo" : percent > 0 ? "Continuar" : "Comecar"}<ChevronRight /></strong></footer></button>; })}</section>

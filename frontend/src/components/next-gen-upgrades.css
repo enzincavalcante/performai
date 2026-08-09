@@ -5,3 +5,24 @@
 @media(max-width:700px){.mission-decisions,.mission-result-scores,.mission-result-feedback{grid-template-columns:1fr}.quick-training-config{grid-template-columns:1fr}.mission-session form{grid-template-columns:42px 1fr 42px}}
 .mission-result>header>strong{color:#fff}
 .ai-thinking p{display:flex!important;align-items:center;gap:4px;color:#5d708a!important}.ai-thinking p>i{width:5px;height:5px;border-radius:50%;background:#3976ee;animation:buyer-thinking 1s ease-in-out infinite}.ai-thinking p>i:nth-child(2){animation-delay:.15s}.ai-thinking p>i:nth-child(3){animation-delay:.3s}.mission-decisions button:disabled{cursor:wait;opacity:.55;transform:none}.coach-composer input:disabled,.mission-session form input:disabled{cursor:wait;background:#f4f7fb}@keyframes buyer-thinking{0%,60%,100%{transform:translateY(0);opacity:.4}30%{transform:translateY(-3px);opacity:1}}
+
+.weekly-review-page { display:grid; gap:18px; }
+.weekly-review-summary { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; }
+.weekly-review-summary article,.weekly-review-grid article,.weekly-action-plan { padding:20px; border:1px solid #294a75; border-radius:7px; background:#0a1e3d; }
+.weekly-review-summary article { display:grid; gap:7px; }
+.weekly-review-summary small,.weekly-review-grid small { color:#63dce5; font-size:8px; font-weight:900; }
+.weekly-review-summary strong { color:#f1f6fd; font-size:28px; }
+.weekly-review-summary span { color:#8ea4c2; font-size:9px; }
+.weekly-review-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.weekly-review-grid h3 { margin:9px 0; color:#f0f5fd; font-size:15px; }
+.weekly-review-grid p { margin:0; color:#91a6c3; font-size:10px; line-height:1.65; }
+.weekly-action-plan { padding:0; overflow:hidden; }
+.weekly-action-plan header { display:flex; justify-content:space-between; gap:18px; padding:20px; background:#102b50; }
+.weekly-action-plan header p { margin:0; color:#63dce5; font-size:8px; font-weight:900; }
+.weekly-action-plan header h2 { margin:6px 0 0; font-size:18px; }
+.weekly-action-plan header>strong { color:#9cb0cb; font-size:9px; }
+.weekly-action-plan>button { width:100%; display:grid; grid-template-columns:30px 1fr 18px; align-items:center; gap:10px; padding:14px 18px; border:0; border-top:1px solid #25466d; color:#dbe7f6; text-align:left; background:#0a1e3d; }
+.weekly-action-plan>button span { width:25px; height:25px; display:grid; place-items:center; border-radius:50%; color:#7fdfe6; background:#173a65; font-size:9px; }
+.weekly-action-plan>button svg { width:15px; }
+@media(max-width:850px){.weekly-review-summary,.weekly-review-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:560px){.weekly-review-summary,.weekly-review-grid{grid-template-columns:1fr}.weekly-action-plan header{flex-direction:column}}

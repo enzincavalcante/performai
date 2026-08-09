@@ -189,8 +189,11 @@ export function NextGenCoach() {
     objections: "",
     competitors: "",
     desiredResult: "",
+    batna: "",
+    limit: "",
   });
   const [planReady, setPlanReady] = useState(false);
+  const [showWeeklyReview, setShowWeeklyReview] = useState(false);
   const [selectedMission, setSelectedMission] = useState<number | null>(null);
   const [replayFile, setReplayFile] = useState("");
   const [missionStep, setMissionStep] = useState<"brief" | "session" | "result">("brief");
@@ -199,6 +202,13 @@ export function NextGenCoach() {
   const [buyerThinking, setBuyerThinking] = useState(false);
   const [missionThinking, setMissionThinking] = useState(false);
   const [trainingConfig, setTrainingConfig] = useState({
+    sellerName: "",
+    sellerRole: "Closer",
+    sellerExperience: "",
+    sellerStrengths: "",
+    sellerWeaknesses: "",
+    product: "",
+    objective: "Conquistar um proximo passo",
     clientName: "Ricardo",
     role: "Diretor Comercial",
     segment: "Tecnologia",
@@ -241,9 +251,9 @@ export function NextGenCoach() {
         segment: trainingConfig.segment,
         personality: inferredProfile,
         difficulty: trainingConfig.difficulty,
-        context: trainingConfig.context || "Conversa comercial de descoberta",
+        context: `${trainingConfig.context || "Conversa comercial de descoberta"}. Produto: ${trainingConfig.product || "nao informado"}. Vendedor: ${trainingConfig.sellerName || "nao informado"}, ${trainingConfig.sellerRole}, experiencia ${trainingConfig.sellerExperience || "nao informada"}, pontos fortes ${trainingConfig.sellerStrengths || "nao informados"}, pontos a desenvolver ${trainingConfig.sellerWeaknesses || "nao informados"}.`,
         objection: inferredObjection,
-        objective: "Entender a necessidade e conquistar um proximo passo",
+        objective: trainingConfig.objective,
       });
       setConversation((items) => [...items, { speaker: "coach", text: reply }]);
     } catch {
@@ -266,17 +276,25 @@ export function NextGenCoach() {
     const value = Math.min(96, base + (hasValue ? 18 : 0));
     const closing = Math.min(96, base + (hasNextStep ? 20 : 0));
     const overall = Math.round((discovery + value + closing) / 3);
+    const note = (score: number) => Number((Math.max(0, Math.min(100, score)) / 10).toFixed(1));
     return {
       overall,
       scores: [
-        ["Comunicacao", Math.min(94, base + 12)],
-        ["Descoberta", discovery],
-        ["Perguntas", Math.min(96, base + questions * 9)],
-        ["Argumentacao", Math.min(94, value + (hasValue ? 4 : 0))],
-        ["Objecoes", Math.min(92, value + 2)],
-        ["Negociacao", Math.min(94, value + (hasNextStep ? 8 : 1))],
-        ["Fechamento", closing],
-        ["Escuta", Math.min(94, discovery + 3)],
+        ["Abertura", note(base + 4)],
+        ["Rapport e adaptacao", note(base + 2)],
+        ["Agenda e controle", note(base + (sellerMessages.length > 2 ? 8 : 0))],
+        ["Descoberta do contexto", note(discovery)],
+        ["Impacto e custo da inacao", note(value)],
+        ["Qualificacao", note(discovery - 6)],
+        ["Escuta ativa", note(discovery + 3)],
+        ["Qualidade das perguntas", note(base + questions * 9)],
+        ["Pitch contextual", note(value + (hasValue ? 4 : 0))],
+        ["Construcao de valor e prova", note(value)],
+        ["Tratamento de objecoes", note(value + 2)],
+        ["Negociacao e margem", note(value + (hasNextStep ? 8 : 1))],
+        ["Fechamento", note(closing)],
+        ["Proximo passo", note(closing + (hasNextStep ? 3 : -8))],
+        ["Tom, postura e compliance", note(base + 10)],
       ] as Array<[string, number]>,
       headline: hasNextStep
         ? "Voce conduziu a conversa para um compromisso claro."
@@ -360,8 +378,8 @@ export function NextGenCoach() {
           </span>
         </div>
         <div>
-          <strong>2.840 XP</strong>
-          <small>Nivel 12 · Closer Intermediario</small>
+          <strong>Desempenho profissional</strong>
+          <small>Ultima avaliacao · 8,1/10</small>
         </div>
       </header>
       <nav className="coach-tabs">
@@ -417,7 +435,14 @@ export function NextGenCoach() {
                   </dl>
                 </article>
                 <div className="coach-config quick-training-config">
-                  <header><span>CONFIGURACAO RAPIDA</span><h3>So o essencial para comecar.</h3><p>A IA infere personalidade, objecoes e criterios de decisao.</p></header>
+                  <header><span>CONFIGURACAO DO CENARIO</span><h3>Prepare uma conversa que pareca com a sua realidade.</h3><p>O perfil do vendedor, a oferta e o comprador orientam cada resposta da simulacao.</p></header>
+                  <label>Seu nome<input value={trainingConfig.sellerName} onChange={(event) => setTrainingConfig((current) => ({ ...current, sellerName: event.target.value }))} placeholder="Nome do vendedor" /></label>
+                  <label>Seu cargo<input value={trainingConfig.sellerRole} onChange={(event) => setTrainingConfig((current) => ({ ...current, sellerRole: event.target.value }))} /></label>
+                  <label>Experiencia<input value={trainingConfig.sellerExperience} onChange={(event) => setTrainingConfig((current) => ({ ...current, sellerExperience: event.target.value }))} placeholder="Ex.: 2 anos em vendas B2B" /></label>
+                  <label>Produto ou servico<input value={trainingConfig.product} onChange={(event) => setTrainingConfig((current) => ({ ...current, product: event.target.value }))} placeholder="O que voce vende" /></label>
+                  <label>Pontos fortes<input value={trainingConfig.sellerStrengths} onChange={(event) => setTrainingConfig((current) => ({ ...current, sellerStrengths: event.target.value }))} placeholder="Ex.: rapport e clareza" /></label>
+                  <label>Pontos a desenvolver<input value={trainingConfig.sellerWeaknesses} onChange={(event) => setTrainingConfig((current) => ({ ...current, sellerWeaknesses: event.target.value }))} placeholder="Ex.: objecoes de preco" /></label>
+                  <label className="wide">Objetivo do treino<input value={trainingConfig.objective} onChange={(event) => setTrainingConfig((current) => ({ ...current, objective: event.target.value }))} /></label>
                   <label>
                     Nome do cliente
                     <input value={trainingConfig.clientName} onChange={(event) => setTrainingConfig((current) => ({ ...current, clientName: event.target.value }))} placeholder="Ex.: Ricardo" />
@@ -530,9 +555,9 @@ export function NextGenCoach() {
                 {evaluation.scores.map(([label, score]) => (
                   <article key={label}>
                     <span>{label}</span>
-                    <strong>{score}</strong>
+                    <strong>{score}/10</strong>
                     <div>
-                      <i style={{ width: `${score}%` }} />
+                      <i style={{ width: `${score * 10}%` }} />
                     </div>
                   </article>
                 ))}
@@ -778,91 +803,13 @@ export function NextGenCoach() {
                 setPlanReady(true);
               }}
             >
-              <label>
-                O que sua empresa vende?
-                <input value={meeting.sellerCompany} onChange={(event) => setMeeting({ ...meeting, sellerCompany: event.target.value })} placeholder="Negocio, oferta principal e diferencial" />
-              </label>
-              <label>
-                Empresa do cliente
-                <input
-                  value={meeting.company}
-                  onChange={(event) =>
-                    setMeeting({ ...meeting, company: event.target.value })
-                  }
-                  placeholder="Nome do cliente"
-                />
-              </label>
-              <label>
-                Segmento
-                <select
-                  value={meeting.industry}
-                  onChange={(event) =>
-                    setMeeting({ ...meeting, industry: event.target.value })
-                  }
-                >
-                  <option>Tecnologia</option>
-                  <option>Varejo</option>
-                  <option>Servicos</option>
-                  <option>Industria</option>
-                </select>
-              </label>
-              <label>
-                Produto ou servico
-                <input
-                  value={meeting.product}
-                  onChange={(event) =>
-                    setMeeting({ ...meeting, product: event.target.value })
-                  }
-                  placeholder="Sua oferta"
-                />
-              </label>
-              <label>
-                Cliente / oportunidade
-                <input value={meeting.client} onChange={(event) => setMeeting({ ...meeting, client: event.target.value })} placeholder="Nome do lead ou area compradora" />
-              </label>
-              <label>
-                Decisor
-                <input value={meeting.decisionMaker} onChange={(event) => setMeeting({ ...meeting, decisionMaker: event.target.value })} placeholder="Cargo e perfil do decisor" />
-              </label>
-              <label>
-                Objetivo
-                <select
-                  value={meeting.goal}
-                  onChange={(event) =>
-                    setMeeting({ ...meeting, goal: event.target.value })
-                  }
-                >
-                  <option>Descoberta</option>
-                  <option>Demonstracao</option>
-                  <option>Negociacao</option>
-                  <option>Fechamento</option>
-                </select>
-              </label>
-              <label>
-                Estagio da negociacao
-                <select value={meeting.stage} onChange={(event) => setMeeting({ ...meeting, stage: event.target.value })}><option>Descoberta</option><option>Proposta</option><option>Negociacao</option><option>Fechamento</option><option>Recuperacao</option></select>
-              </label>
-              <label>
-                Valor do negocio
-                <input value={meeting.dealValue} onChange={(event) => setMeeting({ ...meeting, dealValue: event.target.value })} placeholder="Ex.: R$ 80 mil por ano" />
-              </label>
-              <label>
-                Dores identificadas
-                <textarea value={meeting.pains} onChange={(event) => setMeeting({ ...meeting, pains: event.target.value })} placeholder="Problemas, impacto e urgencia" />
-              </label>
-              <label>
-                Objecoes ja apresentadas
-                <textarea value={meeting.objections} onChange={(event) => setMeeting({ ...meeting, objections: event.target.value })} placeholder="Preco, prazo, risco, prioridade..." />
-              </label>
-              <label>
-                Concorrentes
-                <input value={meeting.competitors} onChange={(event) => setMeeting({ ...meeting, competitors: event.target.value })} placeholder="Empresas ou alternativa atual" />
-              </label>
-              <label>
-                Resultado que voce quer alcancar
-                <textarea value={meeting.desiredResult} onChange={(event) => setMeeting({ ...meeting, desiredResult: event.target.value })} placeholder="Decisao, reuniao, proposta ou contrato" />
-              </label>
-              <button disabled={!meeting.company || !meeting.product}>
+              <label>Contexto da oportunidade<textarea value={meeting.sellerCompany} onChange={(event) => setMeeting({ ...meeting, sellerCompany: event.target.value })} placeholder="O que voce vende, para qual empresa e em que estagio a negociacao esta" /></label>
+              <label>Objetivo da reuniao<input value={meeting.goal} onChange={(event) => setMeeting({ ...meeting, goal: event.target.value })} placeholder="Ex.: validar proposta e combinar decisao" /></label>
+              <label>Cliente e interesses<textarea value={meeting.pains} onChange={(event) => setMeeting({ ...meeting, pains: event.target.value })} placeholder="Decisor, prioridades, dores e criterios conhecidos" /></label>
+              <label>Valor e limite negociavel<input value={meeting.limit} onChange={(event) => setMeeting({ ...meeting, limit: event.target.value })} placeholder="Preco-alvo, margem minima e o que nao pode ceder" /></label>
+              <label>BATNA / melhor alternativa<textarea value={meeting.batna} onChange={(event) => setMeeting({ ...meeting, batna: event.target.value })} placeholder="O que voce fara se nao houver acordo" /></label>
+              <label>Objecao principal<textarea value={meeting.objections} onChange={(event) => setMeeting({ ...meeting, objections: event.target.value })} placeholder="Qual resistencia precisa ser resolvida" /></label>
+              <button disabled={!meeting.sellerCompany.trim() || !meeting.goal.trim()}>
                 <Sparkles /> Preparar minha reuniao
               </button>
             </form>
@@ -872,32 +819,17 @@ export function NextGenCoach() {
                   <CheckCircle2 />
                   <div>
                     <small>PLANO GERADO</small>
-                    <h2>
-                      {meeting.company} · {meeting.goal}
-                    </h2>
+                    <h2>Plano de negociacao · {meeting.goal}</h2>
                   </div>
                 </header>
                 {[
-                  ["1. Contexto da oportunidade", `${meeting.company}, segmento ${meeting.industry}, estagio ${meeting.stage}. Oferta: ${meeting.product}${meeting.dealValue ? `, valor ${meeting.dealValue}` : ""}.`],
-                  ["2. Perfil provavel do comprador", `${meeting.decisionMaker || "Decisor ainda nao confirmado"}. Tende a proteger risco, prioridade e resultado mensuravel.`],
-                  ["3. Objetivo estrategico", meeting.desiredResult || `Avancar a oportunidade para ${meeting.goal.toLowerCase()} com compromisso verificavel.`],
-                  ["4. Diagnostico", meeting.pains || "Confirmar problema atual, impacto, urgencia, processo de decisao e custo de nao agir."],
-                  ["5. Estrategia principal", "Conduza por diagnostico, contraste entre situacao atual e resultado desejado, prova e compromisso progressivo."],
-                  ["6. Argumentos de valor", `Conecte ${meeting.product} a impacto financeiro, velocidade, risco e previsibilidade usando dados do proprio cliente.`],
-                  ["7. Perguntas estrategicas", "Como o problema afeta meta, custo ou velocidade? Por que resolver agora? Quem decide? Qual criterio define a melhor escolha?"],
-                  ["8. Como conduzir a reuniao", "Abra com agenda, diagnostique, resuma o entendimento, apresente somente o valor relevante, trate riscos e confirme o proximo passo."],
-                  ["9. Possiveis objecoes", meeting.objections || "Preco, prioridade, risco de implantacao, concorrente e falta de autoridade."],
-                  ["10. Respostas as objecoes", "Valide, esclareca a causa real, responda com evidencia e confirme se a resistencia foi resolvida antes de avancar."],
-                  ["11. Estrategia de negociacao", "Negocie por interesses e trocas. Nao conceda desconto sem contrapartida de prazo, escopo, volume ou compromisso."],
-                  ["12. Pontos de pressao", `${meeting.stage}, impacto da dor, risco de permanencia e janela de decisao. Nunca invente urgencia.`],
-                  ["13. Concessoes possiveis", "Prazo de pagamento, implantacao faseada, escopo inicial ou condicao vinculada a compromisso. Preserve margem e valor percebido."],
-                  ["14. O que nao fazer", "Nao apresentar cedo demais, atacar concorrentes, prometer sem prova, oferecer desconto prematuro ou encerrar sem data."],
-                  ["15. Como gerar urgencia", "Quantifique o custo da inacao e conecte a decisao a um evento real do negocio, prazo ou meta do cliente."],
-                  ["16. Como conduzir para o fechamento", "Resuma criterios atendidos, pergunte o que ainda impede o avancar e proponha acao, responsavel, data e pauta."],
-                  ["17. Plano B", "Se nao houver decisao, combine uma validacao menor: workshop tecnico, piloto com criterio de sucesso ou conversa com o decisor."],
-                  ["18. Proximos passos", `Enviar resumo para ${meeting.client || meeting.company}, confirmar participantes e agendar a proxima etapa com objetivo definido.`],
-                  ["19. Script recomendado", `\"Pelo que entendi, ${meeting.pains || "o problema atual"} impede o resultado esperado. Se mostrarmos como ${meeting.product} reduz esse impacto com risco controlado, faz sentido avancar com ${meeting.decisionMaker || "o decisor"}?\"`],
-                  ["20. Checklist antes da reuniao", `Revisar dores; confirmar decisor; validar valor ${meeting.dealValue || "do negocio"}; preparar prova; mapear ${meeting.competitors || "alternativas"}; definir proximo passo e Plano B.`],
+                  ["1. Contexto", meeting.sellerCompany],
+                  ["2. Objetivo verificavel", `${meeting.goal}. A conversa deve terminar com decisao, responsavel e data, nao apenas com a promessa de manter contato.`],
+                  ["3. Interesses do cliente", meeting.pains || "Valide impacto, prioridade, risco percebido, criterio de decisao e custo da inacao antes de defender qualquer condicao."],
+                  ["4. BATNA e limite", `${meeting.batna || "Defina sua melhor alternativa caso nao haja acordo."} ${meeting.limit ? `Limite declarado: ${meeting.limit}.` : "Defina margem minima e condicoes inegociaveis."}`],
+                  ["5. Estrategia recomendada", `Negocie por interesses: reconheca ${meeting.objections || "a resistencia principal"}, esclareca a causa, quantifique valor e troque cada concessao por uma contrapartida. A ZOPA existe somente entre seu limite e o maximo sustentavel para o cliente; valide esse intervalo.`],
+                  ["6. Proximo movimento", "Recapitule o diagnostico em ate 40 segundos, confirme a leitura, trate apenas a objecao decisiva e proponha uma acao com data. Condicione qualquer desconto a prazo, volume, escopo ou compromisso formal."],
+                  ["7. Linguagem sugerida", `\"Entendi que o ponto central e ${meeting.objections || "reduzir o risco da decisao"}. Antes de alterar a condicao, quero confirmar o impacto e o criterio de escolha. Se ajustarmos uma parte, qual compromisso concreto voces assumem em contrapartida?\"`],
                 ].map((item) => (
                   <article key={item[0]}>
                     <strong>{item[0]}</strong>
@@ -910,8 +842,7 @@ export function NextGenCoach() {
                 <BriefcaseBusiness />
                 <h2>Seu plano aparecera aqui.</h2>
                 <p>
-                  A IA combina empresa, segmento, oferta e objetivo para
-                  preparar perguntas, riscos, pitch e fechamento.
+                  Preencha seis pontos essenciais para receber uma estrategia direta, com BATNA, limite, ZOPA, concessoes condicionais e proximo movimento.
                 </p>
               </div>
             )}
@@ -919,15 +850,15 @@ export function NextGenCoach() {
         </section>
       )}
 
-      {tab === "career" && (
+      {tab === "career" && !showWeeklyReview && (
         <section>
           <div className="coach-section-title">
             <div>
               <p>PAINEL DE EVOLUCAO PROFISSIONAL</p>
               <h2>Sua evolucao, competencias e proximos niveis em um so lugar.</h2>
             </div>
-            <button>
-              <Award /> Revisao mensal
+            <button onClick={() => setShowWeeklyReview(true)}>
+              <Award /> Revisao semanal
             </button>
           </div>
           <div className="career-hero">
@@ -935,7 +866,7 @@ export function NextGenCoach() {
               <small>NIVEL PROFISSIONAL ESTIMADO</small>
               <h2>Closer Intermediario</h2>
               <p>
-                Voce esta a 320 XP e duas competencias do nivel Closer Avancado.
+                Seu historico mostra consistencia em comunicacao e uma lacuna prioritaria em protecao de valor.
               </p>
               <div>
                 <i style={{ width: "72%" }} />
@@ -972,7 +903,7 @@ export function NextGenCoach() {
               "Replay: revisar momento 08:06",
               "Playbook: matriz de objecoes",
               "Simulacao com CFO",
-              "Quiz de negociacao",
+              "Exercicio: 20 decisoes de negociacao",
               "Call real para validacao",
             ].map((item, index) => (
               <button className={index < 3 ? "done" : ""} key={item}>
@@ -981,6 +912,31 @@ export function NextGenCoach() {
                 <ChevronRight />
               </button>
             ))}
+          </div>
+        </section>
+      )}
+
+      {tab === "career" && showWeeklyReview && (
+        <section className="weekly-review-page">
+          <div className="coach-section-title">
+            <div><p>REVISAO SEMANAL</p><h2>Uma leitura completa da sua semana comercial.</h2></div>
+            <button onClick={() => setShowWeeklyReview(false)}><RefreshCw /> Voltar para minha evolucao</button>
+          </div>
+          <div className="weekly-review-summary">
+            <article><small>MEDIA DA SEMANA</small><strong>8,1</strong><span>+0,6 comparado a semana anterior</span></article>
+            <article><small>TREINOS CONCLUIDOS</small><strong>4</strong><span>3 simulacoes e 1 exercicio</span></article>
+            <article><small>CALLS AVALIADAS</small><strong>3</strong><span>2 discovery e 1 negociacao</span></article>
+            <article><small>FOCO PRIORITARIO</small><strong>7,2</strong><span>Objecoes e protecao de margem</span></article>
+          </div>
+          <div className="weekly-review-grid">
+            <article><small>AVANCOS COMPROVADOS</small><h3>Descoberta mais profunda</h3><p>Voce passou a investigar impacto e urgencia antes do pitch. Em duas calls, o cliente verbalizou o custo da inacao, criando base concreta para valor.</p></article>
+            <article><small>PADRAO DE RISCO</small><h3>Concessao antes da contrapartida</h3><p>Em momentos de resistencia a preco, voce oferece flexibilidade cedo demais. Isso reduz poder de negociacao e enfraquece a percepcao de valor.</p></article>
+            <article><small>MELHOR MOMENTO</small><h3>Call de descoberta · 04:18</h3><p>“Se nada mudar neste trimestre, qual impacto isso gera na meta?” A pergunta conectou o problema ao resultado e melhorou a qualidade da conversa.</p></article>
+            <article><small>MOMENTO DE ATENCAO</small><h3>Negociacao · 08:06</h3><p>“Posso dar 10% de desconto.” Melhor resposta: “Antes de alterar a condicao, qual criterio ainda impede a decisao?”</p></article>
+          </div>
+          <div className="weekly-action-plan">
+            <header><div><p>PLANO DE DESENVOLVIMENTO</p><h2>As cinco acoes da proxima semana.</h2></div><strong>Prazo: sexta-feira</strong></header>
+            {["Concluir aula sobre diagnostico da objecao real", "Responder 20 cenarios de negociacao", "Realizar duas simulacoes sem oferecer desconto", "Revisar uma call real e marcar tres momentos criticos", "Aplicar uma concessao condicional em conversa supervisionada"].map((item, index) => <button key={item}><span>{index + 1}</span><strong>{item}</strong><ChevronRight /></button>)}
           </div>
         </section>
       )}

@@ -3,7 +3,7 @@
 import Image from "next/image";
 import type * as React from "react";
 import {
-  Award, BarChart3, Bot, CheckCircle2, ChevronRight, FileAudio, GraduationCap,
+  Award, BarChart3, Bot, CheckCircle2, ChevronRight, FileAudio, Gift, GraduationCap,
   LayoutDashboard, Mic, Play, ShieldCheck, Sparkles, Target, Trophy, Users, Zap,
 } from "lucide-react";
 import "./landing.css";
@@ -30,8 +30,6 @@ export function LandingPage({ onEnter }: { onEnter: () => void }) {
       <Brand />
       <div className="landing-nav-links">
         <button onClick={() => scrollTo("produto")}>Produto</button>
-        <button onClick={() => scrollTo("como-funciona")}>Como funciona</button>
-        <button onClick={() => scrollTo("resultado")}>Resultado</button>
         <button onClick={() => scrollTo("precos")}>Precos</button>
       </div>
       <div className="landing-nav-cta">
@@ -43,11 +41,11 @@ export function LandingPage({ onEnter }: { onEnter: () => void }) {
     <section className="landing-hero">
       <div className="landing-glow-top" />
       <div className="landing-badge"><i /> Inteligencia comercial para equipes de alta performance</div>
-      <h1>Desenvolva vendedores. Acelere resultados. Evolua com IA.</h1>
-      <p className="landing-lede">Treinamentos inteligentes, Coach Comercial, analise automatica de ligacoes, gamificacao e certificacoes em uma unica plataforma.</p>
+      <h1>Desenvolva vendedores. Acelere resultados.</h1>
+      <p className="landing-lede">Treinamentos inteligentes, Coach Comercial, analise automatica de ligacoes e certificacoes em uma unica plataforma.</p>
       <div className="landing-hero-ctas">
         <button className="landing-btn landing-btn-solid" onClick={onEnter}>Comecar gratuitamente <ChevronRight /></button>
-        <button className="landing-btn landing-btn-ghost" onClick={() => scrollTo("como-funciona")}>Ver demonstracao</button>
+        <button className="landing-btn landing-btn-ghost" onClick={() => scrollTo("preview")}>Ver demonstracao</button>
       </div>
       <div className="landing-hero-stat"><span><b>8 modulos essenciais</b> para treinar, analisar e desenvolver sua equipe comercial.</span></div>
 
@@ -64,7 +62,7 @@ export function LandingPage({ onEnter }: { onEnter: () => void }) {
       </div>
     </section>
 
-    <section className="landing-product-preview" aria-labelledby="preview-title">
+    <section className="landing-product-preview" id="preview" aria-labelledby="preview-title">
       <div className="landing-wrap">
         <div className="landing-preview-heading">
           <div>
@@ -132,9 +130,9 @@ export function LandingPage({ onEnter }: { onEnter: () => void }) {
         <div className="landing-benefit-grid">
           {[
             ["Coach Comercial", "Orienta, explica e ajuda a resolver situacoes comerciais em uma conversa contextual.", Bot],
-            ["Treinamentos", "Aulas, materiais, exercicios, quizzes e certificacao.", GraduationCap],
+            ["Treinamentos", "Aulas, materiais, exercicios completos e certificacao.", GraduationCap],
             ["Analise de Calls", "Avalia ligacoes e transforma erros em um plano pratico.", FileAudio],
-            ["Gamificacao", "Ranking, XP, medalhas e desafios que estimulam constancia.", Trophy],
+            ["Bonus profissionais", "Scripts, checklists e playbooks para aplicar nas vendas reais.", Gift],
             ["Dashboard", "Indicadores claros para vendedores, gestores e equipes.", LayoutDashboard],
             ["Certificados", "Documentos profissionais com progresso e validacao.", Award],
           ].map(([title, text, Icon], index) => { const Component = Icon as typeof Bot; return <article style={{ "--delay": `${index * 65}ms` } as React.CSSProperties} key={title as string}><span><Component /></span><h3>{title as string}</h3><p>{text as string}</p><i><ChevronRight /></i></article>; })}
@@ -161,34 +159,6 @@ export function LandingPage({ onEnter }: { onEnter: () => void }) {
           <article><small>FALHA 01</small><h3>O feedback chega tarde</h3><p>O vendedor so descobre o que fez errado dias depois, quando ja perdeu a venda e esqueceu o contexto.</p></article>
           <article><small>FALHA 02</small><h3>Treino depende de agenda</h3><p>Precisa marcar horario com gestor ou colega. Na pratica, cada vendedor treina uma vez por mes - se treinar.</p></article>
           <article><small>FALHA 03</small><h3>Cada um treina de um jeito</h3><p>Sem padrao, cada gestor cobra uma coisa diferente. O time novo demora meses pra falar a lingua da empresa.</p></article>
-        </div>
-      </div>
-    </section>
-
-    <section className="landing-block" id="como-funciona">
-      <div className="landing-wrap landing-scenario">
-        <div className="landing-scenario-copy">
-          <p className="landing-eyebrow">Como funciona</p>
-          <h2>O vendedor liga pro robo antes de ligar pro cliente.</h2>
-          <p className="landing-sub">Sem instalar nada complicado, sem esperar ninguem ficar livre. O treino mora dentro do app, disponivel a qualquer hora.</p>
-        </div>
-        <div className="landing-steps">
-          <article><b>01</b><h3>Abre o app e liga</h3><p>O vendedor entra no aplicativo e inicia uma chamada com a IA - o cliente que vai treinar com ele agora.</p></article>
-          <article><b>02</b><h3>Enfrenta objecoes reais</h3><p>A IA conduz a conversa como um cliente de verdade: questiona preco, compara concorrente, hesita, testa o discurso.</p></article>
-          <article><b>03</b><h3>Recebe nota e correcao</h3><p>Ao final, o vendedor ve exatamente onde foi bem, onde travou e o que ajustar - pronto pra ligar de novo, melhor.</p></article>
-        </div>
-      </div>
-    </section>
-
-    <section className="landing-block" id="resultado">
-      <div className="landing-wrap">
-        <p className="landing-eyebrow">Resultado</p>
-        <h2>O que muda quando o treino vira rotina.</h2>
-        <div className="landing-stats">
-          <article><b>+10x</b><span>Treinos por vendedor / mes</span></article>
-          <article><b>24/7</b><span>Disponivel, sem agenda</span></article>
-          <article><b>0</b><span>Ator ou colega precisando parar</span></article>
-          <article><b>1</b><span>Padrao de discurso pra todo o time</span></article>
         </div>
       </div>
     </section>

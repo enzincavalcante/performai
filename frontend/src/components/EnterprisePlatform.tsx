@@ -19,6 +19,7 @@ import {
   FileAudio,
   FileText,
   FolderOpen,
+  Gift,
   GraduationCap,
   LayoutDashboard,
   Library,
@@ -61,7 +62,7 @@ export type EnterpriseView =
   | "calls"
   | "paths"
   | "assessments"
-  | "gamification"
+  | "bonuses"
   | "performance"
   | "reports"
   | "teams"
@@ -86,7 +87,7 @@ const NAVIGATION: {
   { id: "simulation", label: "Treino de Vendas IA", icon: Brain },
   { id: "coach", label: "Coach Comercial", icon: Bot },
   { id: "calls", label: "Analisar Ligacao", icon: FileAudio },
-  { id: "gamification", label: "Gamificacao", icon: Trophy },
+  { id: "bonuses", label: "Bonus", icon: Gift },
   { id: "teams", label: "Minha Equipe", icon: Users },
   { id: "certificates", label: "Certificados", icon: Award },
   { id: "settings", label: "Configuracoes", icon: Settings },
@@ -394,7 +395,7 @@ function LegacyDarkEnterpriseDashboard({ onNavigate }: { onNavigate: Navigate })
       <div className="internal-home-copy">
         <span className="internal-home-badge">A PLATAFORMA #1 PARA TIMES COMERCIAIS</span>
         <h1>Treine mais.<br/><b>Venda melhor.</b><br/>Supere metas.</h1>
-        <p>Treinamentos inteligentes, IA que desenvolve, analises que geram acao e gamificacao que engaja sua equipe todos os dias.</p>
+        <p>Treinamentos inteligentes, IA que desenvolve, analises que geram acao e indicadores para orientar sua equipe todos os dias.</p>
         <div><button onClick={() => onNavigate("learning")}><GraduationCap /> Explorar treinamentos</button><button onClick={() => onNavigate("paths")}><BarChart3 /> Ver meu progresso</button></div>
         <small>Empresas que ja transformam seus resultados</small>
         <div className="internal-home-tags"><span>bluefit</span><span>RD STATION</span><span>ContaAzul</span><span>pipedrive</span><span>TOTVS</span></div>
@@ -411,7 +412,7 @@ function LegacyDarkEnterpriseDashboard({ onNavigate }: { onNavigate: Navigate })
       </div>
     </section>
     <section className="internal-metric-strip">{[["+850","Vendedores ativos",Users],["+3.200","Treinamentos concluidos",GraduationCap],["94%","Aumento de performance",Trophy],["+12.000","Certificados emitidos",Award],["+37%","Aumento medio em vendas",LineChart]].map(([value,label,Icon])=>{const Component=Icon as typeof Users;return <article key={label as string}><Component/><div><strong>{value as string}</strong><span>{label as string}</span></div></article>;})}</section>
-    <section className="internal-home-tools"><header><h2>Tudo que seu time <b>comercial</b> precisa<br/>em um so lugar</h2></header><div>{[["Treinamentos","Trilhas completas com conteudo pratico e certificacao.",GraduationCap,"learning"],["Treino de Vendas IA","Pratique com clientes simulados e receba feedback.",Brain,"simulation"],["Coach Comercial","Tire duvidas e receba orientacao contextual.",Bot,"coach"],["Analisar Ligacao","Envie calls reais e transforme erros em evolucao.",FileAudio,"calls"],["Gamificacao","Missoes, ranking e recompensas que motivam e engajam.",Trophy,"gamification"]].map(([title,text,Icon,target])=>{const Component=Icon as typeof Users;return <button onClick={()=>onNavigate(target as EnterpriseView)} key={title as string}><span><Component/></span><strong>{title as string}</strong><small>{text as string}</small><ChevronRight/></button>;})}</div></section>
+    <section className="internal-home-tools"><header><h2>Tudo que seu time <b>comercial</b> precisa<br/>em um so lugar</h2></header><div>{[["Treinamentos","Trilhas completas com conteudo pratico e certificacao.",GraduationCap,"learning"],["Treino de Vendas IA","Pratique com clientes simulados e receba feedback.",Brain,"simulation"],["Coach Comercial","Tire duvidas e receba orientacao contextual.",Bot,"coach"],["Analisar Ligacao","Envie calls reais e transforme erros em evolucao.",FileAudio,"calls"],["Bonus","Materiais profissionais liberados por evolucao comprovada.",Gift,"bonuses"]].map(([title,text,Icon,target])=>{const Component=Icon as typeof Users;return <button onClick={()=>onNavigate(target as EnterpriseView)} key={title as string}><span><Component/></span><strong>{title as string}</strong><small>{text as string}</small><ChevronRight/></button>;})}</div></section>
   </div>;
 }
 
@@ -420,8 +421,8 @@ function MarketingEnterpriseDashboard({ onNavigate }: { onNavigate: Navigate }) 
     ["IA treinando vendedores", "Pratica individual com clientes virtuais realistas.", Bot, "simulation"],
     ["Feedback em tempo real", "Orientacao objetiva durante e depois da conversa.", MessageSquareText, "simulation"],
     ["Simulacoes", "Cargos, objecoes e niveis de pressao diferentes.", Mic, "simulation"],
-    ["Ranking", "Evolucao e consistencia de cada vendedor.", Medal, "gamification"],
-    ["Gamificacao", "XP, desafios e conquistas que engajam o time.", Trophy, "gamification"],
+    ["Performance", "Evolucao e consistencia de cada vendedor.", LineChart, "performance"],
+    ["Bonus", "Beneficios profissionais liberados por evolucao consistente.", Gift, "bonuses"],
     ["Relatorios", "Dados claros para o gestor decidir onde agir.", BarChart3, "reports"],
     ["Coach Comercial", "Tire duvidas e receba orientacao para vender melhor.", Bot, "coach"],
     ["Certificados", "Conquistas profissionais para cada etapa concluida.", Award, "certificates"],
@@ -534,7 +535,7 @@ function LegacyOperationalDashboard({ onNavigate }: { onNavigate: Navigate }) {
     </section>
 
     <section className="ops-bottom-grid">
-      <article className="ops-ranking"><header><div><small>RANKING SEMANAL</small><h2>Melhores vendedores</h2></div><button onClick={() => onNavigate("gamification")}>Ver ranking</button></header><ol>{[["Mariana Lima","9,2","1"],["Enzo Cavalcante","8,7","2"],["Lucas Ferreira","8,1","3"],["Juliana Costa","7,8","4"]].map(([name,score,rank])=><li className={name.startsWith("Enzo")?"current":""} key={name}><b>{rank}</b><i>{name.split(" ").map(part=>part[0]).join("")}</i><span><strong>{name}</strong><small>{name.startsWith("Enzo")?"Voce":"Alta performance"}</small></span><em>{score}</em></li>)}</ol></article>
+      <article className="ops-ranking"><header><div><small>CONSISTENCIA SEMANAL</small><h2>Desempenho da equipe</h2></div><button onClick={() => onNavigate("performance")}>Ver performance</button></header><ol>{[["Mariana Lima","9,2","1"],["Enzo Cavalcante","8,7","2"],["Lucas Ferreira","8,1","3"],["Juliana Costa","7,8","4"]].map(([name,score,rank])=><li className={name.startsWith("Enzo")?"current":""} key={name}><b>{rank}</b><i>{name.split(" ").map(part=>part[0]).join("")}</i><span><strong>{name}</strong><small>{name.startsWith("Enzo")?"Voce":"Consistencia alta"}</small></span><em>{score}</em></li>)}</ol></article>
       <article className="ops-recent"><header><div><small>ATIVIDADE RECENTE</small><h2>Sua evolucao continua</h2></div></header><ul><li><FileAudio /><span><strong>Call de fechamento analisada</strong><small>Nota 8,7 · ha 2 horas</small></span></li><li><Award /><span><strong>Certificado conquistado</strong><small>Vendas Consultivas · ontem</small></span></li><li><Trophy /><span><strong>Subiu no ranking semanal</strong><small>Agora na 2a posicao · ha 2 dias</small></span></li></ul></article>
     </section>
   </div>;
@@ -566,7 +567,7 @@ const COURSE_DATA = [
       "Assista ao video",
       "Baixe o roteiro de descoberta",
       "Responda ao estudo de caso",
-      "Conclua o quiz",
+      "Conclua o exercicio de 20 questoes",
     ],
   },
   {
@@ -614,7 +615,7 @@ const COURSE_DATA = [
       "Assista ao video",
       "Escreva sua abertura",
       "Grave duas versoes",
-      "Passe no quiz",
+      "Conclua o exercicio de 20 questoes",
     ],
   },
   {
@@ -662,7 +663,7 @@ const COURSE_DATA = [
       "Assista ao video",
       "Defina uma meta",
       "Registre um aprendizado",
-      "Conclua o quiz",
+      "Conclua o exercicio de 20 questoes",
     ],
   },
   {
@@ -710,7 +711,7 @@ const COURSE_DATA = [
       "Assista ao video",
       "Aplique o checklist",
       "Revise o pipeline",
-      "Conclua o quiz",
+      "Conclua o exercicio de 20 questoes",
     ],
   },
   {
@@ -734,7 +735,7 @@ const COURSE_DATA = [
       "Assista ao video",
       "Prepare sua agenda",
       "Pratique um resumo",
-      "Conclua o quiz",
+      "Conclua o exercicio de 20 questoes",
     ],
   },
   {
@@ -806,7 +807,7 @@ const COURSE_DATA = [
       "Assista ao video",
       "Crie o plano de 30 dias",
       "Defina indicadores",
-      "Conclua o quiz",
+      "Conclua o exercicio de 20 questoes",
     ],
   },
   {
@@ -979,7 +980,7 @@ const EXPANDED_COURSES = COURSE_EXPANSIONS.flatMap(
         "Assista ao video",
         "Leia o resumo pratico",
         "Resolva o exercicio",
-        "Valide no quiz",
+        "Valide no exercicio de 20 questoes",
       ],
     })),
 );
@@ -1329,8 +1330,8 @@ function FixedPathsModule({ onNavigate }: { onNavigate: Navigate }) {
       description="Trilha, XP, conquistas e consistencia conectados ao seu desenvolvimento."
       action={
         <div className="hub-actions">
-          <button onClick={() => onNavigate("gamification")}>
-            <Trophy /> XP e conquistas
+          <button onClick={() => onNavigate("performance")}>
+            <LineChart /> Ver performance
           </button>
           <button onClick={() => onNavigate("certificates")}>
             <Award /> Certificacao
@@ -1947,6 +1948,46 @@ function GamificationModule() {
   );
 }
 
+function BonusesModule() {
+  const bonuses = [
+    {
+      title: "Playbook de objecoes complexas",
+      criterion: "Liberado por evolucao consistente em tratamento de objecoes.",
+      description: "Matriz profissional para diagnosticar preco, prioridade, risco, concorrencia e autoridade antes de responder.",
+      unlocked: true,
+      content: ["Validar sem concordar automaticamente", "Investigar a causa real da resistencia", "Responder com evidencia contextual", "Confirmar se a objecao foi resolvida", "Avancar para um compromisso verificavel"],
+    },
+    {
+      title: "Roteiro executivo de descoberta",
+      criterion: "Libera ao concluir o modulo de descoberta com nota minima 85.",
+      description: "Perguntas para mapear problema, impacto, prioridade, decisao e custo da inacao.",
+      unlocked: false,
+      content: [],
+    },
+    {
+      title: "Checklist de negociacao enterprise",
+      criterion: "Libera apos tres calls com nota de negociacao acima de 8,0.",
+      description: "Preparacao de BATNA, ZOPA, limites, interesses e concessoes condicionais.",
+      unlocked: false,
+      content: [],
+    },
+  ];
+  const [selectedBonus, setSelectedBonus] = useState(0);
+  const selected = bonuses[selectedBonus];
+  const downloadBonus = () => {
+    const content = `PERFORMA AI - BONUS PROFISSIONAL\n\n${selected.title}\n${selected.description}\n\n${selected.content.map((item) => `[ ] ${item}`).join("\n")}`;
+    const url = URL.createObjectURL(new Blob([content], { type: "text/plain;charset=utf-8" }));
+    const link = document.createElement("a"); link.href = url; link.download = "bonus-performa-ai.txt"; link.click(); URL.revokeObjectURL(url);
+  };
+  return <ModuleFrame eyebrow="BENEFICIOS DE PERFORMANCE" title="Bonus" description="Materiais profissionais liberados por evolucao comprovada, conclusao de treinamentos e qualidade nas calls.">
+    <section className="bonus-performance-note"><Gift /><div><small>BONUS DE PERFORMANCE ATIVO</small><h2>Evolucao consistente em tratamento de objecoes</h2><p>Suas ultimas avaliacoes mostram melhora na investigacao da resistencia antes da argumentacao.</p></div></section>
+    <div className="bonus-professional-layout">
+      <div className="bonus-professional-list">{bonuses.map((bonus,index)=><button className={selectedBonus===index?"active":""} onClick={()=>setSelectedBonus(index)} key={bonus.title}><span>{bonus.unlocked?<Gift />:<Lock />}</span><div><strong>{bonus.title}</strong><small>{bonus.criterion}</small></div><ChevronRight /></button>)}</div>
+      <section className="bonus-professional-detail"><small>{selected.unlocked?"BONUS LIBERADO":"CRITERIO PENDENTE"}</small><h2>{selected.title}</h2><p>{selected.description}</p>{selected.unlocked?<><ul>{selected.content.map((item)=><li key={item}><CheckCircle2 /> {item}</li>)}</ul><button onClick={downloadBonus}><Download /> Baixar material</button></>:<div className="bonus-locked"><Lock /><p>{selected.criterion}</p></div>}</section>
+    </div>
+  </ModuleFrame>;
+}
+
 function PerformanceModule() {
   return (
     <ModuleFrame
@@ -2109,6 +2150,17 @@ function TeamsModule({ onNavigate }: { onNavigate: Navigate }) {
   const [joinCode, setJoinCode] = useState("");
   const [message, setMessage] = useState("");
   const [selectedTeam, setSelectedTeam] = useState<string | null>(null);
+  const [showSellerForm, setShowSellerForm] = useState(false);
+  const [sellers, setSellers] = useState<Array<{ name: string; role: string; experience: string; profile: string; strengths: string; weaknesses: string; goals: string; product: string; team: string; manager: string; notes: string }>>([]);
+  const [sellerForm, setSellerForm] = useState({ name: "", role: "", experience: "", profile: "", strengths: "", weaknesses: "", goals: "", product: "", team: "Equipe Cavalcante", manager: "Enzo Cavalcante", notes: "" });
+  const addSeller = (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!sellerForm.name.trim() || !sellerForm.role.trim()) return;
+    setSellers((current) => [...current, { ...sellerForm, name: sellerForm.name.trim(), role: sellerForm.role.trim() }]);
+    setSellerForm({ name: "", role: "", experience: "", profile: "", strengths: "", weaknesses: "", goals: "", product: "", team: "Equipe Cavalcante", manager: "Enzo Cavalcante", notes: "" });
+    setShowSellerForm(false);
+    setMessage("Vendedor adicionado a equipe com sucesso.");
+  };
   const createInvite = () => {
     const code = crypto
       .randomUUID()
@@ -2137,8 +2189,8 @@ function TeamsModule({ onNavigate }: { onNavigate: Navigate }) {
           <button onClick={() => onNavigate("performance")}>
             <BarChart3 /> Ver estatisticas
           </button>
-          <button onClick={createInvite}>
-            <UserPlus /> Convidar membro
+          <button onClick={() => setShowSellerForm(true)}>
+            <UserPlus /> Adicionar vendedor
           </button>
         </div>
       }
@@ -2148,6 +2200,7 @@ function TeamsModule({ onNavigate }: { onNavigate: Navigate }) {
           <p>CONVITE SEGURO</p>
           <h2>Traga sua equipe para evoluir junto.</h2>
           <span>Gere um codigo exclusivo ou entre com o convite recebido.</span>
+          <button className="team-generate-invite" onClick={createInvite}><UserPlus /> Gerar convite da equipe</button>
         </div>
         {invite && (
           <div className="invite-created">
@@ -2180,7 +2233,7 @@ function TeamsModule({ onNavigate }: { onNavigate: Navigate }) {
         <article>
           <Users />
           <span>
-            <strong>0</strong> membros
+            <strong>{sellers.length}</strong> membros
           </span>
         </article>
         <article>
@@ -2214,7 +2267,7 @@ function TeamsModule({ onNavigate }: { onNavigate: Navigate }) {
             </header>
             <h2>Equipe Cavalcante</h2>
             <p>
-              Nenhum membro adicionado ainda.
+               {sellers.length ? `${sellers.length} vendedor${sellers.length > 1 ? "es" : ""} cadastrado${sellers.length > 1 ? "s" : ""}.` : "Nenhum membro adicionado ainda."}
             </p>
             <dl>
               <div>
@@ -2231,7 +2284,68 @@ function TeamsModule({ onNavigate }: { onNavigate: Navigate }) {
             </button>
           </article>
       </div>
-      {selectedTeam && <section className="team-member-panel"><header><div><p>EQUIPE SELECIONADA</p><h2>{selectedTeam}</h2><span>Dados reais aparecerao quando os membros aceitarem o convite e iniciarem as atividades.</span></div><button onClick={createInvite}><UserPlus /> Adicionar vendedor</button></header><div className="team-empty"><Users /><h3>Sua equipe ainda esta vazia.</h3><p>Adicione vendedores para acompanhar treinamentos, desempenho, evolucao, calls analisadas, pontos fortes e recomendacoes.</p><button onClick={createInvite}><UserPlus /> Adicionar vendedor</button></div><button className="team-close-detail" onClick={() => setSelectedTeam(null)}>Fechar equipe</button></section>}
+      {selectedTeam && (
+        <section className="team-member-panel">
+          <header>
+            <div>
+              <p>EQUIPE SELECIONADA</p>
+              <h2>{selectedTeam}</h2>
+              <span>Acompanhe o contexto, as metas e a evolucao de cada profissional.</span>
+            </div>
+            <button onClick={() => setShowSellerForm(true)}><UserPlus /> Adicionar vendedor</button>
+          </header>
+          {sellers.length ? (
+            <div className="seller-directory">
+              {sellers.map((seller) => (
+                <article key={`${seller.name}-${seller.role}`}>
+                  <div className="seller-avatar">{seller.name.slice(0, 2).toUpperCase()}</div>
+                  <div>
+                    <h3>{seller.name}</h3>
+                    <p>{seller.role} · {seller.experience || "Experiencia nao informada"}</p>
+                    <small>{seller.product || "Produto ainda nao informado"}</small>
+                  </div>
+                  <dl>
+                    <div><dt>Objetivos</dt><dd>{seller.goals || "A definir"}</dd></div>
+                    <div><dt>Pontos fortes</dt><dd>{seller.strengths || "A avaliar"}</dd></div>
+                    <div><dt>Desenvolvimento</dt><dd>{seller.weaknesses || "A avaliar"}</dd></div>
+                  </dl>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <div className="team-empty">
+              <Users /><h3>Sua equipe ainda esta vazia.</h3>
+              <p>Adicione vendedores para acompanhar treinamentos, desempenho, evolucao, calls analisadas, pontos fortes e recomendacoes.</p>
+              <button onClick={() => setShowSellerForm(true)}><UserPlus /> Adicionar vendedor</button>
+            </div>
+          )}
+          <button className="team-close-detail" onClick={() => setSelectedTeam(null)}>Fechar equipe</button>
+        </section>
+      )}
+      {showSellerForm && (
+        <div className="seller-form-backdrop" role="presentation" onClick={() => setShowSellerForm(false)}>
+          <form className="seller-form-modal" onSubmit={addSeller} onClick={(event) => event.stopPropagation()}>
+            <header>
+              <div><p>NOVO PROFISSIONAL</p><h2>Adicionar vendedor</h2><span>Cadastre o contexto que sera usado nos treinos e nas avaliacoes.</span></div>
+              <button type="button" aria-label="Fechar" onClick={() => setShowSellerForm(false)}><X /></button>
+            </header>
+            <div className="seller-form-grid">
+              <label>Nome completo<input required value={sellerForm.name} onChange={(event) => setSellerForm({ ...sellerForm, name: event.target.value })} /></label>
+              <label>Cargo<input required value={sellerForm.role} onChange={(event) => setSellerForm({ ...sellerForm, role: event.target.value })} placeholder="SDR, closer, executivo..." /></label>
+              <label>Tempo de experiencia<input value={sellerForm.experience} onChange={(event) => setSellerForm({ ...sellerForm, experience: event.target.value })} placeholder="Ex.: 2 anos" /></label>
+              <label>Perfil comercial<input value={sellerForm.profile} onChange={(event) => setSellerForm({ ...sellerForm, profile: event.target.value })} placeholder="Consultivo, hunter, farmer..." /></label>
+              <label>Pontos fortes<textarea value={sellerForm.strengths} onChange={(event) => setSellerForm({ ...sellerForm, strengths: event.target.value })} /></label>
+              <label>Pontos a desenvolver<textarea value={sellerForm.weaknesses} onChange={(event) => setSellerForm({ ...sellerForm, weaknesses: event.target.value })} /></label>
+              <label>Objetivos profissionais<textarea value={sellerForm.goals} onChange={(event) => setSellerForm({ ...sellerForm, goals: event.target.value })} /></label>
+              <label>Produto ou servico<input value={sellerForm.product} onChange={(event) => setSellerForm({ ...sellerForm, product: event.target.value })} /></label>
+              <label>Equipe<input value={sellerForm.team} onChange={(event) => setSellerForm({ ...sellerForm, team: event.target.value })} /></label>
+              <label>Gestor responsavel<input value={sellerForm.manager} onChange={(event) => setSellerForm({ ...sellerForm, manager: event.target.value })} /></label>
+              <label className="seller-form-wide">Observacoes<textarea value={sellerForm.notes} onChange={(event) => setSellerForm({ ...sellerForm, notes: event.target.value })} /></label>
+            </div>
+            <footer><button type="button" onClick={() => setShowSellerForm(false)}>Cancelar</button><button type="submit"><UserPlus /> Adicionar a equipe</button></footer>
+          </form>
+        </div>
+      )}
     </ModuleFrame>
   );
 }
@@ -2568,12 +2682,12 @@ function NotificationsModule({ onNavigate }: { onNavigate: Navigate }) {
       target: "learning" as EnterpriseView,
     },
     {
-      title: "Ranking atualizado",
-      text: "Voce subiu duas posicoes no ranking semanal.",
+      title: "Performance atualizada",
+      text: "Sua consistencia semanal melhorou em duas competencias.",
       time: "1 hora",
-      Icon: Trophy,
+      Icon: LineChart,
       unread: true,
-      target: "gamification" as EnterpriseView,
+      target: "performance" as EnterpriseView,
     },
     {
       title: "Certificado em progresso",
@@ -2685,11 +2799,23 @@ function SettingsModule() {
       "Acesso, auditoria, retencao e LGPD.",
       ShieldCheck,
     ],
-    ["Gamificacao", "XP, moedas, badges, desafios e recompensas.", Trophy],
+    ["Padrao comercial da empresa", "Discurso, tom, perguntas, valor, objecoes e fechamento esperados.", ClipboardCheck],
   ] as const;
   const [selected, setSelected] = useState(0);
   const [saved, setSaved] = useState(false);
   const [toggles, setToggles] = useState([true, true, false]);
+  const [commercialStandard, setCommercialStandard] = useState({
+    positioning: "Venda consultiva orientada a resultado, sem promessas sem evidencia.",
+    tone: "Profissional, claro, direto e respeitoso.",
+    opening: "Contexto relevante, objetivo da conversa e pedido de permissao.",
+    questions: "Investigar situacao, problema, impacto, prioridade e decisao antes do pitch.",
+    value: "Conectar a oferta a impactos citados pelo cliente e usar evidencias verificaveis.",
+    objections: "Validar, investigar a causa, responder com evidencia e confirmar entendimento.",
+    closing: "Acao, responsavel, data e objetivo do proximo encontro.",
+    allowed: "Linguagem simples, dados do cliente, criterios objetivos e transparencia.",
+    avoided: "Pressao artificial, promessa vaga, ataque a concorrente e desconto prematuro.",
+    principles: "Escuta antes da recomendacao. Evidencia antes da promessa. Compromisso antes da previsao.",
+  });
   const current = settings[selected];
   return (
     <ModuleFrame
@@ -2726,43 +2852,20 @@ function SettingsModule() {
           <small>CONFIGURACAO SELECIONADA</small>
           <h2>{current[0]}</h2>
           <p>{current[1]}</p>
-          <label>
-            <span>Nome de exibicao</span>
-            <input defaultValue={selected === 0 ? "Performa AI" : current[0]} />
-          </label>
-          <label>
-            <span>Nivel de controle</span>
-            <select defaultValue="recommended">
-              <option value="recommended">Recomendado</option>
-              <option value="strict">Restrito</option>
-              <option value="custom">Personalizado</option>
-            </select>
-          </label>
-          <div className="settings-toggles">
-            {[
-              "Ativar para toda a empresa",
-              "Enviar alertas importantes",
-              "Permitir alteracao por gestores",
-            ].map((label, index) => (
-              <button
-                className={toggles[index] ? "on" : ""}
-                onClick={() =>
-                  setToggles((values) =>
-                    values.map((value, itemIndex) =>
-                      itemIndex === index ? !value : value,
-                    ),
-                  )
-                }
-                key={label}
-              >
-                <span>
-                  <i />
-                </span>
-                {label}
-              </button>
-            ))}
-          </div>
-          <button className="settings-save" onClick={() => setSaved(true)}>
+          {current[0] === "Padrao comercial da empresa" ? <div className="commercial-standard-form">
+            {([
+              ["positioning", "Posicionamento comercial"], ["tone", "Tom de voz"], ["opening", "Estrutura de abertura"],
+              ["questions", "Padrao de perguntas"], ["value", "Forma de apresentar valor"], ["objections", "Tratamento de objecoes"],
+              ["closing", "Padrao de fechamento"], ["allowed", "Linguagem permitida"], ["avoided", "Linguagem e comportamentos a evitar"],
+              ["principles", "Principios comerciais da empresa"],
+            ] as Array<[keyof typeof commercialStandard, string]>).map(([key,label])=><label key={key}><span>{label}</span><textarea value={commercialStandard[key]} onChange={(event)=>setCommercialStandard((value)=>({...value,[key]:event.target.value}))} /></label>)}
+            <p>Este padrao sera usado como referencia em simulacoes, exercicios, feedbacks e avaliacoes de calls.</p>
+          </div> : <>
+            <label><span>Nome de exibicao</span><input defaultValue={selected === 0 ? "Performa AI" : current[0]} /></label>
+            <label><span>Nivel de controle</span><select defaultValue="recommended"><option value="recommended">Recomendado</option><option value="strict">Restrito</option><option value="custom">Personalizado</option></select></label>
+            <div className="settings-toggles">{["Ativar para toda a empresa", "Enviar alertas importantes", "Permitir alteracao por gestores"].map((label, index) => <button className={toggles[index] ? "on" : ""} onClick={() => setToggles((values) => values.map((value, itemIndex) => itemIndex === index ? !value : value))} key={label}><span><i /></span>{label}</button>)}</div>
+          </>}
+          <button className="settings-save" onClick={() => { if (current[0] === "Padrao comercial da empresa") localStorage.setItem("performai_commercial_standard", JSON.stringify(commercialStandard)); setSaved(true); }}>
             {saved ? <CheckCircle2 /> : <Settings />}
             {saved ? "Alteracoes salvas" : "Salvar configuracoes"}
           </button>
@@ -2783,8 +2886,8 @@ export function EnterpriseModule({
     return <EnterpriseDashboard onNavigate={onNavigate} />;
   if (view === "learning") return <PremiumTrainingAcademy onNavigate={onNavigate} />;
   if (view === "paths") return <FixedPathsModule onNavigate={onNavigate} />;
-  if (view === "assessments") return <InteractiveAssessmentsModule />;
-  if (view === "gamification") return <GamificationModule />;
+  if (view === "assessments") return <PremiumTrainingAcademy onNavigate={onNavigate} />;
+  if (view === "bonuses") return <BonusesModule />;
   if (view === "performance") return <PerformanceModule />;
   if (view === "reports") return <ReportsModule />;
   if (view === "teams") return <TeamsModule onNavigate={onNavigate} />;
