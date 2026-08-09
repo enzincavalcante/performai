@@ -73,6 +73,7 @@ export async function POST(request: Request) {
   const turn = (body.conversation ?? []).filter((item) => item.speaker === "seller").length;
   const apiKey = process.env.GEMINI_API_KEY;
   const gatewayToken = process.env.AI_GATEWAY_API_KEY || process.env.VERCEL_OIDC_TOKEN;
+  let gatewayState = gatewayToken ? "configured" : "missing-token";
 
   const systemPrompt = `Voce interpreta um cliente real em um treinamento de vendas. Fale somente como o cliente, nunca como coach ou assistente.
 Persona: ${persona.name || "Cliente"}, ${persona.role || "decisor"}, segmento ${persona.segment || "nao informado"}.
@@ -106,10 +107,12 @@ Regras obrigatorias:
         }),
         signal: AbortSignal.timeout(18_000),
       });
+      gatewayState = `http-${response.status}`;
       const payload = await response.json() as GatewayPayload;
       const reply = payload.choices?.[0]?.message?.content?.replace(/\s+/g, " ").trim();
       if (response.ok && reply) return NextResponse.json({ reply, provider: `vercel-ai-gateway:${gatewayModel}` });
     } catch {
+      gatewayState = "network-error";
       // Continue to the provider key or deterministic fallback.
     }
   }
@@ -137,5 +140,5 @@ Regras obrigatorias:
     }
   }
 
-  return NextResponse.json({ reply: fallbackReply(message, turn, persona.objection ?? "risco da decisao"), provider: "performai-fallback" });
+  return NextResponse.json({ reply: fallbackReply(message, turn, persona.objection ?? "risco da decisao"), provider: `performai-fallback:${gatewayState}` });
 }
