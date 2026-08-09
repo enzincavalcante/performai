@@ -72,7 +72,7 @@ export async function POST(request: Request) {
   const persona = body.persona ?? {};
   const turn = (body.conversation ?? []).filter((item) => item.speaker === "seller").length;
   const apiKey = process.env.GEMINI_API_KEY;
-  const gatewayToken = process.env.AI_GATEWAY_API_KEY || process.env.VERCEL_OIDC_TOKEN;
+  const gatewayToken = process.env.AI_GATEWAY_API_KEY || process.env.VERCEL_OIDC_TOKEN || request.headers.get("x-vercel-oidc-token");
   let gatewayState = gatewayToken ? "configured" : "missing-token";
 
   const systemPrompt = `Voce interpreta um cliente real em um treinamento de vendas. Fale somente como o cliente, nunca como coach ou assistente.
