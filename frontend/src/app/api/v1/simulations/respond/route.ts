@@ -22,6 +22,10 @@ type GeminiPayload = {
   error?: { message?: string };
 };
 
+type GatewayPayload = {
+  choices?: Array<{ message?: { content?: string } }>;
+};
+
 const normalize = (value: string) => value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 
 function fallbackReply(message: string, turn: number, objection: string) {
@@ -68,10 +72,7 @@ export async function POST(request: Request) {
   const persona = body.persona ?? {};
   const turn = (body.conversation ?? []).filter((item) => item.speaker === "seller").length;
   const apiKey = process.env.GEMINI_API_KEY;
-
-  if (!apiKey) {
-    return NextResponse.json({ reply: fallbackReply(message, turn, persona.objection ?? "risco da decisao"), provider: "performai-fallback" });
-  }
+  const gatewayToken = process.env.AI_GATEWAY_API_KEY || process.env.VERCEL_OIDC_TOKEN;
 
   const systemPrompt = `Voce interpreta um cliente real em um treinamento de vendas. Fale somente como o cliente, nunca como coach ou assistente.
 Persona: ${persona.name || "Cliente"}, ${persona.role || "decisor"}, segmento ${persona.segment || "nao informado"}.
@@ -90,24 +91,49 @@ Regras obrigatorias:
   const configuredModel = process.env.GEMINI_SIMULATION_MODEL;
   const models = configuredModel ? [configuredModel] : ["gemini-2.5-flash-lite", "gemini-2.5-flash", "gemini-2.0-flash"];
 
-  for (const model of models) {
+  if (gatewayToken) {
+    const gatewayModel = process.env.AI_GATEWAY_SIMULATION_MODEL || "google/gemini-2.5-flash-lite";
     try {
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(apiKey)}`, {
+      const response = await fetch("https://ai-gateway.vercel.sh/v1/chat/completions", {
         method: "POST",
-        headers: { "content-type": "application/json" },
+        headers: { Authorization: `Bearer ${gatewayToken}`, "content-type": "application/json" },
         body: JSON.stringify({
-          systemInstruction: { parts: [{ text: systemPrompt }] },
-          contents: [{ role: "user", parts: [{ text: prompt }] }],
-          generationConfig: { temperature: 0.72, topP: 0.9, maxOutputTokens: 220 },
+          model: gatewayModel,
+          messages: [{ role: "system", content: systemPrompt }, { role: "user", content: prompt }],
+          temperature: 0.72,
+          max_tokens: 220,
+          stream: false,
         }),
         signal: AbortSignal.timeout(18_000),
       });
-      const payload = await response.json() as GeminiPayload;
-      const reply = payload.candidates?.[0]?.content?.parts?.map((part) => part.text ?? "").join(" ").replace(/\s+/g, " ").trim();
-      if (response.ok && reply) return NextResponse.json({ reply, provider: model });
-      if (![404, 429].includes(response.status)) break;
+      const payload = await response.json() as GatewayPayload;
+      const reply = payload.choices?.[0]?.message?.content?.replace(/\s+/g, " ").trim();
+      if (response.ok && reply) return NextResponse.json({ reply, provider: `vercel-ai-gateway:${gatewayModel}` });
     } catch {
-      break;
+      // Continue to the provider key or deterministic fallback.
+    }
+  }
+
+  if (apiKey) {
+    for (const model of models) {
+      try {
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(apiKey)}`, {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            systemInstruction: { parts: [{ text: systemPrompt }] },
+            contents: [{ role: "user", parts: [{ text: prompt }] }],
+            generationConfig: { temperature: 0.72, topP: 0.9, maxOutputTokens: 220 },
+          }),
+          signal: AbortSignal.timeout(18_000),
+        });
+        const payload = await response.json() as GeminiPayload;
+        const reply = payload.candidates?.[0]?.content?.parts?.map((part) => part.text ?? "").join(" ").replace(/\s+/g, " ").trim();
+        if (response.ok && reply) return NextResponse.json({ reply, provider: model });
+        if (![404, 429].includes(response.status)) break;
+      } catch {
+        break;
+      }
     }
   }
 
