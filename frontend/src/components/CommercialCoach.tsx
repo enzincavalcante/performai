@@ -20,6 +20,17 @@ type CoachLayer = {
 };
 type Message = { role: "coach" | "seller"; text: string; layer?: CoachLayer };
 
+async function requestCoachLayer(message: string, messages: Message[], style: CoachStyle, context: { product: string; customer: string; stage: string; objective: string }) {
+  const response = await fetch("/api/v1/coach/respond", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ message, style, context, history: messages.slice(-10).map((item) => ({ role: item.role, text: item.text })) }),
+  });
+  const payload = await response.json() as { layer?: CoachLayer; detail?: string };
+  if (!response.ok || !payload.layer?.direct) throw new Error(payload.detail || "Coach indisponivel");
+  return payload.layer;
+}
+
 const START_MESSAGE: Message = {
   role: "coach",
   text: "Sou seu Coach Comercial. Traga uma situacao real. Primeiro respondo sua duvida, depois separo fatos de hipoteses, explico o raciocinio e treino a habilidade com voce.",
@@ -65,6 +76,18 @@ function buildCoachLayer(question: string, style: CoachStyle, context: { product
       : style === "Pratico"
         ? "Vamos transformar isso em uma acao que voce pode testar hoje. "
         : "Direto ao ponto: ";
+
+  if (/^(oi|ola|bom dia|boa tarde|boa noite|e ai|tudo bem)[!,.? ]*$/i.test(text.trim())) {
+    return {
+      direct: "Oi! Tudo bem? Estou aqui com voce. Pode me contar uma dificuldade, mandar seu pitch ou descrever uma conversa que nao saiu como esperava.",
+      hypotheses: [],
+      reasoning: "",
+      action: "",
+      question: "Como posso ajudar agora?",
+      options: ["Melhorar meu pitch", "Responder uma objecao", "Descobrir a necessidade", "Fechar uma venda", "Outro - escrever resposta"],
+      next: [],
+    };
+  }
 
   if (isEmptyAnswer(question)) {
     return {
@@ -132,14 +155,58 @@ function buildCoachLayer(question: string, style: CoachStyle, context: { product
       next: ["Analise meu pitch", "Quero praticar isso", "Me de um exemplo", "Comparar com concorrente"],
     };
   }
+  if (/(prospec|primeiro contato|abordagem|lista de clientes|novos clientes|mais reunioes)/.test(text)) {
+    return {
+      direct: `${styleLead}uma prospeccao eficiente comeca por uma hipotese de problema especifica, nao por uma apresentacao longa da empresa.`,
+      hypotheses: ["Sua abordagem pode estar falando da oferta antes de criar relevancia.", "O publico ou o gatilho de contato pode estar amplo demais."],
+      reasoning: `Para ${setting}, o primeiro contato precisa mostrar por que aquela conversa merece atencao agora. Personalizacao util conecta um sinal observavel a um problema plausivel, sem fingir que ja conhece a dor.`,
+      action: "Use esta estrutura: 'Vi [sinal real]. Costumo conversar com [perfil] quando isso gera [problema]. Faz sentido eu fazer duas perguntas para entender se existe relacao com o seu momento?'.",
+      question: "Onde sua prospeccao mais trava?",
+      options: ["Encontrar o publico certo", "Escrever a abordagem", "Conseguir resposta", "Converter para reuniao", "Outro - escrever resposta"],
+      next: ["Criar uma abordagem", "Avaliar minha mensagem", "Montar uma cadencia", "Quero praticar"],
+    };
+  }
+  if (/(meta|produtiv|vender mais|mais vendas|performance|resultado)/.test(text)) {
+    return {
+      direct: `${styleLead}para vender mais, identifique primeiro em qual conversao do funil voce perde mais oportunidades e melhore esse ponto antes de apenas aumentar o volume.`,
+      hypotheses: ["A meta pode estar sendo acompanhada apenas pelo resultado final.", "Volume, qualidade e conversao podem estar misturados em um unico problema."],
+      reasoning: "Receita e efeito de uma cadeia: oportunidades criadas, reunioes realizadas, propostas qualificadas, taxa de ganho e ticket. Sem separar essas etapas, qualquer conselho vira palpite.",
+      action: "Compare as ultimas quatro semanas e marque a maior queda entre uma etapa e a seguinte. Escolha uma habilidade ligada a essa queda e defina uma pratica diaria mensuravel.",
+      question: "Qual numero mais preocupa voce hoje?",
+      options: ["Poucos contatos", "Poucas reunioes", "Poucas propostas", "Baixo fechamento", "Outro - escrever resposta"],
+      next: ["Diagnosticar meu funil", "Criar plano semanal", "Treinar fechamento", "Melhorar prospeccao"],
+    };
+  }
+  if (/(timid|nervos|insegur|confian|postura|comunic)/.test(text)) {
+    return {
+      direct: `${styleLead}confianca comercial nao exige falar mais; exige saber o objetivo da etapa, ouvir a resposta inteira e conduzir uma pergunta de cada vez.`,
+      hypotheses: ["A inseguranca pode aumentar quando voce tenta lembrar um roteiro palavra por palavra.", "Falar rapido ou preencher silencios pode reduzir sua escuta."],
+      reasoning: "Uma estrutura curta reduz a carga mental e deixa espaco para reagir ao cliente. A postura melhora quando voce troca a obrigacao de convencer pela responsabilidade de diagnosticar.",
+      action: "Antes da call, escreva apenas tres pontos: objetivo, duas perguntas essenciais e proximo passo desejado. Durante a resposta do cliente, espere um segundo antes de continuar.",
+      question: "Em qual momento voce sente mais inseguranca?",
+      options: ["Na abertura", "Ao fazer perguntas", "Ao falar de preco", "Ao pedir o fechamento", "Outro - escrever resposta"],
+      next: ["Treinar minha abertura", "Simular uma objecao", "Criar meu roteiro", "Avaliar minha postura"],
+    };
+  }
+  if (/(agressiv|mal educ|grosseir|hostil|interrompe)/.test(text)) {
+    return {
+      direct: `${styleLead}com um cliente agressivo, mantenha o tom calmo, reconheca o ponto sem aceitar desrespeito e recupere o controle com uma pergunta objetiva.`,
+      hypotheses: ["A agressividade pode ser pressao, frustracao ou uma forma de testar firmeza.", "Responder no mesmo tom tende a afastar a conversa do problema real."],
+      reasoning: "Validar uma preocupacao nao significa concordar com a forma. Limites claros preservam a relacao e permitem descobrir se ainda existe uma conversa comercial produtiva.",
+      action: "Diga: 'Entendi que isso incomodou voce. Quero resolver o ponto concreto, mas preciso que a gente converse com objetividade. O problema principal foi prazo, valor ou expectativa?'.",
+      question: "O que o cliente fez?",
+      options: ["Elevou o tom", "Interrompeu", "Desqualificou a oferta", "Exigiu desconto", "Outro - escrever resposta"],
+      next: ["Quero praticar isso", "Criar uma resposta", "Definir um limite", "Treinar negociacao"],
+    };
+  }
   return {
-    direct: `${styleLead}entendi a situacao, mas uma recomendacao especifica depende de saber em qual momento a conversa perdeu avancar.`,
-    hypotheses: ["Ainda nao ha evidencia suficiente para afirmar a causa.", "Vou investigar uma informacao por vez, sem inventar contexto."],
-    reasoning: `Ja considerei o contexto salvo: oferta ${context.product || "nao informada"}, publico ${context.customer || "nao informado"} e etapa ${context.stage.toLowerCase()}.`,
-    action: "Escolha o ponto mais proximo do que aconteceu. Na proxima resposta eu monto a abordagem e o treino.",
-    question: "Em que momento a conversa travou?",
-    options: ["Abertura", "Descoberta", "Apresentacao", "Objecao ou fechamento", "Outro - escrever resposta"],
-    next: ["Explicar melhor meu caso", "Quero uma abordagem", "Quero praticar"],
+    direct: `${styleLead}sobre o que voce perguntou, vou trabalhar apenas com o que voce informou e transformar a situacao em uma decisao comercial concreta.`,
+    hypotheses: ["A mensagem ainda permite mais de uma interpretacao.", "Nao vou escolher uma causa sem evidencia da conversa."],
+    reasoning: `Considerei sua pergunta e o contexto salvo: oferta ${context.product || "nao informada"}, publico ${context.customer || "nao informado"} e etapa ${context.stage.toLowerCase()}. Para ser preciso, preciso localizar somente o momento da dificuldade.`,
+    action: "Conte em uma frase o que voce disse e o que o cliente respondeu. Eu vou analisar essa troca e sugerir uma resposta aplicavel, sem inventar o restante da call.",
+    question: "Qual foi a ultima resposta do cliente?",
+    options: ["Questionou o valor", "Disse que vai pensar", "Parou de responder", "Nao viu prioridade", "Outro - escrever resposta"],
+    next: ["Colar a conversa", "Enviar meu pitch", "Quero praticar"],
   };
 }
 
@@ -148,6 +215,7 @@ export function CommercialCoach({ profile }: { profile: CoachProfile }) {
   const [question, setQuestion] = useState("");
   const [style, setStyle] = useState<CoachStyle>("Direto");
   const [practiceTopic, setPracticeTopic] = useState<string | null>(null);
+  const [coachThinking, setCoachThinking] = useState(false);
   const [context, setContext] = useState({ product: profile.offer, customer: profile.audience, stage: "Descoberta", objective: profile.goal });
   const speech = useSpeechToText((text) => setQuestion((current) => `${current} ${text}`.trim()));
 
@@ -162,15 +230,29 @@ export function CommercialCoach({ profile }: { profile: CoachProfile }) {
   useEffect(() => { window.localStorage.setItem("performai_commercial_coach_history", JSON.stringify(messages.slice(-30))); }, [messages]);
 
   const suggestions = useMemo(() => ["Cliente diz que esta caro", "Nao consigo descobrir a dor", "Meu follow-up nao tem resposta", "Minhas calls nao avancam"], []);
-  const sendText = (text: string) => {
+  const sendText = async (text: string) => {
     const clean = text.trim();
-    if (!clean) return;
-    const layer = buildCoachLayer(clean, style, context, practiceTopic);
-    setMessages((current) => [...current, { role: "seller", text: clean }, { role: "coach", text: layer.direct, layer }]);
-    setPracticeTopic(null);
+    if (!clean || coachThinking) return;
+    const activePractice = practiceTopic;
+    const previousMessages = messages;
+    setMessages((current) => [...current, { role: "seller", text: clean }]);
     setQuestion("");
+    setCoachThinking(true);
+    try {
+      const isGreeting = /^(oi|ola|bom dia|boa tarde|boa noite|e ai|tudo bem)[!,.? ]*$/i.test(normalize(clean).trim());
+      const layer = activePractice || isGreeting
+        ? buildCoachLayer(clean, style, context, activePractice)
+        : await requestCoachLayer(clean, previousMessages, style, context);
+      setMessages((current) => [...current, { role: "coach", text: layer.direct, layer }]);
+    } catch {
+      const layer = buildCoachLayer(clean, style, context, activePractice);
+      setMessages((current) => [...current, { role: "coach", text: layer.direct, layer }]);
+    } finally {
+      setPracticeTopic(null);
+      setCoachThinking(false);
+    }
   };
-  const send = (event: FormEvent) => { event.preventDefault(); sendText(question); };
+  const send = (event: FormEvent) => { event.preventDefault(); void sendText(question); };
   const act = (action: string) => {
     if (/praticar|tentar novamente|simule/i.test(action)) {
       setPracticeTopic(action);
@@ -179,7 +261,7 @@ export function CommercialCoach({ profile }: { profile: CoachProfile }) {
       return;
     }
     if (/outro/i.test(action)) { setQuestion(""); return; }
-    sendText(action);
+    void sendText(action);
   };
 
   return <div className="commercial-coach">
@@ -189,15 +271,15 @@ export function CommercialCoach({ profile }: { profile: CoachProfile }) {
       <main>
         <div className="coach-chat-heading"><div><Sparkles /><span><strong>Sessao de desenvolvimento</strong><small>Resposta direta, criterio e pratica</small></span></div><button onClick={() => { setMessages([START_MESSAGE]); setPracticeTopic(null); }}><RotateCcw /> Nova conversa</button></div>
         <div className="commercial-chat">{messages.map((message, index) => <article className={message.role} key={`${message.role}-${index}`}><small>{message.role === "coach" ? "Coach Comercial" : "Voce"}</small><p>{message.text}</p>{message.layer && <div className="coach-layer">
-          <section><b>Hipoteses, nao fatos</b>{message.layer.hypotheses.map((item) => <span key={item}>{item}</span>)}</section>
-          <section><b>Por que cheguei nisso</b><span>{message.layer.reasoning}</span></section>
-          <section className="coach-action"><b>Acao pratica</b><span>{message.layer.action}</span></section>
+          {message.layer.hypotheses.length > 0 && <section><b>Hipoteses, nao fatos</b>{message.layer.hypotheses.map((item) => <span key={item}>{item}</span>)}</section>}
+          {message.layer.reasoning && <section><b>Por que cheguei nisso</b><span>{message.layer.reasoning}</span></section>}
+          {message.layer.action && <section className="coach-action"><b>Acao pratica</b><span>{message.layer.action}</span></section>}
           {message.layer.feedback && <section className="coach-feedback"><b>Feedback da tentativa</b><span><strong>Funcionou:</strong> {message.layer.feedback.good}</span><span><strong>Faltou:</strong> {message.layer.feedback.missing}</span><span><strong>Versao melhor:</strong> {message.layer.feedback.improved}</span></section>}
           {message.layer.question && <section className="coach-question"><b>{message.layer.question}</b><div>{message.layer.options.map((option) => <button onClick={() => act(option)} key={option}>{option}</button>)}</div></section>}
           {message.layer.next.length > 0 && <section className="coach-next"><b>O que voce quer fazer agora?</b><div>{message.layer.next.map((option) => <button onClick={() => act(option)} key={option}>{option}</button>)}</div></section>}
-        </div>}</article>)}</div>
-        <div className="coach-suggestions">{suggestions.map((item) => <button onClick={() => sendText(item)} key={item}>{item}</button>)}</div>
-        <form onSubmit={send}><textarea value={question} onChange={(event) => setQuestion(event.target.value)} placeholder={practiceTopic ? "Responda como se estivesse falando com o cliente..." : "Conte uma situacao real ou faca uma pergunta comercial..."} aria-label="Mensagem para o Coach Comercial" /><div className="commercial-coach-actions"><button type="button" className={`coach-voice-button ${speech.status}`} onClick={speech.toggle} disabled={speech.status === "processing"}><Mic /> {speech.label}</button><button type="submit" disabled={!question.trim()}><Send /> Enviar</button></div>{(speech.error || speech.status === "recording" || speech.status === "processing") && <p className={`coach-voice-status ${speech.status}`}><i />{speech.error || speech.label}</p>}</form>
+        </div>}</article>)}{coachThinking && <article className="coach coach-thinking" aria-live="polite"><small>Coach Comercial</small><p><i /><i /><i /> Pensando na sua pergunta...</p></article>}</div>
+        <div className="coach-suggestions">{suggestions.map((item) => <button disabled={coachThinking} onClick={() => void sendText(item)} key={item}>{item}</button>)}</div>
+        <form onSubmit={send}><textarea value={question} onChange={(event) => setQuestion(event.target.value)} disabled={coachThinking} placeholder={practiceTopic ? "Responda como se estivesse falando com o cliente..." : "Pergunte qualquer coisa sobre vendas..."} aria-label="Mensagem para o Coach Comercial" /><div className="commercial-coach-actions"><button type="button" className={`coach-voice-button ${speech.status}`} onClick={speech.toggle} disabled={coachThinking || speech.status === "processing"}><Mic /> {speech.label}</button><button type="submit" disabled={!question.trim() || coachThinking}><Send /> Enviar</button></div>{(speech.error || speech.status === "recording" || speech.status === "processing") && <p className={`coach-voice-status ${speech.status}`}><i />{speech.error || speech.label}</p>}</form>
       </main>
       <aside><div className="coach-context-title"><BrainCircuit /><span><strong>Contexto ja conhecido</strong><small>Evita repetir perguntas desnecessarias</small></span></div><label>Oferta<input value={context.product} onChange={(event) => setContext({ ...context, product: event.target.value })} placeholder="Ainda nao informado" /></label><label>Publico<input value={context.customer} onChange={(event) => setContext({ ...context, customer: event.target.value })} placeholder="Ainda nao informado" /></label><label>Etapa<select value={context.stage} onChange={(event) => setContext({ ...context, stage: event.target.value })}><option>Prospeccao</option><option>Descoberta</option><option>Apresentacao</option><option>Negociacao</option><option>Fechamento</option><option>Follow-up</option></select></label><div className="coach-context-note"><Lightbulb /><span><strong>Qualidade da orientacao</strong><small>O Coach separa evidencia, hipotese e informacao ausente. Ele nao inventa cliente, numeros ou resultados.</small></span></div><ul><li><CheckCircle2 /> Resposta direta primeiro</li><li><CheckCircle2 /> Uma pergunta por vez</li><li><CheckCircle2 /> Estrategia explicada</li><li><CheckCircle2 /> Pratica com feedback</li></ul></aside>
     </section>

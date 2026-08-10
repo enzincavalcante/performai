@@ -214,7 +214,7 @@ export function NextGenCoach({ initialTab = "training" }: { initialTab?: HubTab 
   const [missionThinking, setMissionThinking] = useState(false);
   const [trainingConfig, setTrainingConfig] = useState({
     sellerName: "",
-    sellerRole: "Closer",
+    sellerRole: "",
     sellerExperience: "",
     sellerStrengths: "",
     sellerWeaknesses: "",
@@ -446,12 +446,12 @@ export function NextGenCoach({ initialTab = "training" }: { initialTab?: HubTab 
                   </dl>
                 </article>
                 <div className="coach-config quick-training-config">
-                  <header><span>CONFIGURACAO RAPIDA</span><h3>Escolha tres pontos e comece.</h3><p>O restante do cliente fica oculto para voce descobrir durante a conversa.</p></header>
-                  <fieldset className="quick-choice"><legend>Seu cargo</legend><div>{["SDR", "BDR", "Closer", "Executivo de Vendas", "Vendedor", "Gerente Comercial", "Outro"].map((item) => <button type="button" className={trainingConfig.sellerRole === item ? "active" : ""} onClick={() => setTrainingConfig((current) => ({ ...current, sellerRole: item }))} key={item}>{item}</button>)}</div></fieldset>
-                  <fieldset className="quick-choice"><legend>Experiencia</legend><div>{["Iniciante", "Intermediario", "Avancado"].map((item) => <button type="button" className={trainingConfig.sellerExperience === item ? "active" : ""} onClick={() => setTrainingConfig((current) => ({ ...current, sellerExperience: item }))} key={item}>{item}</button>)}</div></fieldset>
-                  <fieldset className="quick-choice wide"><legend>O que voce vende?</legend><div>{["SaaS", "Servico", "Produto fisico", "Consultoria", "Imoveis", "Educacao", "Financeiro", "Outro"].map((item) => <button type="button" className={trainingConfig.product === item ? "active" : ""} onClick={() => setTrainingConfig((current) => ({ ...current, product: item }))} key={item}>{item}</button>)}</div></fieldset>
+                  <header><span>CONFIGURACAO RAPIDA</span><h3>Responda uma opcao por pergunta.</h3><p>Clique na seta para abrir as alternativas. O cliente e o restante do cenario sao criados automaticamente.</p></header>
+                  <label className="quick-select wide"><span>1. Qual e o seu cargo?</span><select value={trainingConfig.sellerRole} onChange={(event) => setTrainingConfig((current) => ({ ...current, sellerRole: event.target.value }))}><option value="">Escolha seu cargo</option><option>SDR</option><option>BDR</option><option>Closer</option><option>Executivo de Vendas</option><option>Vendedor</option><option>Gerente Comercial</option><option>Outro</option></select></label>
+                  <label className="quick-select wide"><span>2. Qual e a sua experiencia em vendas?</span><select value={trainingConfig.sellerExperience} onChange={(event) => setTrainingConfig((current) => ({ ...current, sellerExperience: event.target.value }))}><option value="">Escolha sua experiencia</option><option>Iniciante</option><option>Intermediario</option><option>Avancado</option></select></label>
+                  <label className="quick-select wide"><span>3. O que voce vende?</span><select value={trainingConfig.product} onChange={(event) => setTrainingConfig((current) => ({ ...current, product: event.target.value }))}><option value="">Escolha o tipo de oferta</option><option>SaaS</option><option>Servico</option><option>Produto fisico</option><option>Consultoria</option><option>Imoveis</option><option>Educacao</option><option>Financeiro</option><option>Outro</option></select></label>
                   {(trainingConfig.sellerRole === "Outro" || trainingConfig.product === "Outro") && <label className="wide">Outro - escrever resposta<input value={trainingConfig.context} onChange={(event) => setTrainingConfig((current) => ({ ...current, context: event.target.value }))} placeholder="Escreva seu cargo ou o que voce vende" /></label>}
-                  <button className="start-coaching" onClick={startSession} disabled={!trainingConfig.sellerExperience || !trainingConfig.product || clientLoading}>
+                  <button className="start-coaching" onClick={startSession} disabled={!trainingConfig.sellerRole || !trainingConfig.sellerExperience || !trainingConfig.product || clientLoading}>
                     <Play /> Iniciar treino <ArrowRight />
                   </button>
                 </div>
