@@ -380,7 +380,7 @@ function Workspace({ onLogout }: { onLogout: () => void }) {
     <section className="workspace-content">
       {profile && view === "simulation" && <NextGenCoach />}
       {profile && view === "strategies" && <CommercialStrategies onOpenCoach={() => navigate("coach")} />}
-      {profile && view === "coach" && <CommercialCoach profile={profile} />}
+      {profile && view === "coach" && <CommercialCoach profile={profile} onOpenTraining={() => navigate("learning")} />}
       {profile && view === "ai" && <FocusCoach profile={profile} />}
       {profile && view === "calls" && <CallReview />}
       {profile && !["simulation", "strategies", "coach", "ai", "calls"].includes(view) && <EnterpriseModule view={view} onNavigate={navigate} />}

@@ -42,8 +42,11 @@ export async function POST(request: Request) {
   const message = body.message?.replace(/\s+/g, " ").trim().slice(0, 3500) ?? "";
   if (!message) return NextResponse.json({ detail: "Escreva uma pergunta para o Coach." }, { status: 422 });
 
+  const compact = message.replace(/[^a-zA-Z0-9À-ÿ]/g, "");
+  if (compact.length <= 2 && !/^(oi|ola)$/i.test(compact)) return NextResponse.json({ layer: { direct: "Acho que sua mensagem veio incompleta. Pode terminar?", hypotheses: [], reasoning: "", action: "", question: "", options: [], next: [] }, provider: "conversation-guard" });
+
   const context = body.context ?? {};
-  const history = (body.history ?? []).filter((item) => item.text?.trim()).slice(-10).map((item) => `${item.role === "coach" ? "COACH" : "VENDEDOR"}: ${item.text?.slice(0, 1200)}`).join("\n");
+  const history = (body.history ?? []).filter((item) => item.text?.trim()).slice(-20).map((item) => `${item.role === "coach" ? "COACH" : "VENDEDOR"}: ${item.text?.slice(0, 1400)}`).join("\n");
   const systemPrompt = `Voce e o Coach Comercial da Performa AI, um mentor senior de vendas B2B e B2C. Converse em portugues brasileiro natural, humano e profissional.
 
 REGRAS OBRIGATORIAS:
@@ -54,12 +57,15 @@ REGRAS OBRIGATORIAS:
 - Se a mensagem for casual, responda de forma casual e curta. Nao transforme conversa simples em aula.
 - Entenda girias, abreviacoes, erros de portugues, frases incompletas e audio transcrito sem corrigir o usuario.
 - Se a pergunta estiver clara, responda sem pedir contexto antes. Se faltar algo decisivo, responda o que ja e possivel e faca no maximo UMA pergunta especifica ao final.
+- Se a entrada estiver incompleta, composta por uma letra ou sem intencao compreensivel, diga naturalmente que a mensagem parece incompleta e espere o usuario terminar. Nao invente uma analise.
 - Explique por que a recomendacao funciona e entregue uma acao ou frase aplicavel.
 - Questione conclusoes ruins com respeito. Nao concorde automaticamente com desconto, culpa do cliente ou pressao artificial.
 - Adapte a extensao e o tom automaticamente: pergunta simples pede resposta simples; caso complexo pede analise profunda. Acompanhe o nivel e a formalidade do usuario.
 - Domine prospeccao, SDR, BDR, closer, SPIN, BANT, MEDDIC/MEDDPICC, discovery, pitch, demonstracao, objecoes, negociacao, follow-up, fechamento, CRM, pipeline, forecast, gestao, B2B, B2C, SaaS, outbound, inbound e social selling, mas use metodologia apenas quando ela resolver o caso.
+- Quando o usuario quiser aprender, aja como professor, treinador e consultor: explique o principio, diagnostique o caso, mostre um exemplo aplicado a oferta e ao publico, proponha um exercicio curto e acompanhe a tentativa na mensagem seguinte.
+- Use de verdade Oferta, Publico, Etapa e Objetivo nas recomendacoes. Se algum campo nao estiver informado, nao invente.
 - Nunca use frases vazias como "otima pergunta", "certamente" ou "com base nas informacoes fornecidas".
-- Sugira opcoes clicaveis somente quando ajudarem a continuar, no maximo cinco.
+- Sugira opcoes clicaveis SOMENTE quando existir uma decisao clara entre caminhos. Cumprimentos, respostas simples e perguntas abertas devem retornar options vazio. Botoes existem para decisoes, nao para substituir conversa.
 
 CONTEXTO DISPONIVEL:
 Oferta: ${context.product || "nao informada"}.
@@ -68,7 +74,7 @@ Etapa: ${context.stage || "nao informada"}.
 Objetivo: ${context.objective || "nao informado"}.
 
 Retorne SOMENTE JSON valido. Em resposta simples, reasoning, action, question, options e hypotheses podem ficar vazios. Em resposta complexa, use esses campos para permitir conteudo expansivel:
-{"direct":"resposta direta e humana","hypotheses":["hipoteses somente se relevantes"],"reasoning":"explicacao especifica","action":"acao pratica ou exemplo de frase","question":"uma unica pergunta necessaria ou string vazia","options":["ate 5 respostas clicaveis, incluindo Outro - escrever resposta quando houver pergunta"],"next":["3 a 5 proximas acoes clicaveis"]}`;
+{"direct":"resposta direta e humana","hypotheses":["hipoteses somente se relevantes"],"reasoning":"explicacao especifica","action":"acao pratica, exemplo ou exercicio","question":"uma unica pergunta necessaria ou string vazia","options":["somente escolhas realmente necessarias; caso contrario array vazio"],"next":[]}`;
   const prompt = `HISTORICO:\n${history || "Primeira mensagem."}\n\nMENSAGEM ATUAL:\n${message}`;
   const gatewayToken = process.env.AI_GATEWAY_API_KEY || process.env.VERCEL_OIDC_TOKEN || request.headers.get("x-vercel-oidc-token");
   const apiKey = process.env.GEMINI_API_KEY;
@@ -78,7 +84,7 @@ Retorne SOMENTE JSON valido. Em resposta simples, reasoning, action, question, o
       const response = await fetch("https://ai-gateway.vercel.sh/v1/chat/completions", {
         method: "POST",
         headers: { Authorization: `Bearer ${gatewayToken}`, "content-type": "application/json" },
-        body: JSON.stringify({ model: process.env.AI_GATEWAY_COACH_MODEL || "google/gemini-2.5-flash-lite", messages: [{ role: "system", content: systemPrompt }, { role: "user", content: prompt }], response_format: { type: "json_object" }, temperature: 0.45, max_tokens: 1200 }),
+        body: JSON.stringify({ model: process.env.AI_GATEWAY_COACH_MODEL || "google/gemini-2.5-flash-lite", messages: [{ role: "system", content: systemPrompt }, { role: "user", content: prompt }], response_format: { type: "json_object" }, temperature: 0.42, max_tokens: 2200 }),
         signal: AbortSignal.timeout(22_000),
       });
       const payload = await response.json() as GatewayPayload;
@@ -93,7 +99,7 @@ Retorne SOMENTE JSON valido. Em resposta simples, reasoning, action, question, o
         const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(apiKey)}`, {
           method: "POST",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ systemInstruction: { parts: [{ text: systemPrompt }] }, contents: [{ role: "user", parts: [{ text: prompt }] }], generationConfig: { responseMimeType: "application/json", temperature: 0.45, maxOutputTokens: 1600 } }),
+          body: JSON.stringify({ systemInstruction: { parts: [{ text: systemPrompt }] }, contents: [{ role: "user", parts: [{ text: prompt }] }], generationConfig: { responseMimeType: "application/json", temperature: 0.42, maxOutputTokens: 2600 } }),
           signal: AbortSignal.timeout(22_000),
         });
         const payload = await response.json() as GeminiPayload;
