@@ -362,6 +362,7 @@ function Workspace({ onLogout }: { onLogout: () => void }) {
     });
   }, []);
   const saveProfile = (next: CompanyProfile) => { localStorage.setItem("performai_company_profile", JSON.stringify(next)); setProfile(next); setEditingProfile(false); };
+  const updateProfile = (next: CompanyProfile) => { localStorage.setItem("performai_company_profile", JSON.stringify(next)); setProfile(next); };
   const closeTutorial = () => { localStorage.setItem("performai_tutorial_seen", "true"); setShowTutorial(false); };
   const navigate = (next: EnterpriseView) => {
     setView(next);
@@ -380,7 +381,7 @@ function Workspace({ onLogout }: { onLogout: () => void }) {
     <section className="workspace-content">
       {profile && view === "simulation" && <NextGenCoach />}
       {profile && view === "strategies" && <CommercialStrategies onOpenCoach={() => navigate("coach")} />}
-      {profile && view === "coach" && <CommercialCoach profile={profile} onOpenTraining={() => navigate("learning")} />}
+      {profile && view === "coach" && <CommercialCoach profile={profile} onProfileChange={(next) => updateProfile({ ...profile, ...next })} onOpenTraining={() => navigate("learning")} />}
       {profile && view === "ai" && <FocusCoach profile={profile} />}
       {profile && view === "calls" && <CallReview />}
       {profile && !["simulation", "strategies", "coach", "ai", "calls"].includes(view) && <EnterpriseModule view={view} onNavigate={navigate} />}
