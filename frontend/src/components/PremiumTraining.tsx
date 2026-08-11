@@ -406,7 +406,23 @@ export function PremiumTrainingAcademy({ onNavigate }: { onNavigate: (view: Ente
   const [notice, setNotice] = useState("");
   const [resourceView, setResourceView] = useState<"material" | "summary" | null>(null);
 
-  useEffect(() => { queueMicrotask(() => setProgress(readProgress())); }, []);
+  useEffect(() => {
+    queueMicrotask(() => {
+      setProgress(readProgress());
+      const savedFocus = localStorage.getItem("performai_training_focus");
+      if (savedFocus) {
+        try {
+          const focus = JSON.parse(savedFocus) as { moduleId?: string; lesson?: string };
+          const focusedModule = MODULES.find((module) => module.id === focus.moduleId);
+          if (focusedModule) { setSelected(focusedModule); setLesson(Math.max(0, focusedModule.lessons.findIndex((item) => item === focus.lesson))); setPanel("content"); }
+        } catch {
+          const focusedModule = MODULES.find((module) => module.id === savedFocus);
+          if (focusedModule) { setSelected(focusedModule); setLesson(0); setPanel("content"); }
+        }
+        localStorage.removeItem("performai_training_focus");
+      }
+    });
+  }, []);
   const saveProgress = (next: Record<string, number[]>) => { setProgress(next); localStorage.setItem(STORAGE_KEY, JSON.stringify(next)); };
   const moduleProgress = (module: TrainingModule) => Math.round(((progress[module.id]?.length ?? 0) / module.lessons.length) * 100);
   const completedLessons = Object.values(progress).reduce((total, items) => total + items.length, 0);

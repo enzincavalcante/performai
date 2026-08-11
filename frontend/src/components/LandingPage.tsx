@@ -2,11 +2,13 @@
 
 import Image from "next/image";
 import type * as React from "react";
+import { motion } from "framer-motion";
 import {
   Award, BarChart3, Bot, BriefcaseBusiness, CheckCircle2, ChevronRight, FileAudio, GraduationCap,
-  LayoutDashboard, Mic, Play, ShieldCheck, Sparkles, Target, Trophy, Users, Zap,
+  LayoutDashboard, Mic, Play, Plus, ShieldCheck, Sparkles, Target, Trophy, Users, Zap,
 } from "lucide-react";
 import "./landing.css";
+import "./landing-video-hero.css";
 
 const BRAND_LOGO = `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/brand/performai-logo.png`;
 const CHECKOUTS = {
@@ -24,9 +26,28 @@ function Brand() {
 
 export function LandingPage({ onEnter }: { onEnter: () => void }) {
   const scrollTo = (id: string) => document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+  const ease = [0.16, 1, 0.3, 1] as const;
 
   return <main className="landing-page">
-    <nav className="landing-nav">
+    <motion.nav className="video-landing-nav" initial={{ opacity: 0, y: -16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: .8, ease }}>
+      <div className="video-nav-left"><Brand /><button className="video-menu-pill" onClick={() => scrollTo("produto")}><span><Plus size={12} strokeWidth={3} /></span>Menu</button><div className="video-nav-tags"><span>Treino por voz</span><span>Coach Comercial</span></div></div>
+      <div className="video-nav-right"><div className="video-adaptive-pill"><button onClick={onEnter} aria-label="Entrar na plataforma"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="5" cy="5" r="1.5"/><circle cx="11" cy="5" r="1.5"/><circle cx="5" cy="11" r="1.5"/><circle cx="11" cy="11" r="1.5"/></svg></button><span>Inteligencia adaptativa</span></div></div>
+    </motion.nav>
+
+    <section className="landing-video-hero">
+      <motion.div className="landing-video-stage" initial={{ opacity: 0, scale: 1.05 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 1.8, ease }}><video autoPlay muted loop playsInline preload="metadata" poster="/brand/training-academy-hero-v2.png"><source src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260508_215831_c6a8989c-d716-4d8d-8745-e972a2eec711.mp4" type="video/mp4" /></video></motion.div>
+      <motion.div className="landing-video-footer" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: .5, duration: 1, ease }}>
+        <div className="landing-video-copy">
+          <motion.p className="landing-video-kicker" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: .6, duration: .8, ease }}><i /> Treinamento comercial inteligente, disponivel 24/7</motion.p>
+          <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: .8, duration: .8, ease }}>Treine vendedores.<br />Evolua cada conversa.</motion.h1>
+          <motion.p className="landing-video-description" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: .9, duration: .8, ease }}>Coach comercial, simulacoes realistas e analise profissional de calls em uma plataforma feita para melhorar desempenho de verdade.</motion.p>
+          <motion.div className="landing-video-actions" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1, duration: .8, ease }}><button className="primary" onClick={onEnter}>Conhecer a plataforma</button><button onClick={() => scrollTo("precos")}>Ver planos</button></motion.div>
+        </div>
+        <motion.div className="landing-video-tags" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1, duration: .8, ease }}><span>Coach IA</span><span>Analise de Calls</span><span>Treinamentos</span></motion.div>
+      </motion.div>
+    </section>
+
+    <nav className="landing-nav" hidden aria-hidden="true">
       <Brand />
       <div className="landing-nav-links">
         <button onClick={() => scrollTo("produto")}>Produto</button>
@@ -38,7 +59,7 @@ export function LandingPage({ onEnter }: { onEnter: () => void }) {
       </div>
     </nav>
 
-    <section className="landing-hero">
+    <section className="landing-hero" hidden aria-hidden="true">
       <div className="landing-glow-top" />
       <div className="landing-badge"><i /> Inteligencia comercial para equipes de alta performance</div>
       <h1>Desenvolva vendedores. Acelere resultados.</h1>

@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useRef, useState } from "react";
-import { BookOpen, Check, ChevronDown, Download, GraduationCap, Lightbulb, Mic, Pencil, RotateCcw, Save, Send, Sparkles, X } from "lucide-react";
+import { BookOpen, Check, Download, GraduationCap, Lightbulb, Mic, Pencil, Play, RotateCcw, Save, Send, Sparkles, Target, X } from "lucide-react";
 import { useSpeechToText } from "@/hooks/useSpeechToText";
 import { localCoachResponse, type CoachLayer, type CoachMemory } from "@/lib/coach-brain";
 import "./commercial-coach.css";
@@ -9,6 +9,7 @@ import "./coach-context.css";
 import "./premium-module-readability.css";
 import "./coach-intelligence.css";
 import "./coach-brain.css";
+import "./coach-teacher.css";
 
 type CoachProfile = { offer: string; audience: string; segment: string; goal: string; challenge: string };
 type Message = { role: "coach" | "seller"; text: string; layer?: CoachLayer; source?: string };
@@ -56,7 +57,7 @@ async function requestCoachLayer(message: string, messages: Message[], profile: 
   return payload.layer;
 }
 
-export function CommercialCoach({ profile, onProfileChange, onOpenTraining }: { profile: CoachProfile; onProfileChange?: (profile: CoachProfile) => void; onOpenTraining?: () => void }) {
+export function CommercialCoach({ profile, onProfileChange, onOpenTraining }: { profile: CoachProfile; onProfileChange?: (profile: CoachProfile) => void; onOpenTraining?: (moduleId?: string, lesson?: string) => void }) {
   const [messages, setMessages] = useState<Message[]>([START_MESSAGE]);
   const [memory, setMemory] = useState<CoachMemory>(EMPTY_MEMORY);
   const [commercialContext, setCommercialContext] = useState<CoachProfile>(profile);
@@ -66,6 +67,7 @@ export function CommercialCoach({ profile, onProfileChange, onOpenTraining }: { 
   const [question, setQuestion] = useState("");
   const [idea, setIdea] = useState("");
   const [thinking, setThinking] = useState(false);
+  const [thinkingStage, setThinkingStage] = useState(0);
   const [strategyContext, setStrategyContext] = useState("");
   const [material, setMaterial] = useState<StudyMaterial | null>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -90,13 +92,19 @@ export function CommercialCoach({ profile, onProfileChange, onOpenTraining }: { 
   }, [profile]);
   useEffect(() => { window.localStorage.setItem("performai_commercial_coach_history", JSON.stringify(messages.slice(-60))); }, [messages]);
   useEffect(() => { window.localStorage.setItem("performai_commercial_coach_memory", JSON.stringify(memory)); }, [memory]);
+  useEffect(() => {
+    if (!thinking) return;
+    const first = window.setTimeout(() => setThinkingStage(1), 550);
+    const second = window.setTimeout(() => setThinkingStage(2), 1250);
+    return () => { window.clearTimeout(first); window.clearTimeout(second); };
+  }, [thinking]);
 
   const sendText = async (value: string) => {
     const clean = value.trim();
     if (!clean || thinking) return;
     const previous = messages;
     setMessages((current) => [...current, { role: "seller", text: clean }]);
-    setQuestion(""); setIdea(""); setThinking(true);
+    setQuestion(""); setIdea(""); setThinkingStage(0); setThinking(true);
     try {
       const layer = await requestCoachLayer(clean, previous, commercialContext, strategyContext, memory);
       setMemory(layer.memory || memory);
@@ -138,9 +146,16 @@ export function CommercialCoach({ profile, onProfileChange, onOpenTraining }: { 
         {strategyContext && <div className="coach-loaded-context"><Sparkles /><span><strong>Estrategia carregada</strong><small>O Coach ja recebeu o diagnostico e o plano. Pergunte sem copiar e colar.</small></span><button onClick={() => setStrategyContext("")} aria-label="Remover contexto">x</button></div>}
         <div className="commercial-chat">
           {messages.map((message, index) => <article className={message.role} key={`${message.role}-${index}`}><small>{message.role === "coach" ? "Coach Comercial" : "Voce"}</small><p>{message.text}</p>
-            {message.layer && <div className="coach-layer">{message.layer.reasoning && <details><summary>Entenda o porque <ChevronDown /></summary><p>{message.layer.reasoning}</p>{message.layer.hypotheses.map((item) => <span key={item}>{item}</span>)}</details>}{message.layer.action && <details><summary>Como aplicar <ChevronDown /></summary><p>{message.layer.action}</p></details>}{message.layer.feedback && <details open><summary>Feedback da tentativa <ChevronDown /></summary><p><b>Funcionou:</b> {message.layer.feedback.good}</p><p><b>Faltou:</b> {message.layer.feedback.missing}</p><p><b>Versao melhor:</b> {message.layer.feedback.improved}</p></details>}{message.layer.question && <section className="coach-question"><b>{message.layer.question}</b>{message.layer.decisionRequired && message.layer.options.length > 0 && <div>{message.layer.options.map((option) => <button onClick={() => void sendText(option)} key={option}>{option}</button>)}</div>}</section>}</div>}
+            {message.layer && <div className="coach-layer">
+              {message.layer.lesson ? <section className="coach-mini-lesson"><header><GraduationCap /><div><small>MODO PROFESSOR</small><h3>{message.layer.lesson.title}</h3></div></header>{message.layer.lesson.sections.map((section) => <div className="coach-lesson-section" key={section.title}><h4>{section.title}</h4><p>{section.content}</p></div>)}<div className="coach-example bad"><b>Exemplo ruim</b><p>{message.layer.lesson.badExample}</p></div><div className="coach-example good"><b>Exemplo melhor</b><p>{message.layer.lesson.goodExample}</p></div><div className="coach-lesson-errors"><h4>Principais erros</h4>{message.layer.lesson.mistakes.map((item) => <span key={item}><X /> {item}</span>)}</div><div className="coach-lesson-exercise"><Target /><span><b>Como treinar</b><p>{message.layer.lesson.exercise}</p></span></div></section> : (message.layer.reasoning || message.layer.action) && <section className="coach-inline-explanation">{message.layer.reasoning && <div><h4>Raciocinio</h4><p>{message.layer.reasoning}</p>{message.layer.hypotheses.map((item) => <span key={item}>{item}</span>)}</div>}{message.layer.action && <div><h4>Aplicacao pratica</h4><p>{message.layer.action}</p></div>}</section>}
+              {message.layer.feedback && <section className="coach-feedback"><header><Target /><b>Feedback da tentativa</b></header><p><b>Funcionou:</b> {message.layer.feedback.good}</p><p><b>Faltou:</b> {message.layer.feedback.missing}</p><p><b>Versao melhor:</b> {message.layer.feedback.improved}</p></section>}
+              {message.layer.training && <section className="coach-training-recommendation"><div><GraduationCap /><span><small>CONTINUE APRENDENDO</small><b>{message.layer.training.title}</b><p>{message.layer.training.lesson} · {message.layer.training.duration} · aula + atividade</p><em>{message.layer.training.activity}</em></span></div><button onClick={() => onOpenTraining?.(message.layer?.training?.moduleId, message.layer?.training?.lesson)}><Play /> Assistir aula</button></section>}
+              {message.layer.question && <section className="coach-question"><b>{message.layer.question}</b>{message.layer.decisionRequired && message.layer.options.length > 0 && <div>{message.layer.options.map((option) => <button onClick={() => void sendText(option)} key={option}>{option}</button>)}</div>}</section>}
+            </div>}
           </article>)}
-          {thinking && <article className="coach coach-thinking" aria-live="polite"><small>Coach Comercial</small><p><i /><i /><i /> Lendo sua mensagem e o contexto...</p></article>}
+          {thinking && <article className="coach coach-thinking" aria-live="polite"><small>Coach Comercial</small><p><i /><i /><i /> {[
+            "Analisando sua duvida...", "Consultando contexto e historico...", "Preparando uma explicacao...",
+          ][thinkingStage]}</p></article>}
         </div>
         <form className="coach-main-composer" onSubmit={submit}><textarea ref={inputRef} value={question} onChange={(event) => setQuestion(event.target.value)} disabled={thinking} placeholder="Pergunte qualquer coisa sobre vendas..." aria-label="Mensagem para o Coach Comercial" /><div><button type="button" className={`coach-voice-button ${speech.status}`} onClick={speech.toggle} disabled={thinking || speech.status === "processing"}><Mic /> {speech.label}</button><button type="submit" disabled={!question.trim() || thinking}><Send /> Enviar</button></div>{(speech.error || speech.status === "recording" || speech.status === "processing") && <p className={`coach-voice-status ${speech.status}`}><i />{speech.error || speech.label}</p>}</form>
         <label className="coach-idea-select"><Lightbulb /><span>Exemplos de perguntas</span><select value={idea} onChange={(event) => chooseIdea(event.target.value)}><option value="">Escolha apenas se precisar de uma ideia</option>{IDEAS.map((item) => <option key={item}>{item}</option>)}</select></label>

@@ -381,7 +381,7 @@ function Workspace({ onLogout }: { onLogout: () => void }) {
     <section className="workspace-content">
       {profile && view === "simulation" && <NextGenCoach />}
       {profile && view === "strategies" && <CommercialStrategies onOpenCoach={() => navigate("coach")} />}
-      {profile && view === "coach" && <CommercialCoach profile={profile} onProfileChange={(next) => updateProfile({ ...profile, ...next })} onOpenTraining={() => navigate("learning")} />}
+      {profile && view === "coach" && <CommercialCoach profile={profile} onProfileChange={(next) => updateProfile({ ...profile, ...next })} onOpenTraining={(moduleId, lesson) => { if (moduleId) localStorage.setItem("performai_training_focus", JSON.stringify({ moduleId, lesson })); navigate("learning"); }} />}
       {profile && view === "ai" && <FocusCoach profile={profile} />}
       {profile && view === "calls" && <CallReview />}
       {profile && !["simulation", "strategies", "coach", "ai", "calls"].includes(view) && <EnterpriseModule view={view} onNavigate={navigate} />}

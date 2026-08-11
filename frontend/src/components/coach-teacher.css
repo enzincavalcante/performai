@@ -1,0 +1,184 @@
+.commercial-chat > article {
+  animation: coach-message-in 0.32s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.coach-mini-lesson {
+  overflow: hidden;
+  border: 1px solid #d7e2ef;
+  border-radius: 7px;
+  background: #fff;
+}
+
+.coach-mini-lesson > header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 15px 16px;
+  border-bottom: 1px solid #dfe7f1;
+  background: #f2f7ff;
+}
+
+.coach-mini-lesson > header > svg { width: 22px; color: #2563eb; }
+.coach-mini-lesson > header div { display: grid; gap: 3px; }
+.coach-layer .coach-mini-lesson > header small { color: #1d4ed8; font-size: 10px; font-weight: 900; }
+.coach-layer .coach-mini-lesson > header h3 { margin: 0; color: #172f50; font-size: 17px; }
+
+.coach-lesson-section {
+  padding: 15px 16px;
+  border-bottom: 1px solid #e8edf4;
+}
+
+.coach-layer .coach-lesson-section h4,
+.coach-layer .coach-lesson-errors h4,
+.coach-layer .coach-inline-explanation h4 {
+  margin: 0 0 7px;
+  color: #1d416f;
+  font-size: 14px;
+}
+
+.coach-lesson-section p,
+.coach-example p,
+.coach-lesson-exercise p,
+.coach-inline-explanation p,
+.coach-feedback p,
+.coach-training-recommendation p,
+.coach-training-recommendation em {
+  margin: 0;
+  color: #42566f;
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+.coach-example {
+  margin: 12px 16px 0;
+  padding: 14px;
+  border-left: 3px solid #d85e73;
+  background: #fff6f7;
+}
+
+.coach-example.good { border-color: #1ca688; background: #f1fbf8; }
+.coach-example b { display: block; margin-bottom: 5px; color: #7a2f3e; font-size: 13px; }
+.coach-example.good b { color: #116a58; }
+
+.coach-lesson-errors {
+  display: grid;
+  gap: 8px;
+  margin: 12px 16px;
+  padding: 14px;
+  border: 1px solid #e3e9f1;
+  background: #fafbfd;
+}
+
+.coach-lesson-errors span {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  color: #465b75;
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.coach-lesson-errors svg { width: 14px; min-width: 14px; color: #c84b63; }
+
+.coach-lesson-exercise {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 12px 16px 16px;
+  padding: 14px;
+  border: 1px solid #bcd1ee;
+  background: #edf5ff;
+}
+
+.coach-lesson-exercise > svg { width: 19px; min-width: 19px; color: #2563eb; }
+.coach-lesson-exercise span { display: grid; gap: 5px; }
+.coach-lesson-exercise b { color: #1c4e91; font-size: 13px; }
+
+.coach-inline-explanation {
+  display: grid;
+  gap: 1px;
+  overflow: hidden;
+  border: 1px solid #dfe7f1;
+  border-radius: 6px;
+  background: #fff;
+}
+
+.coach-inline-explanation > div { padding: 14px; }
+.coach-inline-explanation > div + div { border-top: 1px solid #e7edf4; }
+.coach-inline-explanation span {
+  display: block;
+  margin-top: 8px;
+  padding-left: 10px;
+  border-left: 2px solid #8eadd7;
+  color: #4b617a;
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.coach-feedback {
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+  border: 1px solid #bcd1ee;
+  border-radius: 6px;
+  background: #f2f7ff;
+}
+
+.coach-feedback header { display: flex; align-items: center; gap: 8px; color: #1d4f91; font-size: 13px; }
+.coach-feedback header svg { width: 17px; }
+.coach-feedback p b { color: #244a7a; }
+
+.coach-training-recommendation {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid #c7d9f1;
+  border-radius: 7px;
+  background: linear-gradient(135deg, #f4f8ff, #fff);
+}
+
+.coach-training-recommendation > div { display: flex; align-items: flex-start; gap: 10px; }
+.coach-training-recommendation > div > svg { width: 22px; min-width: 22px; color: #2563eb; }
+.coach-training-recommendation span { display: grid; gap: 4px; }
+.coach-layer .coach-training-recommendation small { color: #1d4ed8; font-size: 10px; font-weight: 900; }
+.coach-layer .coach-training-recommendation b { color: #17365f; font-size: 14px; }
+.coach-training-recommendation em { font-style: normal; }
+.coach-training-recommendation button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 0 13px;
+  border: 1px solid #2563eb;
+  border-radius: 5px;
+  color: #fff;
+  background: #2563eb;
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.coach-training-recommendation button svg { width: 15px; }
+.coach-thinking p { transition: opacity 0.18s ease; }
+
+@keyframes coach-message-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (max-width: 620px) {
+  .coach-training-recommendation { grid-template-columns: 1fr; }
+  .coach-training-recommendation button { justify-content: center; }
+  .coach-mini-lesson > header,
+  .coach-lesson-section { padding-right: 13px; padding-left: 13px; }
+  .coach-example,
+  .coach-lesson-errors,
+  .coach-lesson-exercise { margin-right: 13px; margin-left: 13px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .commercial-chat > article { animation: none; }
+  .coach-thinking p { transition: none; }
+}

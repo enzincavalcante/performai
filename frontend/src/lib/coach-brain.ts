@@ -22,6 +22,8 @@ export type CoachLayer = {
   decisionRequired: boolean;
   memory: CoachMemory;
   feedback?: { good: string; missing: string; improved: string };
+  lesson?: { title: string; sections: Array<{ title: string; content: string }>; badExample: string; goodExample: string; mistakes: string[]; exercise: string };
+  training?: { moduleId: string; title: string; lesson: string; duration: string; activity: string };
 };
 
 type Topic = {
@@ -48,7 +50,23 @@ const TOPICS: Topic[] = [
   { id: "negotiation", label: "negociacao", aliases: /negocia|margem|concessao|condi(c|ç)ao/, definition: "Negociacao e a troca estruturada de valor, risco, prazo e condicoes entre partes com interesses diferentes.", principle: "Toda concessao deve ter motivo, limite e contrapartida. Preco nao pode ser discutido separado de escopo, risco e resultado.", application: "Mapeie interesses, defina limites e troque concessoes: se houver movimento de um lado, combine um compromisso do outro.", example: "Consigo avaliar essa condicao se ajustarmos prazo de contrato e data de decisao. Faz sentido construir nesses termos?", mistake: "Conceder desconto para aliviar tensao sem receber compromisso ou reduzir escopo." },
   { id: "pipeline", label: "pipeline e forecast", aliases: /pipeline|funil|forecast|crm|conversao|meta|indicador/, definition: "Pipeline representa oportunidades por etapa; forecast estima receita futura usando evidencia de progresso, nao apenas opiniao do vendedor.", principle: "Etapas precisam de criterios de entrada e saida observaveis. Volume sem qualidade cria previsao falsa.", application: "Meça conversao, tempo, aging, proximo passo e motivo de perda por etapa; revise a restricao antes de aumentar atividade.", example: "Uma proposta so avanca quando problema, decisor, criterio, prazo e proximo passo estao registrados e confirmados.", mistake: "Manter oportunidades antigas para proteger o numero do pipeline ou confundir atividade com progresso." },
   { id: "retention", label: "retencao e expansao", aliases: /retencao|churn|upsell|cross.?sell|pos.?venda/, definition: "Retencao preserva o valor entregue; expansao aumenta a relacao quando novos resultados justificam mais escopo.", principle: "Upsell sustentavel nasce de adocao, resultado comprovado e nova necessidade, nao de oferta precoce.", application: "Monitore marcos de valor, risco de uso, objetivos do cliente e oportunidades de ampliar resultado.", example: "Desde a implantacao, qual resultado evoluiu e qual gargalo passou a limitar o proximo nivel?", mistake: "Oferecer modulo adicional antes de comprovar valor no contrato atual." },
+  { id: "roles", label: "papeis SDR, BDR e closer", aliases: /\bsdr\b|\bbdr\b|closer|pre.?vendas/, definition: "SDR e BDR trabalham a criacao e qualificacao de oportunidades; o closer conduz discovery avancada, negociacao e fechamento. A divisao exata depende do processo da empresa.", principle: "Em muitas operacoes, SDR atende e qualifica demanda recebida, enquanto BDR desenvolve contas por prospeccao ativa. O closer assume quando existe aderencia e motivo real para uma conversa de venda.", application: "Defina criterio de passagem entre os papeis: ICP, problema, prioridade, participantes e proximo passo. Sem criterio, a especializacao apenas transfere leads ruins.", example: "O BDR abre uma conta-alvo, o SDR pode qualificar o interesse gerado e o closer conduz a oportunidade ate uma decisao verificavel.", mistake: "Confundir cargo com processo ou medir SDR e BDR apenas por volume de reunioes, sem qualidade e conversao." },
 ];
+
+const TRAINING_BY_TOPIC: Record<string, { moduleId: string; title: string; lesson: string; duration: string; activity: string }> = {
+  pitch: { moduleId: "pitch", title: "Pitch Comercial: do Basico ao Avancado", lesson: "Pitch consultivo", duration: "19 min", activity: "Monte seu pitch e valide clareza, valor e proximo passo." },
+  objections: { moduleId: "objecoes", title: "Contorno de Objecoes", lesson: "Diagnostico da objecao real", duration: "16 min", activity: "Responda a uma objecao real sem conceder desconto cedo." },
+  prospecting: { moduleId: "prospeccao", title: "Prospeccao Multicanal", lesson: "Estrategia outbound", duration: "18 min", activity: "Construa uma abordagem com contexto, relevancia e permissao." },
+  spin: { moduleId: "processo", title: "Processo Comercial Completo", lesson: "Diagnostico", duration: "22 min", activity: "Crie uma sequencia SPIN para uma conta real." },
+  discovery: { moduleId: "processo", title: "Processo Comercial Completo", lesson: "Diagnostico", duration: "22 min", activity: "Mapeie problema, impacto, prioridade e decisao." },
+  closing: { moduleId: "fechamento", title: "Tecnicas de Fechamento", lesson: "Fechamento consultivo", duration: "14 min", activity: "Transforme interesse em compromisso com data e responsavel." },
+  followup: { moduleId: "crm", title: "CRM e Pipeline", lesson: "Follow-up e agendamento", duration: "20 min", activity: "Escreva um follow-up que facilite uma decisao." },
+  negotiation: { moduleId: "processo", title: "Processo Comercial Completo", lesson: "Negociacao", duration: "22 min", activity: "Defina limites, trocas e contrapartidas." },
+  pipeline: { moduleId: "crm", title: "CRM e Pipeline", lesson: "Pipeline bem definido", duration: "20 min", activity: "Audite criterios de etapa e proximos passos." },
+  rapport: { moduleId: "comunicacao", title: "Comunicacao Comercial", lesson: "Rapport profissional", duration: "17 min", activity: "Prepare uma abertura contextual e natural." },
+  bant: { moduleId: "processo", title: "Processo Comercial Completo", lesson: "Qualificacao", duration: "22 min", activity: "Qualifique uma oportunidade sem transformar a call em formulario." },
+  roles: { moduleId: "prospeccao", title: "Prospeccao Multicanal", lesson: "Estrategia outbound", duration: "18 min", activity: "Defina papeis, criterio de passagem e indicador de qualidade." },
+};
 
 const normalize = (value: string) => value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
 const unique = (items: string[], limit = 8) => [...new Set(items.filter(Boolean))].slice(-limit);
@@ -88,6 +106,7 @@ export function classifyCoachIntent(message: string, history: CoachHistoryItem[]
   if (/me ensina|me explica|explique|quero aprender|como aplicar|explica.*como|aula/.test(text)) return "teaching";
   if (/\bpraticar\b|\bpratica\b|quero treinar|faz o papel|simula/.test(text)) return "practice";
   if (/dificuldade|nao consigo|travando|problema|ruim|perco|preciso melhorar/.test(text)) return "problem";
+  if (/^como (melhorar|contornar|prospectar|aprender|fazer|montar|estruturar)/.test(text) && topicsIn(text).length) return "teaching";
   if (/^(como|por que|porque|qual|quando|onde|quem)|\?$/.test(text)) return "question";
   if (topicsIn(text).length && text.split(/\s+/).length <= 4) return "teaching";
   return "unknown";
@@ -100,6 +119,38 @@ function contextualExample(topic: Topic, context: CoachContext) {
   const prefix = audience ? `Pensando em ${audience}` : "Pensando no seu cliente";
   const suffix = offer ? ` Aplique isso sem listar recursos de ${offer}; conecte a oferta ao resultado confirmado.` : "";
   return `${prefix}: ${topic.example}${suffix}`;
+}
+
+function lessonFor(topic: Topic, context: CoachContext): CoachLayer["lesson"] {
+  const offer = context.product || "sua oferta";
+  const audience = context.customer || "seu publico";
+  const commonSections = [
+    { title: "O que e", content: topic.definition },
+    { title: "Para que serve", content: topic.principle },
+    { title: "Como funciona", content: topic.application },
+    { title: "Como adaptar para sua empresa", content: `Aplique o conceito a ${offer}, considerando as prioridades, linguagem e criterios de decisao de ${audience}. Use dados reais da conversa e nunca complete lacunas com suposicoes.` },
+  ];
+  const pitchSections = [
+    { title: "1. Abertura", content: "Crie relevancia com um contexto real e confirme o objetivo da conversa. Nao desperdice os primeiros segundos contando a historia da empresa." },
+    { title: "2. Contexto", content: "Use algo que o cliente confirmou: processo atual, meta, mudanca ou friccao. O pitch precisa parecer continuacao da discovery." },
+    { title: "3. Problema e impacto", content: "Nomeie o problema nas palavras do cliente e traduza a consequencia em tempo, receita, risco, custo ou experiencia." },
+    { title: "4. Proposta de valor", content: `Explique como ${offer} muda o processo e qual resultado verificavel pode apoiar, sem prometer o que ainda nao foi comprovado.` },
+    { title: "5. Diferencial e prova", content: "Escolha apenas o diferencial relevante para o criterio de compra. Sustente com evidencia, caso, demonstracao ou dado verificavel." },
+    { title: "6. Validacao", content: "Pare e devolva a conversa ao cliente. Confirme se a proposta atende ao criterio mais importante antes de continuar." },
+    { title: "7. Proximo passo", content: "Converta interesse em uma acao com responsavel, data e objetivo. Um pitch sem proximo passo vira apenas apresentacao." },
+  ];
+  return {
+    title: `Mini aula: ${topic.label}`,
+    sections: topic.id === "pitch" ? [...commonSections.slice(0, 3), ...pitchSections, commonSections[3]] : commonSections,
+    badExample: `Exemplo ruim: apresentar recursos e afirmar que a solucao e a melhor sem conectar com o que ${audience} realmente disse. Problema: ${topic.mistake}`,
+    goodExample: contextualExample(topic, context),
+    mistakes: [topic.mistake, "Usar o mesmo roteiro para todos os clientes", "Avancar sem confirmar entendimento", "Confundir uma resposta positiva com compromisso real"],
+    exercise: `Escreva uma versao aplicada a ${offer} e ${audience}. Use uma situacao real, limite a resposta ao essencial e termine com uma pergunta de validacao. Envie ao Coach para receber feedback criterio por criterio.`,
+  };
+}
+
+function trainingFor(topic: Topic) {
+  return TRAINING_BY_TOPIC[topic.id];
 }
 
 function startPractice(topic: Topic, context: CoachContext, memory: CoachMemory): CoachLayer {
@@ -184,8 +235,8 @@ export function localCoachResponse(message: string, context: CoachContext = {}, 
 
   if (intent === "definition") return {
     ...simpleLayer(topic.definition, intent, updatedMemory),
-    reasoning: topic.principle,
-    action: `Na pratica: ${topic.application}`,
+    lesson: lessonFor(topic, context),
+    training: trainingFor(topic),
   };
 
   if (intent === "clarification") return {
@@ -264,6 +315,8 @@ export function localCoachResponse(message: string, context: CoachContext = {}, 
     options: intent === "teaching" ? ["Quero praticar", "Quero outro exemplo"] : [],
     hypotheses: [], next: [], intent, decisionRequired: intent === "teaching",
     memory: updatedMemory,
+    lesson: intent === "teaching" ? lessonFor(topic, context) : undefined,
+    training: intent === "teaching" || intent === "problem" ? trainingFor(topic) : undefined,
   };
 }
 
@@ -281,5 +334,7 @@ export function sanitizeCoachLayer(layer: Partial<CoachLayer>, fallback: CoachLa
     decisionRequired,
     memory: { ...fallback.memory, ...(layer.memory ?? {}) },
     feedback: layer.feedback,
+    lesson: layer.lesson ?? fallback.lesson,
+    training: layer.training ?? fallback.training,
   };
 }
