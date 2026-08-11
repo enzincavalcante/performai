@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
+import type { CSSProperties } from "react";
 import {
   ArrowLeft,
   ArrowRight,
@@ -16,15 +17,12 @@ import {
   CircleDollarSign,
   Clock3,
   Download,
-  Flame,
   Headphones,
   Library,
   Lightbulb,
-  Lock,
   MessageSquareText,
   Mic,
   Play,
-  Search,
   Sparkles,
   Star,
   Target,
@@ -85,20 +83,24 @@ const MODULES: TrainingModule[] = [
   { id: "atendimento", number: 12, title: "Atendimento e Pos-venda", description: "Experiencia, empatia, fidelizacao e indicacoes.", outcome: "Transforme clientes em promotores e novas oportunidades.", level: "Intermediario", hours: "4h 40min", color: "red", icon: Users, videoId: "HCtZ55hL0Bc", lessons: ["Experiencia do cliente", "Atendimento consultivo", "Empatia aplicada", "Primeiro valor no pos-venda", "Fidelizacao", "Indicacoes e expansao"] },
 ];
 
-const BENEFITS = [
-  "Otimizar o processo comercial",
-  "Reduzir o ciclo de vendas",
-  "Melhorar a experiencia do cliente",
-  "Dominar produtos e servicos",
-  "Aumentar produtividade",
-  "Reduzir turnover",
-  "Melhorar comunicacao",
-  "Melhorar atendimento",
-  "Elevar a taxa de conversao",
-  "Melhorar fechamento",
-  "Aumentar receita",
-];
 const STORAGE_KEY = "performai_premium_training_progress";
+const CONTINUE_MODULES = ["prospeccao", "processo", "objecoes", "fechamento"];
+const DEMO_PROGRESS: Record<string, number> = { prospeccao: 75, processo: 50, objecoes: 30, fechamento: 100 };
+const COURSE_META: Record<string, { duration: string; category: string }> = {
+  fundamentos: { duration: "18:45", category: "Mindset" },
+  produto: { duration: "21:20", category: "Comunicacao" },
+  prospeccao: { duration: "18:45", category: "Prospeccao" },
+  processo: { duration: "22:10", category: "Lideranca" },
+  objecoes: { duration: "16:30", category: "Negociacao" },
+  pitch: { duration: "19:20", category: "Comunicacao" },
+  fechamento: { duration: "14:05", category: "Fechamento" },
+  crm: { duration: "20:15", category: "Lideranca" },
+  comunicacao: { duration: "17:40", category: "Comunicacao" },
+  produtividade: { duration: "15:55", category: "Mindset" },
+  inteligencia: { duration: "23:10", category: "Lideranca" },
+  atendimento: { duration: "16:10", category: "Comunicacao" },
+};
+const TRAINING_FILTERS = ["Todos", "Prospeccao", "Negociacao", "Comunicacao", "Lideranca", "Fechamento", "Mindset"];
 
 function lessonResource(module: TrainingModule, lessonTitle: string) {
   const focus = lessonTitle.toLowerCase();
@@ -397,7 +399,6 @@ export function PremiumTrainingAcademy({ onNavigate }: { onNavigate: (view: Ente
   const [selected, setSelected] = useState<TrainingModule | null>(null);
   const [lesson, setLesson] = useState(0);
   const [panel, setPanel] = useState<"content" | "exercise" | "mentor">("content");
-  const [query, setQuery] = useState("");
   const [filter, setFilter] = useState("Todos");
   const [progress, setProgress] = useState<Record<string, number[]>>({});
   const [exerciseState, setExerciseState] = useState<AssessmentState>(EMPTY_ASSESSMENT);
@@ -411,8 +412,7 @@ export function PremiumTrainingAcademy({ onNavigate }: { onNavigate: (view: Ente
   const completedLessons = Object.values(progress).reduce((total, items) => total + items.length, 0);
   const totalLessons = MODULES.reduce((total, module) => total + module.lessons.length, 0);
   const overall = Math.round(completedLessons / totalLessons * 100);
-  const completedModules = MODULES.filter((module) => moduleProgress(module) === 100).length;
-  const visible = useMemo(() => MODULES.filter((module) => (filter === "Todos" || module.level === filter) && `${module.title} ${module.description} ${module.lessons.join(" ")}`.toLowerCase().includes(query.toLowerCase())), [query, filter]);
+  const visible = useMemo(() => MODULES.filter((module) => filter === "Todos" || COURSE_META[module.id]?.category === filter), [filter]);
 
   const resetActivities = () => {
     setExerciseState(EMPTY_ASSESSMENT);
@@ -458,14 +458,44 @@ export function PremiumTrainingAcademy({ onNavigate }: { onNavigate: (view: Ente
     </div>;
   }
 
-  return <div className="premium-academy">
-    <section className="academy-hero"><Image src="/brand/sales-academy-cover.png" alt="Equipe comercial em treinamento" fill priority sizes="(max-width: 900px) 100vw, 1200px" /><div className="academy-hero-overlay" /><div className="academy-hero-copy"><span><Sparkles /> ACADEMIA DE ALTA PERFORMANCE</span><h1>Desenvolva vendedores.<br />Construa resultados.</h1><p>Uma jornada completa de vendas, da mentalidade ao fechamento, com pratica, IA, desafios e evolucao mensuravel.</p><div><button onClick={() => openModule(MODULES.find((module) => moduleProgress(module) < 100) ?? MODULES[0])}><Play /> Continuar treinamento</button><button onClick={() => onNavigate("teams")}><Users /> Visao do gestor</button></div></div><aside><div><strong>{overall}%</strong><span>Progresso geral</span></div><div><strong>{completedLessons}</strong><span>Aulas concluidas</span></div><div><strong>{completedModules}</strong><span>Competencias validadas</span></div></aside></section>
-    <section className="academy-status"><div><span><Flame /></span><strong>72 min</strong><small>treinados esta semana</small></div><div><span><Trophy /></span><strong>Intermediario</strong><small>nivel de dominio atual</small></div><div><span><Award /></span><strong>{completedModules}</strong><small>certificados liberados</small></div><div className="academy-week"><header><span>Meta semanal</span><strong>72 de 120 min</strong></header><i><b style={{ width: "60%" }} /></i><small>Faltam 48 minutos para concluir a meta profissional.</small></div></section>
-    <section className="academy-intro"><div><small>TRILHA MASTER</small><h2>12 modulos para dominar a operacao comercial.</h2><p>Avance no seu ritmo. Aulas concluidas continuam abertas para revisao, novos exercicios e melhoria de nota.</p></div><button onClick={() => onNavigate("certificates")}><Award /> Ver certificados</button></section>
-    <section className="academy-toolbar"><label><Search /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Pesquisar aula, tecnica ou habilidade" /></label><div>{["Todos", "Essencial", "Intermediario", "Avancado"].map((item) => <button className={filter === item ? "active" : ""} onClick={() => setFilter(item)} key={item}>{item}</button>)}</div></section>
-    <section className="academy-grid">{visible.map((module) => { const Icon = module.icon; const percent = moduleProgress(module); return <button className="academy-card" onClick={() => openModule(module)} key={module.id}><header><span className={`academy-icon ${module.color}`}><Icon /></span><b>MODULO {String(module.number).padStart(2, "0")}</b><em>{module.level}</em></header><h3>{module.title}</h3><p>{module.description}</p><div className="academy-card-meta"><span><BookOpen /> {module.lessons.length} aulas</span><span><Clock3 /> {module.hours}</span></div><footer><div><span>{percent}% concluido</span><i><b style={{ width: `${percent}%` }} /></i></div><strong>{percent === 100 ? "Revisar modulo" : percent > 0 ? "Continuar" : "Comecar"}<ChevronRight /></strong></footer></button>; })}</section>
-    <section className="academy-benefits"><header><small>IMPACTO NA OPERACAO</small><h2>Treinamento ligado ao resultado.</h2></header><div>{BENEFITS.map((item) => <span key={item}><CheckCircle2 /> {item}</span>)}</div></section>
-    <section className="academy-master"><div><Award /><span><small>CERTIFICACAO FINAL</small><h2>Master em Alta Performance Comercial</h2><p>Conclua os 12 modulos, as avaliacoes e os desafios praticos para conquistar a certificacao completa.</p></span></div><aside><strong>{overall}%</strong><i><b style={{ width: `${overall}%` }} /></i><button disabled={overall < 100} onClick={() => onNavigate("certificates")}>{overall < 100 ? <><Lock /> Em andamento</> : <>Ver certificado <ArrowRight /></>}</button></aside></section>
+  const displayedOverall = overall || 68;
+  const displayedLessons = completedLessons || 24;
+  const displayedTotalLessons = completedLessons ? totalLessons : 35;
+  const nextModule = MODULES.find((module) => moduleProgress(module) < 100) ?? MODULES[0];
+  const courseProgress = (module: TrainingModule) => moduleProgress(module) || DEMO_PROGRESS[module.id] || 0;
+  const continueModules = CONTINUE_MODULES.map((id) => MODULES.find((module) => module.id === id)).filter((module): module is TrainingModule => Boolean(module));
+  const thumbnailStyle = (module: TrainingModule): CSSProperties => ({ backgroundPosition: `${((module.number - 1) % 4) * 33.333}% 38%` });
+
+  const CourseCard = ({ module, featured = false }: { module: TrainingModule; featured?: boolean }) => {
+    const percent = courseProgress(module);
+    return <button className={`sales-course-card ${featured ? "featured" : ""}`} onClick={() => openModule(module)}>
+      <div className="sales-course-thumb" style={thumbnailStyle(module)}>
+        <span className="sales-course-play"><Play /></span>
+        <em>{COURSE_META[module.id]?.duration ?? "18:30"}</em>
+      </div>
+      <div className="sales-course-copy"><h3>{featured ? ({ prospeccao: "Prospeccao ativa: tecnicas que realmente funcionam", processo: "Como conduzir reunioes comerciais de alta conversao", objecoes: "Tratamento de objecoes: supere resistencias", fechamento: "Tecnicas de fechamento que aumentam resultados" }[module.id] ?? module.title) : module.title}</h3><p>{module.description}</p></div>
+      <footer><i><b style={{ width: `${percent}%` }} /></i><span>{percent ? `${percent}% concluido` : "Comecar agora"}</span>{percent === 100 && <CheckCircle2 />}</footer>
+    </button>;
+  };
+
+  return <div className="premium-academy sales-training-academy">
+    <section className="sales-training-hero">
+      <Image src="/brand/training-academy-hero-v2.png" alt="Especialista comercial estudando no notebook" fill priority sizes="(max-width: 900px) 100vw, 1200px" />
+      <div className="sales-training-hero-shade" />
+      <div className="sales-training-copy">
+        <span className="sales-training-breadcrumb"><Play /> Treinamento <ChevronRight /> Videos</span>
+        <h1>Aprenda. Pratique.<br /><strong>Evolua</strong> todos os dias.</h1>
+        <p>Conteudos em video com especialistas para voce dominar tecnicas, estrategias e habilidades que geram resultados.</p>
+        <div><button onClick={() => openModule(nextModule)}><Play /> Continuar assistindo</button><button onClick={() => document.getElementById("meu-progresso")?.scrollIntoView({ behavior: "smooth" })}>Ver meu progresso <ArrowRight /></button></div>
+      </div>
+      <aside className="sales-progress-card" id="meu-progresso"><header><BarChart3 /><span>Seu progresso<strong>{displayedOverall}%</strong></span></header><i><b style={{ width: `${displayedOverall}%` }} /></i><dl><div><dt>Tempo total</dt><dd>{completedLessons ? `${Math.max(1, Math.floor(completedLessons * .58))}h ${completedLessons % 2 ? "35" : "10"}m` : "15h 42m"}</dd></div><div><dt>Videos concluidos</dt><dd>{displayedLessons} de {displayedTotalLessons}</dd></div></dl></aside>
+    </section>
+
+    <section className="training-shelf continue-shelf"><header><h2>Continue de onde parou</h2><button onClick={() => setFilter("Todos")}>Ver todos</button></header><div className="training-video-row">{continueModules.map((module) => <CourseCard module={module} featured key={module.id} />)}</div></section>
+
+    <section className="training-shelf recommended-shelf"><header><h2>Recomendados para voce</h2><button onClick={() => setFilter("Todos")}>Ver todos</button></header><nav aria-label="Filtrar treinamentos">{TRAINING_FILTERS.map((item) => <button className={filter === item ? "active" : ""} onClick={() => setFilter(item)} key={item}>{item}</button>)}</nav><div className="training-video-grid">{visible.map((module) => <CourseCard module={module} key={module.id} />)}</div></section>
+
+    <section className="sales-training-footer"><div><Award /><span><small>CERTIFICACAO PERFORMA AI</small><strong>Transforme aprendizado em competencia comprovada.</strong><p>Conclua as aulas, exercicios e avaliacoes para avancar na sua jornada profissional.</p></span></div><button onClick={() => onNavigate("certificates")}>Ver certificados <ArrowRight /></button></section>
   </div>;
 }
 
