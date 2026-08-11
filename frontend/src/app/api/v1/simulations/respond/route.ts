@@ -57,7 +57,7 @@ function fallbackReply(message: string, conversation: ConversationMessage[], per
       : "Essa parte eu entendi. Pode avancar e conectar sua proposta a um resultado concreto para a minha operacao?";
   }
 
-  if (has(text, /\b(ola|oi|bom dia|boa tarde|boa noite|tudo bem)\b/) && turn <= 1) {
+  if (/^(ola|oi|bom dia|boa tarde|boa noite|tudo bem)(,? tudo bem)?[!. ]*$/.test(text) && turn <= 1) {
     return selectReply(aggressive ? [
       "Tudo certo. Tenho pouco tempo, entao va direto ao ponto: por que essa conversa merece minha atencao?",
       "Ola. Posso falar por alguns minutos, mas quero objetividade. O que voce precisa entender primeiro?",
@@ -152,6 +152,20 @@ export async function POST(request: Request) {
     .map((item) => `${item.speaker === "seller" ? "VENDEDOR" : "CLIENTE"}: ${item.text.slice(0, 1800)}`)
     .join("\n");
   const persona = body.persona ?? {};
+  const sellerTurns = (body.conversation ?? []).filter((item) => item.speaker === "seller");
+  const sellerText = normalize(sellerTurns.map((item) => item.text).join(" "));
+  const questionCount = sellerTurns.filter((item) => item.text.includes("?")).length;
+  const discoverySignals = (sellerText.match(/como|qual|onde|quando|problema|impacto|prioridade|processo/g) ?? []).length;
+  const valueSignals = (sellerText.match(/resultado|impacto|retorno|roi|econom|risco|evidencia/g) ?? []).length;
+  const pressureSignals = (sellerText.match(/fechar hoje|ultima chance|desconto|agora ou nunca|tem que decidir/g) ?? []).length;
+  const internalState = {
+    interest: Math.max(15, Math.min(90, 38 + discoverySignals * 5 + valueSignals * 4 - pressureSignals * 7)),
+    trust: Math.max(10, Math.min(90, 42 + questionCount * 5 - pressureSignals * 8)),
+    clarity: Math.max(15, Math.min(90, 40 + valueSignals * 4)),
+    perceivedValue: Math.max(10, Math.min(90, 28 + valueSignals * 7)),
+    urgency: Math.max(10, Math.min(85, 25 + discoverySignals * 3)),
+    resistance: Math.max(10, Math.min(95, 68 - discoverySignals * 4 - valueSignals * 3 + pressureSignals * 9)),
+  };
   const apiKey = process.env.GEMINI_API_KEY;
   const gatewayToken = process.env.AI_GATEWAY_API_KEY || process.env.VERCEL_OIDC_TOKEN || request.headers.get("x-vercel-oidc-token");
   let gatewayState = gatewayToken ? "configured" : "missing-token";
@@ -161,19 +175,24 @@ export async function POST(request: Request) {
 Persona: ${persona.name || "Cliente"}, ${persona.role || "decisor"}, segmento ${persona.segment || "nao informado"}.
 Personalidade: ${persona.personality || "criterioso e objetivo"}. Dificuldade: ${persona.difficulty || "media"}.
 Contexto: ${persona.context || "conversa comercial"}. Objecao principal: ${persona.objection || "risco da decisao"}. Objetivo do vendedor: ${persona.objective || "avancar a venda"}.
+Estado interno atual, que nunca deve ser revelado literalmente: interesse ${internalState.interest}/100, confianca ${internalState.trust}/100, clareza ${internalState.clarity}/100, valor percebido ${internalState.perceivedValue}/100, urgencia ${internalState.urgency}/100 e resistencia ${internalState.resistance}/100.
 
 Regras obrigatorias:
 - Leia a ultima fala e responda diretamente ao significado dela.
 - Lembre do historico e nao repita perguntas ou frases ja usadas.
+- Se o vendedor perguntar novamente algo que voce ja respondeu, sinalize isso naturalmente e preserve o fato anterior.
 - Seja natural, humano e coerente com a persona; varie ritmo e vocabulario.
 - Responda com conteudo suficiente para uma conversa real: normalmente 2 a 5 frases naturais e no maximo uma pergunta por turno.
 - Revele informacoes aos poucos. Crie objecoes ligadas ao que o vendedor falou, sem mudar de assunto.
+- Nao entregue dor, impacto, autoridade, orcamento e urgencia de uma vez. Quanto melhor a investigacao, mais informacao voce fornece.
 - Se o vendedor fizer uma boa pergunta, responda com um detalhe concreto. Se fizer pitch generico, pressione por relevancia ou evidencia.
 - Evolua pelas fases abertura, descoberta, impacto, valor, objecao, negociacao e proximo passo. Nao reinicie a call e nao volte a uma fase encerrada sem motivo.
 - Guarde fatos ja revelados sobre problema, impacto, urgencia, autoridade, orcamento, concorrente e criterios de decisao.
 - Nao transforme toda resposta em pergunta. Reaja, revele informacao, expresse duvida, concorde ou discorde como uma pessoa real.
 - A objecao deve nascer da proposta e do contexto atual. Depois que ela for resolvida com evidencia, avance em vez de repeti-la.
-- Dificuldade facil: mais aberto e cooperativo. Media: criterioso e com uma objecao por vez. Dificil: resistente, impaciente e exigente, sem ser incoerente.
+- Dificuldade facil: mais aberto e cooperativo. Media: criterioso e com uma objecao por vez. Dificil: resistente e exigente. Especialista: testa logica, evidencia, diferenciacao, risco e criterio de decisao, sem ser mal-educado sem motivo.
+- Se a fala for confusa, diga com naturalidade que nao entendeu e peca esclarecimento. Se for longa demais, interrompa ou resuma o ponto. Se houver promessa exagerada, demonstre duvida.
+- O resultado pode ser venda fechada, reuniao, proxima etapa, proposta, follow-up, indecisao ou oportunidade perdida. Nunca avance sem merito apenas para agradar.
 - Nunca invente que o cliente entendeu algo que o vendedor nao explicou. Nunca aceite promessa vaga como prova.
 - Nao avalie, nao ensine, nao elogie a tecnica e nao mencione que e uma IA.`;
   const prompt = `HISTORICO DA CONVERSA:\n${history || "Sem historico anterior."}\n\nULTIMA FALA DO VENDEDOR:\n${message}\n\nResponda agora como o cliente.`;

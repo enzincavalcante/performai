@@ -1,0 +1,40 @@
+.quick-training-config textarea {
+  min-height: 84px;
+  padding: 11px 13px;
+  border: 1px solid #31517d;
+  border-radius: 5px;
+  color: #eef5ff;
+  background: #071a34;
+  font-family: inherit;
+  line-height: 1.55;
+  resize: vertical;
+}
+.coach-score-grid article { align-content: start; }
+.coach-score-grid article > p {
+  grid-column: 1 / -1;
+  min-height: 38px;
+  margin: 0;
+  color: #93a8c3;
+  font-size: 8px;
+  line-height: 1.55;
+}
+.coach-score-grid article > blockquote {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding: 8px;
+  border-left: 2px solid #4fcfd9;
+  color: #bdccdf;
+  background: #0d2648;
+  font-size: 8px;
+  line-height: 1.5;
+}
+.coach-result-columns article > p + p { margin-top: 8px; }
+.coach-result-columns article b { color: #dce8f7; }
+.coach-result-columns article small { display: block; margin-top: 8px; color: #7790ae; line-height: 1.5; }
+.coach-model-flow { margin: 0 18px 18px; border: 1px solid #2b5684; background: #0b294b; }
+.coach-model-flow summary { display: flex; align-items: center; gap: 8px; padding: 14px; color: #67dce5; font-size: 9px; font-weight: 900; cursor: pointer; list-style: none; }
+.coach-model-flow summary::-webkit-details-marker { display: none; }
+.coach-model-flow summary svg { width: 16px; }
+.coach-model-flow summary svg:last-child { margin-left: auto; }
+.coach-model-flow p { margin: 0; padding: 0 14px 14px; color: #adc0d7; font-size: 9px; line-height: 1.65; }
+@media(max-width:720px) { .coach-score-grid article > p { min-height: 0; } }

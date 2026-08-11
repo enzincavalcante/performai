@@ -1,0 +1,60 @@
+.coach-simple > header > p,
+.commercial-strategies > header p { font-size: 11px; }
+.coach-simple > header span,
+.commercial-strategies > header > div > span { font-size: 14px; }
+.coach-chat-heading strong { font-size: 13px; }
+.coach-chat-heading small,
+.commercial-chat article > small { font-size: 11px; }
+.commercial-chat article > p { font-size: 14px; }
+.coach-layer details summary,
+.coach-question > b { font-size: 12px; }
+.coach-layer details > p { font-size: 13px; }
+.coach-layer details > span { font-size: 11px; }
+.coach-question button { font-size: 11px; }
+.coach-main-composer textarea { font-size: 14px; }
+.coach-main-composer button { font-size: 12px; }
+.coach-idea-select { font-size: 12px; }
+.coach-idea-select select { font-size: 12px; }
+.coach-loaded-context strong { font-size: 12px; }
+.coach-loaded-context small { font-size: 11px; }
+
+.strategy-wizard article > small,
+.strategy-results > header small,
+.strategy-diagnosis-grid small,
+.strategy-executive-plan small,
+.strategy-ai-summary small { font-size: 10px; }
+.strategy-progress { font-size: 11px; }
+.strategy-wizard select,
+.strategy-wizard input,
+.strategy-wizard textarea { font-size: 14px; }
+.strategy-wizard footer button,
+.strategy-actions button,
+.strategy-executive-plan button { font-size: 12px; }
+.strategy-results > header p { font-size: 13px; }
+.strategy-results > header > strong { font-size: 12px; }
+.strategy-diagnosis-grid strong { font-size: 14px; }
+.strategy-diagnosis-grid p { font-size: 11px; }
+.strategy-results > details > summary { font-size: 13px; }
+.strategy-detail-body p { font-size: 13px; }
+.strategy-priorities header span { font-size: 9px; }
+.strategy-priorities h3 { font-size: 15px; }
+.strategy-priorities dt { font-size: 9px; }
+.strategy-priorities dd { font-size: 11px; }
+.strategy-timeline small { font-size: 9px; }
+.strategy-timeline b,
+.strategy-scenarios b { font-size: 13px; }
+.strategy-timeline p,
+.strategy-scenarios p { font-size: 11px; }
+.strategy-ai-summary p,
+.strategy-executive-plan > p { font-size: 12px; }
+
+.coach-score-grid span { font-size: 11px; }
+.coach-score-grid article > p { font-size: 11px; }
+.coach-score-grid article > blockquote { font-size: 10px; }
+.coach-result-columns p { font-size: 11px; }
+.coach-model-flow summary { font-size: 12px; }
+.coach-model-flow p { font-size: 12px; }
+@media(max-width:700px) {
+  .coach-simple > header span,
+  .commercial-strategies > header > div > span { font-size: 13px; }
+}

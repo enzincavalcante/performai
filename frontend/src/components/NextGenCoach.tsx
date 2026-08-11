@@ -26,6 +26,8 @@ import {
 import "./next-gen-coach.css";
 import "./next-gen-coach-premium.css";
 import "./next-gen-upgrades.css";
+import "./simulation-evaluation.css";
+import "./premium-module-readability.css";
 import { CallReview } from "./CallReview";
 import { useSpeechToText } from "@/hooks/useSpeechToText";
 
@@ -213,21 +215,20 @@ export function NextGenCoach({ initialTab = "training" }: { initialTab?: HubTab 
   const [clientLoading, setClientLoading] = useState(false);
   const [missionThinking, setMissionThinking] = useState(false);
   const [trainingConfig, setTrainingConfig] = useState({
-    sellerName: "",
-    sellerRole: "",
-    sellerExperience: "",
-    sellerStrengths: "",
-    sellerWeaknesses: "",
-    product: "",
-    objective: "Conquistar um proximo passo",
-    clientName: "Ricardo",
-    role: "Diretor Comercial",
-    segment: "Tecnologia",
-    difficulty: "Medio",
+    scenario: "",
+    difficulty: "",
+    clientType: "",
+    customScenario: "",
+    customClient: "",
     context: "",
   });
   const customer = useMemo(() => CLIENT_POOL[seed % CLIENT_POOL.length], [seed]);
-  const inferredProfile = customer.personality;
+  const activeCustomer = useMemo(() => ({
+    ...customer,
+    role: trainingConfig.clientType === "Outro" ? trainingConfig.customClient || customer.role : trainingConfig.clientType || customer.role,
+    difficulty: trainingConfig.difficulty || customer.difficulty,
+  }), [customer, trainingConfig.clientType, trainingConfig.customClient, trainingConfig.difficulty]);
+  const inferredProfile = activeCustomer.personality;
   const inferredObjection = customer.objection;
 
   const generateCustomer = () => {
@@ -239,10 +240,11 @@ export function NextGenCoach({ initialTab = "training" }: { initialTab?: HubTab 
   };
 
   const startSession = () => {
+    const scenario = trainingConfig.scenario === "Criar meu proprio cenario" ? trainingConfig.customScenario : trainingConfig.scenario;
     setConversation([
       {
         speaker: "coach",
-        text: `Sou ${customer.name}, ${customer.role} da ${customer.company}. Tenho poucos minutos. Comece a conversa e me mostre por que vale a pena continuar.`,
+        text: `Oi, aqui e ${activeCustomer.name}, ${activeCustomer.role} da ${activeCustomer.company}. Podemos comecar nossa conversa sobre ${scenario.toLowerCase()}.`,
       },
     ]);
     setStep("session");
@@ -257,20 +259,20 @@ export function NextGenCoach({ initialTab = "training" }: { initialTab?: HubTab 
     setBuyerThinking(true);
     try {
       const reply = await requestBuyerReply("training", sellerMessage, history, {
-        name: customer.name,
-        role: customer.role,
-        segment: customer.segment,
+        name: activeCustomer.name,
+        role: activeCustomer.role,
+        segment: activeCustomer.segment,
         personality: inferredProfile,
-        difficulty: customer.difficulty,
-        context: `${customer.hidden} Produto: ${trainingConfig.product || "nao informado"}. Vendedor: ${trainingConfig.sellerRole}, experiencia ${trainingConfig.sellerExperience || "nao informada"}. Objetivo: ${trainingConfig.objective}.`,
+        difficulty: activeCustomer.difficulty,
+        context: `${activeCustomer.hidden} Tipo de treino: ${trainingConfig.scenario}. Cenario personalizado: ${trainingConfig.customScenario || "nao informado"}. Contexto adicional: ${trainingConfig.context || "nao informado"}.`,
         objection: inferredObjection,
-        objective: trainingConfig.objective,
+        objective: "Conduzir a conversa ate um resultado comercial realista",
       });
       setConversation((items) => [...items, { speaker: "coach", text: reply }]);
     } catch {
       setConversation((items) => [...items, {
         speaker: "coach",
-        text: createBuyerReply(sellerMessage, turn, trainingConfig.context || "Conversa comercial", inferredObjection, inferredProfile),
+        text: createBuyerReply(sellerMessage, turn, trainingConfig.customScenario || trainingConfig.scenario || "Conversa comercial", inferredObjection, inferredProfile),
       }]);
     } finally {
       setBuyerThinking(false);
@@ -280,49 +282,59 @@ export function NextGenCoach({ initialTab = "training" }: { initialTab?: HubTab 
     const sellerMessages = conversation.filter((item) => item.speaker === "seller");
     const combined = normalizeText(sellerMessages.map((item) => item.text).join(" "));
     const questions = sellerMessages.filter((item) => item.text.includes("?")).length;
-    const hasValue = /(impacto|resultado|roi|econom|reduz|aument)/.test(combined);
-    const hasNextStep = /(proximo passo|reuniao|agenda|quinta|sexta|data)/.test(combined);
-    const base = Math.min(70, 48 + sellerMessages.length * 6);
-    const discovery = Math.min(96, base + questions * 8);
-    const value = Math.min(96, base + (hasValue ? 18 : 0));
-    const closing = Math.min(96, base + (hasNextStep ? 20 : 0));
-    const overall = Math.round((discovery + value + closing) / 3);
-    const note = (score: number) => Number((Math.max(0, Math.min(100, score)) / 10).toFixed(1));
+    const first = sellerMessages[0]?.text ?? "";
+    const longest = sellerMessages.reduce((best, item) => item.text.length > best.length ? item.text : best, "");
+    const last = sellerMessages.at(-1)?.text ?? "";
+    const hasGreeting = /(oi|ola|bom dia|boa tarde|boa noite|tudo bem)/.test(normalizeText(first));
+    const hasDiscovery = /(como|qual|onde|quando|hoje|atualmente|processo|problema|dificuldade)/.test(combined) && questions > 0;
+    const hasImpact = /(impacto|resultado|custo|consequencia|perde|tempo|receita|risco|prioridade)/.test(combined);
+    const hasListening = /(entendi|pelo que|voce disse|faz sentido|entao|se eu entendi)/.test(combined);
+    const hasPain = /(dor|problema|dificuldade|desafio|trava|gargalo)/.test(combined);
+    const hasValue = /(valor|impacto|resultado|roi|econom|reduz|aument|retorno|evidencia)/.test(combined);
+    const hasPitch = /(solucao|produto|plataforma|servico|proposta|funciona)/.test(combined);
+    const hasObjectionWork = /(entendo|faz sentido|quando voce diz|o que esta por tras|comparando|criterio)/.test(combined);
+    const mentionedDiscount = /(desconto|reduzir o preco|baixar o preco|%)/.test(combined);
+    const hasTrade = /(contrapartida|escopo|prazo|condicao|em troca)/.test(combined);
+    const hasNextStep = /(proximo passo|reuniao|agenda|quinta|sexta|segunda|terca|quarta|data|marcar|agendar)/.test(combined);
+    const hasDecision = /(decisor|quem decide|aprova|criterio de decisao|orcamento)/.test(combined);
+    const overpromise = /(garanto|certeza|100%|sem risco|resultado garantido)/.test(combined);
+    const avgLength = sellerMessages.length ? sellerMessages.reduce((sum, item) => sum + item.text.length, 0) / sellerMessages.length : 0;
+    const volumeBase = Math.min(18, sellerMessages.length * 4);
+    const score = (value: number) => Math.max(0, Math.min(100, Math.round(value)));
+    const scores = [
+      { label: "Abertura", score: score(42 + volumeBase + (hasGreeting ? 24 : 0)), reason: hasGreeting ? "Voce iniciou com uma saudacao e abriu espaco para a conversa." : "A conversa comecou sem uma abertura clara ou permissao para avancar.", evidence: first },
+      { label: "Rapport", score: score(44 + volumeBase + (hasListening ? 20 : 0)), reason: hasListening ? "Houve validacao ou retomada do que o cliente disse." : "Faltou demonstrar conexao com a fala anterior do cliente.", evidence: hasListening ? longest : first },
+      { label: "Comunicacao", score: score(50 + volumeBase + (avgLength >= 25 && avgLength <= 240 ? 18 : 4)), reason: avgLength > 240 ? "As falas ficaram longas para uma conversa comercial." : "As falas mantiveram tamanho compreensivel para o dialogo.", evidence: longest },
+      { label: "Qualidade das perguntas", score: score(38 + questions * 13 + (hasDiscovery ? 12 : 0)), reason: questions > 1 ? `Foram identificadas ${questions} perguntas ao longo da conversa.` : "Houve pouca investigacao antes de avancar.", evidence: sellerMessages.find((item) => item.text.includes("?"))?.text ?? first },
+      { label: "Diagnostico", score: score(36 + volumeBase + (hasDiscovery ? 26 : 0) + (hasImpact ? 10 : 0)), reason: hasDiscovery ? "Voce buscou entender contexto ou processo antes de concluir." : "Nao apareceu uma sequencia suficiente de descoberta.", evidence: longest },
+      { label: "Escuta ativa", score: score(40 + volumeBase + (hasListening ? 28 : 0)), reason: hasListening ? "Sua fala retomou informacoes do cliente." : "Nao houve evidencia clara de parafrase ou confirmacao de entendimento.", evidence: hasListening ? longest : first },
+      { label: "Identificacao de dor", score: score(38 + volumeBase + (hasPain ? 24 : 0) + (hasImpact ? 9 : 0)), reason: hasPain ? "O problema foi nomeado e conectado ao dialogo." : "A necessidade ficou generica ou pouco explorada.", evidence: longest },
+      { label: "Construcao de valor", score: score(38 + volumeBase + (hasValue ? 28 : 0) + (hasImpact ? 8 : 0)), reason: hasValue ? "A conversa incluiu impacto, resultado ou retorno." : "O valor nao foi ligado a um resultado reconhecido pelo cliente.", evidence: longest },
+      { label: "Pitch", score: score(42 + volumeBase + (hasPitch ? 18 : 0) + (hasValue ? 12 : 0)), reason: hasPitch && hasValue ? "A oferta apareceu ligada a valor, e nao apenas a funcionalidades." : "O pitch precisa conectar a solucao ao diagnostico.", evidence: longest },
+      { label: "Objecoes", score: score(40 + volumeBase + (hasObjectionWork ? 28 : 0)), reason: hasObjectionWork ? "Voce validou ou investigou antes de argumentar." : "Faltou identificar a causa real por tras da resistencia.", evidence: longest },
+      { label: "Negociacao", score: score(52 + volumeBase + (hasTrade ? 22 : 0) - (mentionedDiscount && !hasTrade ? 24 : 0)), reason: mentionedDiscount && !hasTrade ? "Preco ou desconto apareceu sem contrapartida explicita." : "Nao houve concessao prematura detectada.", evidence: longest },
+      { label: "Fechamento", score: score(38 + volumeBase + (hasNextStep ? 28 : 0) + (hasDecision ? 8 : 0)), reason: hasNextStep ? "Voce conduziu a conversa para uma acao concreta." : "A conversa terminou sem pedido claro de avanco.", evidence: last },
+      { label: "Proximo passo", score: score(34 + volumeBase + (hasNextStep ? 38 : 0)), reason: hasNextStep ? "Foi sinalizado um proximo movimento." : "Faltaram data, responsavel e objetivo da proxima etapa.", evidence: last },
+      { label: "Postura comercial", score: score(58 + volumeBase - (overpromise ? 28 : 0)), reason: overpromise ? "Foi detectada promessa absoluta ou dificil de sustentar." : "A postura permaneceu profissional, sem promessa exagerada detectada.", evidence: longest },
+    ];
+    const overall = Math.round(scores.reduce((sum, item) => sum + item.score, 0) / scores.length);
+    const ranked = [...scores].sort((a, b) => b.score - a.score);
+    const improvements = [...scores].sort((a, b) => a.score - b.score).slice(0, 3);
     return {
       overall,
-      scores: [
-        ["Abertura", note(base + 4)],
-        ["Rapport e adaptacao", note(base + 2)],
-        ["Agenda e controle", note(base + (sellerMessages.length > 2 ? 8 : 0))],
-        ["Descoberta do contexto", note(discovery)],
-        ["Impacto e custo da inacao", note(value)],
-        ["Qualificacao", note(discovery - 6)],
-        ["Escuta ativa", note(discovery + 3)],
-        ["Qualidade das perguntas", note(base + questions * 9)],
-        ["Pitch contextual", note(value + (hasValue ? 4 : 0))],
-        ["Construcao de valor e prova", note(value)],
-        ["Tratamento de objecoes", note(value + 2)],
-        ["Negociacao e margem", note(value + (hasNextStep ? 8 : 1))],
-        ["Fechamento", note(closing)],
-        ["Proximo passo", note(closing + (hasNextStep ? 3 : -8))],
-        ["Tom, postura e compliance", note(base + 10)],
-      ] as Array<[string, number]>,
+      scores,
+      strengths: ranked.slice(0, 3),
+      improvements,
       headline: hasNextStep
         ? "Voce conduziu a conversa para um compromisso claro."
         : questions
           ? "Boa investigacao; falta transformar valor em um proximo passo."
           : "Sua proposta precisa partir de mais descoberta antes de avancar.",
-      error: hasNextStep
-        ? "O proximo passo apareceu, mas ainda faltou confirmar explicitamente quem decide e qual criterio comprovara o valor."
-        : questions
-          ? "Voce investigou o contexto, mas encerrou sem combinar responsavel, data e objetivo da proxima conversa."
-          : "Voce apresentou a solucao antes de investigar o impacto e o criterio de decisao do cliente.",
-      best: inferredObjection === "Preco"
-        ? "Quando voce diz caro, esta comparando com o orcamento, com outra proposta ou com o retorno que espera gerar?"
-        : `Antes de responder sobre ${inferredObjection.toLowerCase()}, qual risco ou criterio esta por tras dessa preocupacao?`,
-      next: hasNextStep
-        ? "Repita com dificuldade maior e valide o compromisso sem oferecer desconto."
-        : "Repita o treino e termine com um proximo passo que tenha data, participantes e pauta.",
+      keyMoment: longest || "Nao houve fala suficiente para destacar um momento real.",
+      keyMomentReason: hasDiscovery ? "Esta fala concentrou a maior parte do diagnostico observado." : "Esta foi a fala mais completa, mas ainda precisa aprofundar problema e impacto.",
+      coachFlow: inferredObjection === "Preco"
+        ? "Eu validaria a preocupacao, perguntaria se a comparacao e com verba, concorrente ou retorno, retomaria o impacto confirmado e so entao negociaria o proximo criterio de decisao."
+        : `Eu confirmaria o que esta por tras de ${inferredObjection.toLowerCase()}, conectaria a resposta ao impacto que o cliente reconheceu e proporia um proximo passo com data, participantes e objetivo.`,
     };
   }, [conversation, inferredObjection]);
 
@@ -428,16 +440,16 @@ export function NextGenCoach({ initialTab = "training" }: { initialTab?: HubTab 
                     <UserRound />
                   </span>
                   <p>CLIENTE GERADO</p>
-                  <h2>{clientLoading ? "Criando novo cliente..." : customer.name}</h2>
-                  <strong>{customer.role} · {customer.company}</strong>
+                  <h2>{clientLoading ? "Criando novo cliente..." : activeCustomer.name}</h2>
+                  <strong>{activeCustomer.role} · {activeCustomer.company}</strong>
                   <dl>
                     <div>
                       <dt>Personalidade</dt>
-                      <dd>{customer.personality}</dd>
+                      <dd>{activeCustomer.personality}</dd>
                     </div>
                     <div>
                       <dt>Dificuldade</dt>
-                      <dd>{customer.difficulty}</dd>
+                      <dd>{activeCustomer.difficulty}</dd>
                     </div>
                     <div>
                       <dt>A IA cria automaticamente</dt>
@@ -446,12 +458,14 @@ export function NextGenCoach({ initialTab = "training" }: { initialTab?: HubTab 
                   </dl>
                 </article>
                 <div className="coach-config quick-training-config">
-                  <header><span>CONFIGURACAO RAPIDA</span><h3>Responda uma opcao por pergunta.</h3><p>Clique na seta para abrir as alternativas. O cliente e o restante do cenario sao criados automaticamente.</p></header>
-                  <label className="quick-select wide"><span>1. Qual e o seu cargo?</span><select value={trainingConfig.sellerRole} onChange={(event) => setTrainingConfig((current) => ({ ...current, sellerRole: event.target.value }))}><option value="">Escolha seu cargo</option><option>SDR</option><option>BDR</option><option>Closer</option><option>Executivo de Vendas</option><option>Vendedor</option><option>Gerente Comercial</option><option>Outro</option></select></label>
-                  <label className="quick-select wide"><span>2. Qual e a sua experiencia em vendas?</span><select value={trainingConfig.sellerExperience} onChange={(event) => setTrainingConfig((current) => ({ ...current, sellerExperience: event.target.value }))}><option value="">Escolha sua experiencia</option><option>Iniciante</option><option>Intermediario</option><option>Avancado</option></select></label>
-                  <label className="quick-select wide"><span>3. O que voce vende?</span><select value={trainingConfig.product} onChange={(event) => setTrainingConfig((current) => ({ ...current, product: event.target.value }))}><option value="">Escolha o tipo de oferta</option><option>SaaS</option><option>Servico</option><option>Produto fisico</option><option>Consultoria</option><option>Imoveis</option><option>Educacao</option><option>Financeiro</option><option>Outro</option></select></label>
-                  {(trainingConfig.sellerRole === "Outro" || trainingConfig.product === "Outro") && <label className="wide">Outro - escrever resposta<input value={trainingConfig.context} onChange={(event) => setTrainingConfig((current) => ({ ...current, context: event.target.value }))} placeholder="Escreva seu cargo ou o que voce vende" /></label>}
-                  <button className="start-coaching" onClick={startSession} disabled={!trainingConfig.sellerRole || !trainingConfig.sellerExperience || !trainingConfig.product || clientLoading}>
+                  <header><span>CONFIGURACAO RAPIDA</span><h3>Prepare uma conversa realista.</h3><p>Quatro campos. A IA cria personalidade, necessidades, objecoes e reacoes durante a conversa.</p></header>
+                  <label className="quick-select wide"><span>1. O que voce quer treinar?</span><select value={trainingConfig.scenario} onChange={(event) => setTrainingConfig((current) => ({ ...current, scenario: event.target.value }))}><option value="">Selecionar tipo de treino</option><option>Cold Call</option><option>Discovery Call</option><option>Reuniao Comercial</option><option>Apresentacao</option><option>Demonstracao</option><option>Negociacao</option><option>Objecoes</option><option>Follow-up</option><option>Fechamento</option><option>Renovacao</option><option>Upsell</option><option>Criar meu proprio cenario</option></select></label>
+                  {trainingConfig.scenario === "Criar meu proprio cenario" && <label className="wide">Descreva seu cenario<textarea value={trainingConfig.customScenario} onChange={(event) => setTrainingConfig((current) => ({ ...current, customScenario: event.target.value }))} placeholder="Ex.: Quero vender software para o dono de uma clinica que ja usa um concorrente." /></label>}
+                  <label className="quick-select wide"><span>2. Qual a dificuldade?</span><select value={trainingConfig.difficulty} onChange={(event) => setTrainingConfig((current) => ({ ...current, difficulty: event.target.value }))}><option value="">Selecionar dificuldade</option><option>Facil</option><option>Medio</option><option>Dificil</option><option>Especialista</option></select></label>
+                  <label className="quick-select wide"><span>3. Quem esta do outro lado?</span><select value={trainingConfig.clientType} onChange={(event) => setTrainingConfig((current) => ({ ...current, clientType: event.target.value }))}><option value="">Selecionar tipo de cliente</option><option>CEO</option><option>CFO</option><option>Diretor Comercial</option><option>Gerente de Compras</option><option>Dono de empresa</option><option>Cliente analitico</option><option>Cliente desconfiado</option><option>Cliente impaciente</option><option>Cliente economico</option><option>Outro</option></select></label>
+                  {trainingConfig.clientType === "Outro" && <label className="wide">Escreva o tipo de cliente<input value={trainingConfig.customClient} onChange={(event) => setTrainingConfig((current) => ({ ...current, customClient: event.target.value }))} placeholder="Ex.: Gestor de clinica leal ao concorrente" /></label>}
+                  <label className="wide">4. Contexto adicional <small>OPCIONAL</small><textarea value={trainingConfig.context} onChange={(event) => setTrainingConfig((current) => ({ ...current, context: event.target.value }))} placeholder="O que voce vende, momento do cliente, objetivo ou informacao importante." /></label>
+                  <button className="start-coaching" onClick={startSession} disabled={!trainingConfig.scenario || !trainingConfig.difficulty || !trainingConfig.clientType || (trainingConfig.scenario === "Criar meu proprio cenario" && trainingConfig.customScenario.trim().length < 12) || (trainingConfig.clientType === "Outro" && trainingConfig.customClient.trim().length < 3) || clientLoading}>
                     <Play /> Iniciar treino <ArrowRight />
                   </button>
                 </div>
@@ -465,8 +479,8 @@ export function NextGenCoach({ initialTab = "training" }: { initialTab?: HubTab 
                   <UserRound />
                 </span>
                 <p>CLIENTE EM SIMULACAO</p>
-                <h2>{customer.name}</h2>
-                <strong>{customer.role} · {customer.personality}</strong>
+                <h2>{activeCustomer.name}</h2>
+                <strong>{activeCustomer.role} · {activeCustomer.personality}</strong>
                 <div>
                   <i />
                   <span>Conversa ativa</span>
@@ -481,12 +495,12 @@ export function NextGenCoach({ initialTab = "training" }: { initialTab?: HubTab 
                   {conversation.map((item, index) => (
                     <article className={item.speaker} key={index}>
                       <small>
-                        {item.speaker === "coach" ? customer.name : "Voce"}
+                        {item.speaker === "coach" ? activeCustomer.name : "Voce"}
                       </small>
                       <p>{item.text}</p>
                     </article>
                   ))}
-                  {buyerThinking && <article className="coach ai-thinking" aria-live="polite"><small>{customer.name}</small><p><i /><i /><i /> Analisando o que voce disse...</p></article>}
+                  {buyerThinking && <article className="coach ai-thinking" aria-live="polite"><small>{activeCustomer.name}</small><p><i /><i /><i /> Interpretando sua fala...</p></article>}
                 </div>
                 <div className="inline-coach">
                   <Lightbulb />
@@ -536,44 +550,42 @@ export function NextGenCoach({ initialTab = "training" }: { initialTab?: HubTab 
                 </strong>
               </header>
               <div className="coach-score-grid">
-                {evaluation.scores.map(([label, score]) => (
-                  <article key={label}>
-                    <span>{label}</span>
-                    <strong>{score}/10</strong>
+                {evaluation.scores.map((item) => (
+                  <article key={item.label}>
+                    <span>{item.label}</span>
+                    <strong>{item.score}/100</strong>
                     <div>
-                      <i style={{ width: `${score * 10}%` }} />
+                      <i style={{ width: `${item.score}%` }} />
                     </div>
+                    <p>{item.reason}</p>
+                    {item.evidence && <blockquote>&ldquo;{item.evidence}&rdquo;</blockquote>}
                   </article>
                 ))}
               </div>
               <div className="coach-result-columns">
                 <article>
-                  <ShieldAlert />
-                  <h3>Maior erro</h3>
-                  <p>
-                    {evaluation.error}
-                  </p>
+                  <CheckCircle2 />
+                  <h3>Pontos fortes</h3>
+                  {evaluation.strengths.map((item) => <p key={item.label}><b>{item.label}:</b> {item.reason}</p>)}
                 </article>
                 <article>
-                  <Sparkles />
-                  <h3>Melhor resposta</h3>
-                  <p>
-                    &ldquo;{evaluation.best}&rdquo;
-                  </p>
+                  <ShieldAlert />
+                  <h3>Melhorias prioritarias</h3>
+                  {evaluation.improvements.map((item) => <p key={item.label}><b>{item.label}:</b> {item.reason}</p>)}
                 </article>
                 <article>
                   <Target />
-                  <h3>Proxima acao</h3>
-                  <p>
-                    {evaluation.next}
-                  </p>
+                  <h3>Momento real da simulacao</h3>
+                  <p>&ldquo;{evaluation.keyMoment}&rdquo;</p>
+                  <small>{evaluation.keyMomentReason}</small>
                 </article>
               </div>
+              <details className="coach-model-flow"><summary><Sparkles /> Como o Coach conduziria essa situacao <ChevronRight /></summary><p>{evaluation.coachFlow}</p></details>
               <footer>
                 <button onClick={() => setTab("battle")}>
                   Ver desafios comerciais
                 </button>
-                <button onClick={() => setStep("setup")}>
+                <button onClick={() => { generateCustomer(); setTrainingConfig((current) => ({ ...current, difficulty: current.difficulty === "Facil" ? "Medio" : current.difficulty === "Medio" ? "Dificil" : current.difficulty === "Dificil" ? "Especialista" : current.difficulty })); }}>
                   <RefreshCw /> Treinar novamente
                 </button>
               </footer>

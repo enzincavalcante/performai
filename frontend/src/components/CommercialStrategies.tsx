@@ -1,67 +1,124 @@
 "use client";
 
-import { FormEvent, useState } from "react";
-import { BarChart3, BriefcaseBusiness, CheckCircle2, ShieldAlert, Sparkles, Target } from "lucide-react";
+import { useState } from "react";
+import { ArrowLeft, ArrowRight, BriefcaseBusiness, Check, ChevronDown, Clipboard, MessageSquare, RefreshCw, Sparkles, Target } from "lucide-react";
 import "./commercial-strategies.css";
+import "./premium-module-readability.css";
 
-const PROBLEMS = ["Aquisicao", "Conversao", "Ticket medio", "Retencao", "Margem", "Equipe comercial", "Processo", "Nao sei identificar", "Outro"];
-const GOALS = ["Aumentar vendas", "Aumentar margem", "Gerar oportunidades", "Aumentar conversao", "Estruturar comercial", "Escalar operacao", "Outro"];
-const COUNCIL = ["Aprofundar estrategia", "Criar plano de 90 dias", "Analisar meus numeros", "Melhorar minha oferta", "Simular cenarios", "Questionar essa estrategia"];
+type Answers = { offer: string; goal: string; problem: string; channel: string; context: string };
+type Priority = { title: string; what: string; why: string; how: string; resources: string; kpi: string; risk: string };
 
-export function CommercialStrategies() {
-  const [problem, setProblem] = useState("");
-  const [goal, setGoal] = useState("");
-  const [detail, setDetail] = useState("");
-  const [other, setOther] = useState("");
-  const [metrics, setMetrics] = useState({ leads: "", meetings: "", sales: "", ticket: "" });
+const QUESTIONS = [
+  { key: "offer", title: "O que sua empresa vende?", placeholder: "Selecionar tipo de oferta", options: ["Software/SaaS", "Servico", "Produto fisico", "Consultoria", "Educacao", "Agencia", "E-commerce", "Outro"] },
+  { key: "goal", title: "Qual e o principal objetivo da empresa agora?", placeholder: "Selecionar objetivo", options: ["Aumentar faturamento", "Conseguir mais clientes", "Aumentar conversao", "Aumentar ticket medio", "Melhorar margem/lucro", "Estruturar comercial", "Escalar operacao", "Melhorar retencao", "Entrar em novos mercados", "Outro"] },
+  { key: "problem", title: "Qual e hoje o maior problema para crescer?", placeholder: "Selecionar principal problema", options: ["Poucos leads", "Leads ruins", "Poucas reunioes", "Baixa conversao", "Vendedores com baixa performance", "Ciclo de vendas longo", "Ticket baixo", "Muitos cancelamentos", "Falta de processo", "Dificuldade para escalar", "Nao sei identificar", "Outro"] },
+  { key: "channel", title: "Como voces conseguem clientes hoje?", placeholder: "Selecionar canal principal", options: ["Indicacao", "Outbound", "Trafego pago", "Conteudo", "Redes sociais", "Parceiros", "Eventos", "Prospeccao", "Equipe comercial", "Combinacao de canais", "Outro"] },
+] as const;
+
+const EMPTY: Answers = { offer: "", goal: "", problem: "", channel: "", context: "" };
+
+function prioritySet(problem: string, goal: string): Priority[] {
+  const map: Record<string, Priority[]> = {
+    "Poucos leads": [
+      { title: "Definir ICP e gatilhos de compra", what: "Escolher um segmento, cargo e evento que aumente a chance de necessidade ativa.", why: "Mais volume sem foco aumenta custo e reduz conversao.", how: "Compare os 10 melhores clientes, identifique padroes e crie uma lista-piloto de 50 contas.", resources: "CRM, dados de clientes e 1 responsavel por pesquisa.", kpi: "Taxa de resposta e reunioes por 50 contas.", risk: "ICP amplo demais." },
+      { title: "Construir uma cadencia multicanal", what: "Combinar contato relevante por email, telefone e rede social.", why: "Uma tentativa isolada perde oportunidades por timing.", how: "Teste uma sequencia de 8 contatos em 15 dias com duas mensagens de valor.", resources: "CRM e modelos de mensagem.", kpi: "Contatos por conta, respostas e reunioes.", risk: "Automacao sem personalizacao." },
+      { title: "Criar um ativo de conversao", what: "Oferecer diagnostico, benchmark ou material ligado ao problema prioritario.", why: "Uma proposta de valor util reduz a barreira do primeiro contato.", how: "Crie um ativo curto e teste em uma unica campanha.", resources: "Especialista interno e pagina simples.", kpi: "Conversao de interesse para reuniao.", risk: "Material generico." },
+    ],
+    "Baixa conversao": [
+      { title: "Localizar a etapa de maior perda", what: "Medir conversao entre reuniao, diagnostico, proposta e fechamento.", why: "A media final esconde onde a venda realmente quebra.", how: "Classifique 30 oportunidades recentes por etapa e motivo de perda.", resources: "CRM e amostra de calls.", kpi: "Conversao por etapa e motivo de perda.", risk: "Dados inconsistentes." },
+      { title: "Elevar a qualidade da discovery", what: "Padronizar problema, impacto, prioridade, decisores e criterio de decisao.", why: "Proposta sem diagnostico compete principalmente por preco.", how: "Crie um checklist e revise duas calls por vendedor por semana.", resources: "Gestor, roteiro e Call Review.", kpi: "Descobertas completas e propostas qualificadas.", risk: "Transformar checklist em interrogatorio." },
+      { title: "Treinar o principal gap", what: "Concentrar a pratica na competencia com maior impacto sobre perdas.", why: "Treinar tudo ao mesmo tempo dilui a mudanca comportamental.", how: "Execute simulacoes semanais e compare a mesma competencia por quatro semanas.", resources: "Treino com IA e rotina de coaching.", kpi: "Nota da competencia e conversao da etapa.", risk: "Avaliar sem pratica recorrente." },
+    ],
+    "Muitos cancelamentos": [
+      { title: "Diagnosticar churn por causa e momento", what: "Separar cancelamentos por expectativa, adocao, valor, atendimento e perfil.", why: "Retencao nao melhora com uma acao unica para causas diferentes.", how: "Revise os ultimos 20 cancelamentos e entreviste cinco clientes.", resources: "CRM, CS e dados de produto.", kpi: "Churn por causa e tempo ate cancelamento.", risk: "Aceitar motivo declarado sem aprofundar." },
+      { title: "Corrigir promessa e onboarding", what: "Alinhar venda, entrega e primeiro valor percebido.", why: "Expectativa errada acelera frustracao e churn.", how: "Defina criterios de sucesso na venda e marcos de 7, 30 e 60 dias.", resources: "Vendas, CS e operacao.", kpi: "Tempo ate valor e ativacao.", risk: "Prometer mais para fechar." },
+      { title: "Criar sinais de risco", what: "Monitorar queda de uso, atrasos e ausencia de patrocinador.", why: "Recuperar antes do pedido de cancelamento aumenta a chance de reversao.", how: "Crie alertas e uma rotina semanal de contas em risco.", resources: "CS e dashboard simples.", kpi: "Contas recuperadas e expansao liquida.", risk: "Alertas sem responsavel." },
+    ],
+  };
+  if (map[problem]) return map[problem];
+  if (problem === "Leads ruins" || problem === "Poucas reunioes") return prioritySet("Poucos leads", goal);
+  if (problem === "Vendedores com baixa performance" || problem === "Ciclo de vendas longo" || problem === "Falta de processo" || problem === "Dificuldade para escalar") return prioritySet("Baixa conversao", goal);
+  if (problem === "Ticket baixo") return [
+    { title: "Revisar segmentacao e disposicao a pagar", what: "Comparar ticket, margem e valor por segmento.", why: "Ticket baixo pode ser problema de cliente, pacote ou venda de valor.", how: "Analise ganhos e perdas por segmento e tamanho de conta.", resources: "CRM e dados financeiros.", kpi: "Ticket e margem por segmento.", risk: "Aumentar preco sem reposicionar valor." },
+    { title: "Redesenhar pacotes", what: "Separar oferta essencial, avancada e expansao.", why: "Empacotamento torna valor e escolha mais claros.", how: "Monte tres pacotes baseados em resultados e limites objetivos.", resources: "Produto, vendas e financeiro.", kpi: "Mix de planos e ticket medio.", risk: "Pacotes definidos apenas por features." },
+    { title: "Criar movimento de upsell", what: "Usar resultado conquistado para diagnosticar a proxima necessidade.", why: "Expansao em clientes aderentes custa menos que nova aquisicao.", how: "Mapeie contas elegiveis e crie revisao trimestral de resultado.", resources: "CS e executivo de conta.", kpi: "Receita de expansao e NRR.", risk: "Ofertar antes de comprovar valor." },
+  ];
+  return prioritySet(goal.includes("retencao") ? "Muitos cancelamentos" : "Baixa conversao", goal);
+}
+
+function metric(text: string, label: string) {
+  const normalized = text.replaceAll(".", "");
+  const afterNumber = normalized.match(new RegExp(`(\\d+(?:,\\d+)?)\\s*(?:${label})`, "i"));
+  const afterLabel = normalized.match(new RegExp(`(?:${label})[^\\d]{0,12}(\\d+(?:,\\d+)?)`, "i"));
+  const match = afterNumber || afterLabel;
+  return match ? Number(match[1].replace(",", ".")) : 0;
+}
+
+export function CommercialStrategies({ onOpenCoach }: { onOpenCoach?: () => void }) {
+  const [step, setStep] = useState(0);
+  const [answers, setAnswers] = useState<Answers>(EMPTY);
+  const [custom, setCustom] = useState<Record<string, string>>({});
   const [ready, setReady] = useState(false);
-  const [error, setError] = useState("");
-  const [council, setCouncil] = useState("");
-  const leads = Number(metrics.leads);
-  const meetings = Number(metrics.meetings);
-  const sales = Number(metrics.sales);
-  const ticket = Number(metrics.ticket.replace(",", "."));
-  const hasFunnel = leads > 0 && meetings >= 0 && sales >= 0;
+  const [copied, setCopied] = useState("");
+  const [aiSummary, setAiSummary] = useState("");
+  const [summarizing, setSummarizing] = useState(false);
+  const current = QUESTIONS[step];
+  const currentKey = current?.key as keyof Answers | undefined;
+  const resolved = (key: keyof Answers) => answers[key] === "Outro" ? custom[key]?.trim() || "Outro nao detalhado" : answers[key];
+  const priorities = prioritySet(resolved("problem"), resolved("goal"));
+  const leads = metric(answers.context, "leads?");
+  const meetings = metric(answers.context, "reunioes?|reuniao");
+  const sales = metric(answers.context, "vendas?");
+  const ticket = metric(answers.context, "ticket");
+  const hasNumbers = leads > 0 && meetings > 0 && sales >= 0;
 
-  const generate = (event: FormEvent) => {
-    event.preventDefault();
-    const freeText = (other || detail).trim();
-    if (!problem || !goal) { setError("Escolha o problema e o objetivo para continuar."); return; }
-    if ((problem === "Outro" || goal === "Outro") && freeText.length < 12) { setError("Explique o caso em uma frase completa. Nao vamos inventar o contexto que falta."); return; }
-    if (freeText && /^(a|b|c|sim|nao|sei la)$/i.test(freeText)) { setError("Essa resposta nao descreve um problema comercial. Conte o que esta acontecendo."); return; }
-    setError("");
-    setCouncil("");
+  const strategyText = `PLANO EXECUTIVO\nObjetivo: ${resolved("goal")}\nProblema principal: ${resolved("problem")}\nOferta: ${resolved("offer")}\nCanal atual: ${resolved("channel")}\nContexto: ${answers.context || "Nao informado"}\n\nPrioridades:\n${priorities.map((item, index) => `${index + 1}. ${item.title}\nO que fazer: ${item.what}\nPor que: ${item.why}\nComo: ${item.how}\nKPI: ${item.kpi}\nRisco: ${item.risk}`).join("\n\n")}\n\nPlano 7 dias: medir a linha de base e validar o principal gargalo.\nPlano 30 dias: executar um teste controlado e treinar o comportamento necessario.\nPlano 90 dias: consolidar o que funcionou, documentar e escalar.`;
+
+  const continueFlow = () => {
+    if (step < 4) { setStep((value) => value + 1); return; }
     setReady(true);
   };
+  const canContinue = step === 4 || Boolean(currentKey && answers[currentKey] && (answers[currentKey] !== "Outro" || custom[currentKey]?.trim().length >= 3));
+  const copy = async (content: string, label: string) => { await navigator.clipboard.writeText(content); setCopied(label); window.setTimeout(() => setCopied(""), 1800); };
+  const summarize = async () => {
+    setSummarizing(true);
+    try {
+      const response = await fetch("/api/v1/coach/respond", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ message: `Resuma este plano executivo em diagnostico, objetivo, tres prioridades, metas e proximo passo:\n${strategyText}` }) });
+      const payload = await response.json() as { layer?: { direct?: string; action?: string } };
+      setAiSummary(response.ok && payload.layer?.direct ? `${payload.layer.direct} ${payload.layer.action || ""}` : `Objetivo: ${resolved("goal")}. Gargalo prioritario: ${resolved("problem")}. Execute ${priorities.map((item) => item.title).join(", ")}. Primeiro passo: medir a linha de base nos proximos 7 dias.`);
+    } catch { setAiSummary(`Objetivo: ${resolved("goal")}. Gargalo prioritario: ${resolved("problem")}. Primeiro passo: medir a linha de base e validar a causa antes de escalar investimento.`); }
+    finally { setSummarizing(false); }
+  };
+  const openCoach = () => {
+    window.localStorage.setItem("performai_coach_strategy_context", strategyText);
+    onOpenCoach?.();
+  };
+  const restart = () => { setReady(false); setStep(0); setAiSummary(""); };
 
-  return <div className="commercial-strategies">
-    <header><div><p>ESTRATEGIAS COMERCIAIS</p><h1>Decisoes melhores para o seu comercial.</h1><span>Entende o problema da empresa, questiona premissas, cria prioridades e transforma o diagnostico em execucao mensuravel.</span></div><aside><BriefcaseBusiness /><span><strong>Motor de estrategia</strong><small>Fatos separados de hipoteses</small></span></aside></header>
-    <div className="strategies-distinction"><Target /><p><b>Use aqui:</b> &ldquo;Como aumentar a conversao do meu time?&rdquo;</p><span><b>Use o Coach:</b> &ldquo;Como posso melhorar meu fechamento?&rdquo;</span></div>
-    <section className="strategies-layout">
-      <form onSubmit={generate}>
-        <fieldset><legend>Onde esta seu maior problema?</legend><div className="strategy-options">{PROBLEMS.map((item) => <button type="button" className={problem === item ? "active" : ""} onClick={() => { setProblem(item); setReady(false); }} key={item}>{item}</button>)}</div></fieldset>
-        <fieldset><legend>Qual e seu principal objetivo?</legend><div className="strategy-options">{GOALS.map((item) => <button type="button" className={goal === item ? "active" : ""} onClick={() => { setGoal(item); setReady(false); }} key={item}>{item}</button>)}</div></fieldset>
-        {(problem === "Outro" || goal === "Outro") && <label>Outro - escrever resposta<textarea value={other} onChange={(event) => setOther(event.target.value)} placeholder="Explique o problema ou objetivo em uma frase" /></label>}
-        <label>O que voce ja observou? <small>Opcional</small><textarea value={detail} onChange={(event) => setDetail(event.target.value)} placeholder="Use fatos. Ex.: 500 leads, 50 reunioes e 10 vendas." /></label>
-        <details><summary><BarChart3 /> Analisar numeros reais (opcional)</summary><div className="strategy-metrics"><label>Leads<input inputMode="numeric" value={metrics.leads} onChange={(event) => setMetrics({ ...metrics, leads: event.target.value })} /></label><label>Reunioes<input inputMode="numeric" value={metrics.meetings} onChange={(event) => setMetrics({ ...metrics, meetings: event.target.value })} /></label><label>Vendas<input inputMode="numeric" value={metrics.sales} onChange={(event) => setMetrics({ ...metrics, sales: event.target.value })} /></label><label>Ticket medio<input inputMode="decimal" value={metrics.ticket} onChange={(event) => setMetrics({ ...metrics, ticket: event.target.value })} /></label></div></details>
-        {error && <p className="strategy-error"><ShieldAlert />{error}</p>}
-        <button type="submit" className="strategy-submit"><Sparkles /> Criar plano estrategico</button>
-      </form>
-      {!ready ? <div className="strategy-empty"><BriefcaseBusiness /><h2>Simples por fora, rigoroso por dentro.</h2><p>Escolha problema e objetivo. Voce recebera diagnostico, prioridades, execucao, metricas, riscos e cenarios sem informacoes inventadas.</p></div> : <div className="strategy-plan">
-        <header><CheckCircle2 /><div><small>PLANO ESTRATEGICO COMERCIAL</small><h2>{goal} com foco em {problem.toLowerCase()}</h2></div></header>
-        <article><h3>Diagnostico</h3><p><b>Fato informado:</b> o problema selecionado foi {problem.toLowerCase()} e o objetivo e {goal.toLowerCase()}. {detail.trim() ? `Evidencia relatada: ${detail.trim()}` : "Nenhum dado operacional adicional foi informado."}</p><p><b>Hipotese a validar:</b> o gargalo pode estar em volume, qualidade, passagem de etapa ou consistencia. A selecao aponta a area, mas nao prova a causa.</p></article>
-        <article><h3>Problema central</h3><p>O sintoma e {problem.toLowerCase()}. Confirme a causa comparando entrada, conversao por etapa, ciclo, perdas e variacao entre vendedores.</p></article>
-        <article><h3>Oportunidades</h3><p>Mapear a etapa com maior perda, reproduzir comportamentos dos melhores vendedores e remover uma friccao por ciclo.</p></article>
-        <article><h3>Estrategia principal</h3><p>Instrumentar o funil, escolher um gargalo verificavel e executar um ciclo curto de melhoria. Isso evita mudar aquisicao, oferta, equipe e processo ao mesmo tempo.</p></article>
-        <div className="strategy-timeline">{[["24 horas", "Extrair os numeros atuais e criar uma linha de base."], ["7 dias", "Ouvir calls, classificar perdas e testar uma mudanca."], ["30 dias", "Treinar o comportamento e comparar com a linha de base."], ["90 dias", "Consolidar o que funcionou, documentar e escalar."]].map(([period, action]) => <article key={period}><small>{period}</small><p>{action}</p></article>)}</div>
-        <article><h3>Prioridades: impacto x esforco x urgencia</h3><p>1. Medir conversao: alto impacto, baixo esforco, urgente. 2. Revisar evidencia de calls: alto impacto, esforco medio. 3. Alterar oferta ou contratar: alto esforco, somente depois do diagnostico.</p></article>
-        <article><h3>Metricas</h3>{hasFunnel ? <p>Lead para reuniao: {((meetings / leads) * 100).toFixed(1)}%. Reuniao para venda: {meetings > 0 ? ((sales / meetings) * 100).toFixed(1) : "0.0"}%. Conversao total: {((sales / leads) * 100).toFixed(1)}%. {ticket > 0 ? `Receita calculada: R$ ${(sales * ticket).toLocaleString("pt-BR")}.` : "Ticket nao informado; receita nao calculada."}</p> : <p>Numeros nao informados. Acompanhe volume por etapa, conversao, ciclo, ticket, margem e motivo de perda. Nenhum numero foi estimado.</p>}</article>
-        <article><h3>Riscos</h3><p>Confundir correlacao com causa, mudar varias variaveis juntas, usar amostra pequena e pressionar volume sem qualidade.</p></article>
-        <article><h3>Cenarios</h3><p><b>Acima do esperado:</b> documente e replique. <b>Sem evolucao:</b> revise hipotese e execucao. <b>Novo problema:</b> preserve a linha de base e teste uma variavel.</p></article>
-        <article className="strategy-first"><h3>O que eu faria primeiro?</h3><p>Hoje, reuniria as oportunidades recentes por etapa e analisaria as cinco perdas mais representativas para descobrir onde a conversao realmente quebra.</p></article>
-        <div className="strategy-council"><b>Conselho estrategico</b><div>{COUNCIL.map((item) => <button onClick={() => setCouncil(item)} key={item}>{item}</button>)}</div></div>
-        {council && <article className="strategy-question"><h3>{council}</h3>{council === "Questionar essa estrategia" ? <><p><b>Premissa possivelmente errada:</b> {problem.toLowerCase()} pode ser apenas o sintoma mais visivel.</p><p><b>Informacao faltante:</b> conversao por etapa, tempo, origem e vendedor.</p><p><b>Maior risco:</b> otimizar volume enquanto a perda real ocorre na qualificacao ou oferta.</p><p><b>Alternativa:</b> comparar uma coorte de ganhos e perdas antes de alterar todo o processo.</p><p><b>O que invalida a conclusao:</b> dados mostrando que o gargalo esta em outra etapa.</p></> : <p>Esta frente exige dados adicionais antes de uma recomendacao especifica. Complete os numeros relevantes e gere novamente; nenhum contexto sera inventado.</p>}</article>}
-      </div>}
-    </section>
+  return <div className="commercial-strategies strategy-premium">
+    <header><div><p>ESTRATEGIAS COMERCIAIS</p><h1>Diagnostico claro. Plano executavel.</h1><span>Responda cinco perguntas. A plataforma cruza o contexto, identifica o gargalo e organiza as tres prioridades de maior impacto.</span></div><aside><BriefcaseBusiness /><span><strong>Consultor estrategico</strong><small>Menos opiniao. Mais criterio.</small></span></aside></header>
+    {!ready ? <section className="strategy-wizard">
+      <div className="strategy-progress"><span>{step + 1} de 5</span><div><i style={{ width: `${((step + 1) / 5) * 100}%` }} /></div></div>
+      <article>
+        <small>PERGUNTA {String(step + 1).padStart(2, "0")}</small>
+        <h2>{step === 4 ? "Conte rapidamente como sua empresa esta hoje." : current.title}</h2>
+        {step < 4 && currentKey ? <>
+          <select value={answers[currentKey]} onChange={(event) => setAnswers((value) => ({ ...value, [currentKey]: event.target.value }))}><option value="">{current.placeholder}</option>{current.options.map((item) => <option key={item}>{item}</option>)}</select>
+          {answers[currentKey] === "Outro" && <input autoFocus value={custom[currentKey] || ""} onChange={(event) => setCustom((value) => ({ ...value, [currentKey]: event.target.value }))} placeholder="Escreva sua resposta" />}
+        </> : <textarea value={answers.context} onChange={(event) => setAnswers((value) => ({ ...value, context: event.target.value }))} placeholder="Pode falar de faturamento, clientes, equipe, ticket, metas, dificuldades ou qualquer informacao que ajude a IA a entender sua empresa." />}
+        <footer><button onClick={() => setStep((value) => Math.max(0, value - 1))} disabled={step === 0}><ArrowLeft /> Voltar</button><button className="primary" onClick={continueFlow} disabled={!canContinue}>{step === 4 ? <><Sparkles /> Gerar estrategia</> : <>Continuar <ArrowRight /></>}</button></footer>
+      </article>
+    </section> : <section className="strategy-results">
+      <header><div><small>RESUMO EXECUTIVO</small><h2>{resolved("goal")} com foco em {resolved("problem").toLowerCase()}</h2><p>Para uma empresa de {resolved("offer").toLowerCase()} que hoje depende de {resolved("channel").toLowerCase()}, o primeiro movimento nao e fazer tudo: e validar o gargalo e concentrar execucao nas tres prioridades abaixo.</p></div><strong><Target /> 3 prioridades</strong></header>
+      <div className="strategy-diagnosis-grid"><article><small>SITUACAO ATUAL</small><strong>{resolved("channel")}</strong><p>{answers.context || "Contexto operacional adicional nao informado."}</p></article><article><small>PRINCIPAL GARGALO</small><strong>{resolved("problem")}</strong><p>Hipotese orientadora que precisa ser validada com dados do funil e evidencia de clientes.</p></article><article><small>MAIOR OPORTUNIDADE</small><strong>{resolved("goal")}</strong><p>Concentrar recursos na etapa que limita o crescimento antes de ampliar o volume.</p></article><article><small>NAO PRIORIZAR AGORA</small><strong>Mudar tudo ao mesmo tempo</strong><p>Contratacao, novos canais ou desconto sem diagnostico podem ampliar o desperdicio.</p></article></div>
+      <details open><summary>Diagnostico da empresa <ChevronDown /></summary><div className="strategy-detail-body"><p><b>Tese:</b> {resolved("problem")} pode ser causa ou apenas o sintoma mais visivel. Cruze conversao por etapa, origem, ciclo, ticket e motivo de perda antes de aumentar investimento.</p><p><b>Risco atual:</b> perseguir {resolved("goal").toLowerCase()} com mais volume sem corrigir a restricao principal.</p><p><b>Prioridade estrategica:</b> localizar a maior perda mensuravel e executar um ciclo curto de melhoria.</p></div></details>
+      <details open><summary>Estrategia comercial recomendada <ChevronDown /></summary><div className="strategy-priorities">{priorities.map((item, index) => <article key={item.title}><header><span>PRIORIDADE #{index + 1}</span><h3>{item.title}</h3></header><dl><div><dt>O que fazer</dt><dd>{item.what}</dd></div><div><dt>Por que fazer</dt><dd>{item.why}</dd></div><div><dt>Como executar</dt><dd>{item.how}</dd></div><div><dt>Recursos</dt><dd>{item.resources}</dd></div><div><dt>Indicador</dt><dd>{item.kpi}</dd></div><div><dt>Risco</dt><dd>{item.risk}</dd></div></dl></article>)}</div></details>
+      <details><summary>Plano de execucao: 7, 30 e 90 dias <ChevronDown /></summary><div className="strategy-timeline"><article><small>PROXIMOS 7 DIAS</small><b>Validar o gargalo</b><p>Extrair a linha de base, revisar uma amostra real e escolher o teste de maior impacto.</p></article><article><small>PROXIMOS 30 DIAS</small><b>Executar e comparar</b><p>Rodar um experimento, treinar a habilidade necessaria e comparar com a linha de base.</p></article><article><small>PROXIMOS 90 DIAS</small><b>Padronizar e escalar</b><p>Documentar o que funcionou, definir responsaveis e ampliar somente depois da evidencia.</p></article></div></details>
+      <details><summary>Metricas e projecoes <ChevronDown /></summary><div className="strategy-detail-body">{hasNumbers ? <><p>Funil informado: {leads} leads, {meetings} reunioes e {sales} vendas. Conversao lead-reuniao: {((meetings / leads) * 100).toFixed(1)}%. Conversao reuniao-venda: {((sales / meetings) * 100).toFixed(1)}%.</p>{ticket > 0 && <p>Receita base calculada: {sales} × R$ {ticket.toLocaleString("pt-BR")} = <b>R$ {(sales * ticket).toLocaleString("pt-BR")}</b>. Projecoes futuras exigem uma hipotese explicita de conversao; nao tratamos potencial como garantia.</p>}</> : <p>Nao ha numeros suficientes para uma projecao responsavel. Informe no contexto leads, reunioes, vendas e ticket para calcular a linha de base sem inventar dados.</p>}</div></details>
+      <details><summary>Cenarios e riscos <ChevronDown /></summary><div className="strategy-scenarios"><article><b>Conservador</b><p>Melhora operacional sem novo investimento relevante. Menor risco, aprendizado mais lento.</p></article><article><b>Base</b><p>Executa as tres prioridades com dono, prazo e revisao quinzenal.</p></article><article><b>Agressivo</b><p>Aumenta investimento somente depois que o teste base comprovar conversao e capacidade operacional.</p></article></div></details>
+      {aiSummary && <article className="strategy-ai-summary"><Sparkles /><div><small>RESUMO COM IA</small><p>{aiSummary}</p></div></article>}
+      <div className="strategy-actions"><button onClick={() => void copy(strategyText, "estrategia")}><Clipboard /> {copied === "estrategia" ? "Estrategia copiada" : "Copiar estrategia"}</button><button onClick={() => void summarize()} disabled={summarizing}><Sparkles /> {summarizing ? "Resumindo..." : "Resumir com IA"}</button><button onClick={openCoach}><MessageSquare /> Conversar com IA sobre esta estrategia</button><button onClick={restart}><RefreshCw /> Refazer estrategia</button></div>
+      <article className="strategy-executive-plan"><header><Check /><div><small>PLANO EXECUTIVO</small><h2>Decisao pronta para alinhar com o time</h2></div></header><p><b>Objetivo:</b> {resolved("goal")}</p><p><b>Problema:</b> {resolved("problem")}</p><p><b>KPIs:</b> {priorities.map((item) => item.kpi).join("; ")}</p><p><b>Responsaveis sugeridos:</b> lider comercial, dono da etapa e analista de operacoes/CRM.</p><p><b>Proxima acao:</b> medir a linha de base e validar a causa nos proximos 7 dias.</p><button onClick={() => void copy(strategyText, "plano")}><Clipboard /> {copied === "plano" ? "Plano copiado" : "Copiar plano"}</button></article>
+    </section>}
   </div>;
 }

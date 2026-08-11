@@ -11,7 +11,6 @@ type CoachLayer = {
 };
 type CoachRequest = {
   message?: string;
-  style?: string;
   context?: { product?: string; customer?: string; stage?: string; objective?: string };
   history?: Array<{ role?: string; text?: string }>;
 };
@@ -22,12 +21,12 @@ function parseLayer(raw: string): CoachLayer | null {
   try {
     const clean = raw.trim().replace(/^```json\s*/i, "").replace(/```$/i, "").trim();
     const value = JSON.parse(clean) as Partial<CoachLayer>;
-    if (!value.direct?.trim() || !value.reasoning?.trim() || !value.action?.trim()) return null;
+    if (!value.direct?.trim()) return null;
     return {
       direct: value.direct.trim(),
       hypotheses: Array.isArray(value.hypotheses) ? value.hypotheses.filter(Boolean).slice(0, 4) : [],
-      reasoning: value.reasoning.trim(),
-      action: value.action.trim(),
+      reasoning: value.reasoning?.trim() ?? "",
+      action: value.action?.trim() ?? "",
       question: value.question?.trim() ?? "",
       options: Array.isArray(value.options) ? value.options.filter(Boolean).slice(0, 5) : [],
       next: Array.isArray(value.next) ? value.next.filter(Boolean).slice(0, 5) : [],
@@ -45,18 +44,22 @@ export async function POST(request: Request) {
 
   const context = body.context ?? {};
   const history = (body.history ?? []).filter((item) => item.text?.trim()).slice(-10).map((item) => `${item.role === "coach" ? "COACH" : "VENDEDOR"}: ${item.text?.slice(0, 1200)}`).join("\n");
-  const systemPrompt = `Voce e o Coach Comercial da Performa AI, um mentor senior de vendas B2B e B2C. Responda em portugues brasileiro natural, humano, claro e profissional.
+  const systemPrompt = `Voce e o Coach Comercial da Performa AI, um mentor senior de vendas B2B e B2C. Converse em portugues brasileiro natural, humano e profissional.
 
 REGRAS OBRIGATORIAS:
 - Responda DIRETAMENTE o que o usuario perguntou na primeira frase. Nunca desvie para uma pergunta generica.
 - Leia o historico e mantenha continuidade. Nao repita recomendacoes ja dadas.
 - Nao invente empresa, cliente, numeros, fatos ou resultados. Separe fatos, hipoteses e informacoes ausentes.
-- Se a mensagem for casual, responda de forma casual e acolhedora. Nao transforme "oi" em diagnostico.
+- Primeiro interprete a intencao: cumprimento, continuacao, duvida, problema, pedido de opiniao, ensino, analise ou negociacao.
+- Se a mensagem for casual, responda de forma casual e curta. Nao transforme conversa simples em aula.
+- Entenda girias, abreviacoes, erros de portugues, frases incompletas e audio transcrito sem corrigir o usuario.
 - Se a pergunta estiver clara, responda sem pedir contexto antes. Se faltar algo decisivo, responda o que ja e possivel e faca no maximo UMA pergunta especifica ao final.
 - Explique por que a recomendacao funciona e entregue uma acao ou frase aplicavel.
 - Questione conclusoes ruins com respeito. Nao concorde automaticamente com desconto, culpa do cliente ou pressao artificial.
-- Use o estilo ${body.style || "Direto"}: Direto e objetivo; Professor explica; Desafiador questiona; Pratico usa exemplos e exercicios.
-- Sugira 3 a 5 proximas acoes clicaveis relacionadas ao assunto.
+- Adapte a extensao e o tom automaticamente: pergunta simples pede resposta simples; caso complexo pede analise profunda. Acompanhe o nivel e a formalidade do usuario.
+- Domine prospeccao, SDR, BDR, closer, SPIN, BANT, MEDDIC/MEDDPICC, discovery, pitch, demonstracao, objecoes, negociacao, follow-up, fechamento, CRM, pipeline, forecast, gestao, B2B, B2C, SaaS, outbound, inbound e social selling, mas use metodologia apenas quando ela resolver o caso.
+- Nunca use frases vazias como "otima pergunta", "certamente" ou "com base nas informacoes fornecidas".
+- Sugira opcoes clicaveis somente quando ajudarem a continuar, no maximo cinco.
 
 CONTEXTO DISPONIVEL:
 Oferta: ${context.product || "nao informada"}.
@@ -64,7 +67,7 @@ Publico: ${context.customer || "nao informado"}.
 Etapa: ${context.stage || "nao informada"}.
 Objetivo: ${context.objective || "nao informado"}.
 
-Retorne SOMENTE JSON valido no formato:
+Retorne SOMENTE JSON valido. Em resposta simples, reasoning, action, question, options e hypotheses podem ficar vazios. Em resposta complexa, use esses campos para permitir conteudo expansivel:
 {"direct":"resposta direta e humana","hypotheses":["hipoteses somente se relevantes"],"reasoning":"explicacao especifica","action":"acao pratica ou exemplo de frase","question":"uma unica pergunta necessaria ou string vazia","options":["ate 5 respostas clicaveis, incluindo Outro - escrever resposta quando houver pergunta"],"next":["3 a 5 proximas acoes clicaveis"]}`;
   const prompt = `HISTORICO:\n${history || "Primeira mensagem."}\n\nMENSAGEM ATUAL:\n${message}`;
   const gatewayToken = process.env.AI_GATEWAY_API_KEY || process.env.VERCEL_OIDC_TOKEN || request.headers.get("x-vercel-oidc-token");
