@@ -28,4 +28,3 @@
 .weekly-action-plan>button svg { width:15px; }
 @media(max-width:850px){.weekly-review-summary,.weekly-review-grid{grid-template-columns:1fr 1fr}}
 @media(max-width:560px){.weekly-review-summary,.weekly-review-grid{grid-template-columns:1fr}.weekly-action-plan header{flex-direction:column}}
-.diagnosis-simulation-context{display:flex;align-items:flex-start;gap:12px;margin:0 0 18px;padding:16px 18px;border:1px solid #294f83;border-radius:7px;color:#d9e7f8;background:#0c2549}.diagnosis-simulation-context>svg{width:22px;color:#60dde2}.diagnosis-simulation-context>div{display:grid;gap:4px}.diagnosis-simulation-context small{color:#62dce4;font-size:9px;font-weight:900}.diagnosis-simulation-context strong{font-size:15px}.diagnosis-simulation-context p{margin:0;color:#91a7c7;font-size:11px;line-height:1.5}

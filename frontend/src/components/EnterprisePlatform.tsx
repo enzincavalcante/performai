@@ -51,7 +51,6 @@ import "./operational-home.css";
 import "./functional-upgrades.css";
 import { PremiumTrainingAcademy } from "./PremiumTraining";
 import { IntelligenceHome } from "./IntelligenceHome";
-import type { CommercialDiagnosis } from "@/lib/commercial-diagnosis";
 
 export type EnterpriseView =
   | "dashboard"
@@ -541,8 +540,8 @@ function LegacyOperationalDashboard({ onNavigate }: { onNavigate: Navigate }) {
   </div>;
 }
 
-export function EnterpriseDashboard({ onNavigate, diagnosis }: { onNavigate: Navigate; diagnosis?: CommercialDiagnosis | null }) {
-  return <IntelligenceHome onNavigate={onNavigate} diagnosis={diagnosis} />;
+export function EnterpriseDashboard({ onNavigate }: { onNavigate: Navigate }) {
+  return <IntelligenceHome onNavigate={onNavigate} />;
 }
 
 const COURSE_DATA = [
@@ -2838,17 +2837,15 @@ function SettingsModule() {
 export function EnterpriseModule({
   view,
   onNavigate,
-  diagnosis,
 }: {
   view: EnterpriseView;
   onNavigate: Navigate;
-  diagnosis?: CommercialDiagnosis | null;
 }) {
   if (view === "dashboard")
-    return <EnterpriseDashboard onNavigate={onNavigate} diagnosis={diagnosis} />;
-  if (view === "learning") return <PremiumTrainingAcademy onNavigate={onNavigate} diagnosis={diagnosis} />;
+    return <EnterpriseDashboard onNavigate={onNavigate} />;
+  if (view === "learning") return <PremiumTrainingAcademy onNavigate={onNavigate} />;
   if (view === "paths") return <FixedPathsModule onNavigate={onNavigate} />;
-  if (view === "assessments") return <PremiumTrainingAcademy onNavigate={onNavigate} diagnosis={diagnosis} />;
+  if (view === "assessments") return <PremiumTrainingAcademy onNavigate={onNavigate} />;
   if (view === "performance") return <PerformanceModule />;
   if (view === "reports") return <ReportsModule />;
   if (view === "teams") return <TeamsModule onNavigate={onNavigate} />;

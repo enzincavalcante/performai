@@ -4,7 +4,6 @@ import { FormEvent, useEffect, useRef, useState } from "react";
 import { BookOpen, Check, Download, GraduationCap, Lightbulb, Mic, Pencil, Play, RotateCcw, Save, Send, Sparkles, Target, X } from "lucide-react";
 import { useSpeechToText } from "@/hooks/useSpeechToText";
 import { localCoachResponse, type CoachLayer, type CoachMemory } from "@/lib/coach-brain";
-import { diagnosisContext, type CommercialDiagnosis } from "@/lib/commercial-diagnosis";
 import "./commercial-coach.css";
 import "./coach-context.css";
 import "./premium-module-readability.css";
@@ -58,7 +57,7 @@ async function requestCoachLayer(message: string, messages: Message[], profile: 
   return payload.layer;
 }
 
-export function CommercialCoach({ profile, diagnosis, onProfileChange, onOpenTraining }: { profile: CoachProfile; diagnosis?: CommercialDiagnosis | null; onProfileChange?: (profile: CoachProfile) => void; onOpenTraining?: (moduleId?: string, lesson?: string) => void }) {
+export function CommercialCoach({ profile, onProfileChange, onOpenTraining }: { profile: CoachProfile; onProfileChange?: (profile: CoachProfile) => void; onOpenTraining?: (moduleId?: string, lesson?: string) => void }) {
   const [messages, setMessages] = useState<Message[]>([START_MESSAGE]);
   const [memory, setMemory] = useState<CoachMemory>(EMPTY_MEMORY);
   const [commercialContext, setCommercialContext] = useState<CoachProfile>(profile);
@@ -107,8 +106,7 @@ export function CommercialCoach({ profile, diagnosis, onProfileChange, onOpenTra
     setMessages((current) => [...current, { role: "seller", text: clean }]);
     setQuestion(""); setIdea(""); setThinkingStage(0); setThinking(true);
     try {
-      const personalizedStrategy = [strategyContext, diagnosisContext(diagnosis)].filter(Boolean).join("\n");
-      const layer = await requestCoachLayer(clean, previous, commercialContext, personalizedStrategy, memory);
+      const layer = await requestCoachLayer(clean, previous, commercialContext, strategyContext, memory);
       setMemory(layer.memory || memory);
       setMessages((current) => [...current, { role: "coach", text: layer.direct, layer, source: clean }]);
     } catch {
@@ -145,7 +143,7 @@ export function CommercialCoach({ profile, diagnosis, onProfileChange, onOpenTra
     <div className="coach-workspace-layout">
       <main className="coach-conversation">
         <div className="coach-chat-heading"><div><Sparkles /><span><strong>Conversa com seu Coach</strong><small>Escuta, interpreta, responde e ensina</small></span></div><nav><button onClick={openMaterial}><BookOpen /> Material</button><button onClick={resetConversation}><RotateCcw /> Nova conversa</button></nav></div>
-        {(strategyContext || diagnosis) && <div className="coach-loaded-context"><Sparkles /><span><strong>{strategyContext ? "Estrategia carregada" : "Diagnostico inicial carregado"}</strong><small>O Coach conhece seu foco em {diagnosis?.primaryBottleneck || "estrategia comercial"}, seu objetivo e o contexto da operacao.</small></span>{strategyContext && <button onClick={() => setStrategyContext("")} aria-label="Remover contexto">x</button>}</div>}
+        {strategyContext && <div className="coach-loaded-context"><Sparkles /><span><strong>Estrategia carregada</strong><small>O Coach ja recebeu o diagnostico e o plano. Pergunte sem copiar e colar.</small></span><button onClick={() => setStrategyContext("")} aria-label="Remover contexto">x</button></div>}
         <div className="commercial-chat">
           {messages.map((message, index) => <article className={message.role} key={`${message.role}-${index}`}><small>{message.role === "coach" ? "Coach Comercial" : "Voce"}</small><p>{message.text}</p>
             {message.layer && <div className="coach-layer">

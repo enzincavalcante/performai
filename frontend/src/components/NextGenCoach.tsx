@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import {
   ArrowRight,
   Award,
@@ -29,7 +29,6 @@ import "./next-gen-upgrades.css";
 import "./simulation-evaluation.css";
 import "./premium-module-readability.css";
 import { CallReview } from "./CallReview";
-import type { CommercialDiagnosis } from "@/lib/commercial-diagnosis";
 import { useSpeechToText } from "@/hooks/useSpeechToText";
 
 type HubTab = "training" | "battle" | "replay" | "twin" | "doctor" | "career";
@@ -182,7 +181,7 @@ const replayMoments = [
   },
 ];
 
-export function NextGenCoach({ initialTab = "training", diagnosis }: { initialTab?: HubTab; diagnosis?: CommercialDiagnosis | null }) {
+export function NextGenCoach({ initialTab = "training" }: { initialTab?: HubTab }) {
   const [tab, setTab] = useState<HubTab>(initialTab);
   const [step, setStep] = useState<"setup" | "session" | "result">("setup");
   const [message, setMessage] = useState("");
@@ -223,16 +222,6 @@ export function NextGenCoach({ initialTab = "training", diagnosis }: { initialTa
     customClient: "",
     context: "",
   });
-  useEffect(() => {
-    if (!diagnosis) return;
-    queueMicrotask(() => setTrainingConfig((current) => current.scenario ? current : {
-      ...current,
-      scenario: diagnosis.recommendedSimulation.scenario,
-      difficulty: diagnosis.recommendedSimulation.difficulty,
-      clientType: diagnosis.recommendedSimulation.clientType,
-      context: diagnosis.recommendedSimulation.context,
-    }));
-  }, [diagnosis]);
   const customer = useMemo(() => CLIENT_POOL[seed % CLIENT_POOL.length], [seed]);
   const activeCustomer = useMemo(() => ({
     ...customer,
@@ -416,7 +405,6 @@ export function NextGenCoach({ initialTab = "training", diagnosis }: { initialTa
           <small>Ultima avaliacao · 8,1/10</small>
         </div>
       </header>
-      {diagnosis && <section className="diagnosis-simulation-context"><Target /><div><small>TREINO RECOMENDADO PELO SEU DIAGNOSTICO</small><strong>{diagnosis.primaryBottleneck}</strong><p>{diagnosis.mission}</p></div></section>}
       <nav className="coach-tabs">
         {tabs.map((item) => {
           const Icon = item.icon;

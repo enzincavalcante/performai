@@ -1,12 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { ArrowLeft, ArrowRight, BriefcaseBusiness, Check, ChevronDown, Clipboard, MessageSquare, Mic, RefreshCw, Sparkles, Target } from "lucide-react";
 import { useSpeechToText } from "@/hooks/useSpeechToText";
 import "./commercial-strategies.css";
 import "./premium-module-readability.css";
 import "./strategy-intelligence.css";
-import { diagnosisContext, type CommercialDiagnosis } from "@/lib/commercial-diagnosis";
 
 type Answers = { offer: string; goal: string; problem: string; channel: string; context: string };
 type Priority = { title: string; what: string; why: string; how: string; resources: string; kpi: string; risk: string };
@@ -107,7 +106,7 @@ function fallbackReport(answers: Answers, resolve: (key: keyof Answers) => strin
   };
 }
 
-export function CommercialStrategies({ onOpenCoach, diagnosis }: { onOpenCoach?: () => void; diagnosis?: CommercialDiagnosis | null }) {
+export function CommercialStrategies({ onOpenCoach }: { onOpenCoach?: () => void }) {
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<Answers>(EMPTY);
   const [custom, setCustom] = useState<Record<string, string>>({});
@@ -122,21 +121,6 @@ export function CommercialStrategies({ onOpenCoach, diagnosis }: { onOpenCoach?:
   const resolved = (key: keyof Answers) => answers[key] === "Outro" ? custom[key]?.trim() || "Outro nao detalhado" : answers[key];
   const basePriorities = prioritySet(resolved("problem"), resolved("goal"));
   const speech = useSpeechToText((text) => { setAnswers((value) => ({ ...value, context: `${value.context} ${text}`.trim() })); setContextError(""); });
-
-  useEffect(() => {
-    if (!diagnosis) return;
-    queueMicrotask(() => {
-      setAnswers({
-        offer: "Outro",
-        goal: "Outro",
-        problem: "Outro",
-        channel: "Outro",
-        context: `${diagnosisContext(diagnosis)} Contexto livre informado: ${diagnosis.mainDifficulty || "nao detalhado"}. Oferta: ${diagnosis.offer}. Publico: ${diagnosis.audience}. O canal atual ainda precisa ser confirmado pelo usuario.`,
-      });
-      setCustom({ offer: diagnosis.offer, goal: diagnosis.objective, problem: diagnosis.primaryBottleneck, channel: "Canal a confirmar" });
-      setStep(4);
-    });
-  }, [diagnosis]);
 
   const generateStrategy = async () => {
     if (!meaningfulContext(answers.context)) { setContextError("Ainda nao tenho informacao suficiente. Conte como a empresa vende hoje, onde esta travando, o que ja tentou e qual resultado deseja alcancar."); return; }
@@ -168,7 +152,7 @@ export function CommercialStrategies({ onOpenCoach, diagnosis }: { onOpenCoach?:
   const restart = () => { setReport(null); setStep(0); setAiSummary(""); setContextError(""); };
 
   return <div className="commercial-strategies strategy-premium">
-    <header><div><p>ESTRATEGIAS COMERCIAIS</p><h1>Diagnostico claro. Plano executavel.</h1><span>{diagnosis ? `Seu diagnostico sobre ${diagnosis.primaryBottleneck.toLowerCase()} ja foi carregado. Confirme o contexto e complemente o que estiver faltando.` : "Responda cinco perguntas. A plataforma cruza o contexto, identifica o gargalo e constroi a ponte entre o cenario atual e o resultado desejado."}</span></div><aside><BriefcaseBusiness /><span><strong>Diretor comercial virtual</strong><small>Diagnostico, Revenue Operations e execucao.</small></span></aside></header>
+    <header><div><p>ESTRATEGIAS COMERCIAIS</p><h1>Diagnostico claro. Plano executavel.</h1><span>Responda cinco perguntas. A plataforma cruza o contexto, identifica o gargalo e constroi a ponte entre o cenario atual e o resultado desejado.</span></div><aside><BriefcaseBusiness /><span><strong>Diretor comercial virtual</strong><small>Diagnostico, Revenue Operations e execucao.</small></span></aside></header>
     {!report ? <section className="strategy-wizard">
       <div className="strategy-progress"><span>{step + 1} de 5</span><div><i style={{ width: `${((step + 1) / 5) * 100}%` }} /></div></div>
       <article><small>PERGUNTA {String(step + 1).padStart(2, "0")}</small><h2>{step === 4 ? "Rapidamente, como esta sua empresa hoje?" : current.title}</h2>

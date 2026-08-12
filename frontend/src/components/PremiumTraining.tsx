@@ -32,7 +32,6 @@ import {
   Zap,
 } from "lucide-react";
 import type { EnterpriseView } from "./EnterprisePlatform";
-import type { CommercialDiagnosis } from "@/lib/commercial-diagnosis";
 import "./premium-training.css";
 
 type ModuleIcon = typeof BookOpen;
@@ -396,7 +395,7 @@ function LessonAssessment({
   </section>;
 }
 
-export function PremiumTrainingAcademy({ onNavigate, diagnosis }: { onNavigate: (view: EnterpriseView) => void; diagnosis?: CommercialDiagnosis | null }) {
+export function PremiumTrainingAcademy({ onNavigate }: { onNavigate: (view: EnterpriseView) => void }) {
   const [selected, setSelected] = useState<TrainingModule | null>(null);
   const [lesson, setLesson] = useState(0);
   const [panel, setPanel] = useState<"content" | "exercise" | "mentor">("content");
@@ -429,18 +428,7 @@ export function PremiumTrainingAcademy({ onNavigate, diagnosis }: { onNavigate: 
   const completedLessons = Object.values(progress).reduce((total, items) => total + items.length, 0);
   const totalLessons = MODULES.reduce((total, module) => total + module.lessons.length, 0);
   const overall = Math.round(completedLessons / totalLessons * 100);
-  const visible = useMemo(() => {
-    const filtered = MODULES.filter((module) => filter === "Todos" || COURSE_META[module.id]?.category === filter);
-    if (!diagnosis || filter !== "Todos") return filtered;
-    const recommendedIds = [diagnosis.recommendedTraining.moduleId, ...diagnosis.plan.map((item) => item.moduleId)];
-    return [...filtered].sort((a, b) => {
-      const aIndex = recommendedIds.indexOf(a.id);
-      const bIndex = recommendedIds.indexOf(b.id);
-      const aRank = aIndex === -1 ? Number.MAX_SAFE_INTEGER : aIndex;
-      const bRank = bIndex === -1 ? Number.MAX_SAFE_INTEGER : bIndex;
-      return aRank - bRank;
-    });
-  }, [filter, diagnosis]);
+  const visible = useMemo(() => MODULES.filter((module) => filter === "Todos" || COURSE_META[module.id]?.category === filter), [filter]);
 
   const resetActivities = () => {
     setExerciseState(EMPTY_ASSESSMENT);
@@ -521,7 +509,7 @@ export function PremiumTrainingAcademy({ onNavigate, diagnosis }: { onNavigate: 
 
     <section className="training-shelf continue-shelf"><header><h2>Continue de onde parou</h2><button onClick={() => setFilter("Todos")}>Ver todos</button></header><div className="training-video-row">{continueModules.map((module) => <CourseCard module={module} featured key={module.id} />)}</div></section>
 
-    <section className="training-shelf recommended-shelf"><header><div><h2>Recomendados para voce</h2>{diagnosis && <p className="training-diagnosis-note">Primeiro foco: {diagnosis.primaryBottleneck}. As aulas abaixo foram ordenadas pelo seu diagnostico.</p>}</div><button onClick={() => setFilter("Todos")}>Ver todos</button></header><nav aria-label="Filtrar treinamentos">{TRAINING_FILTERS.map((item) => <button className={filter === item ? "active" : ""} onClick={() => setFilter(item)} key={item}>{item}</button>)}</nav><div className="training-video-grid">{visible.map((module) => <CourseCard module={module} key={module.id} />)}</div></section>
+    <section className="training-shelf recommended-shelf"><header><h2>Recomendados para voce</h2><button onClick={() => setFilter("Todos")}>Ver todos</button></header><nav aria-label="Filtrar treinamentos">{TRAINING_FILTERS.map((item) => <button className={filter === item ? "active" : ""} onClick={() => setFilter(item)} key={item}>{item}</button>)}</nav><div className="training-video-grid">{visible.map((module) => <CourseCard module={module} key={module.id} />)}</div></section>
 
     <section className="sales-training-footer"><div><Award /><span><small>CERTIFICACAO PERFORMA AI</small><strong>Transforme aprendizado em competencia comprovada.</strong><p>Conclua as aulas, exercicios e avaliacoes para avancar na sua jornada profissional.</p></span></div><button onClick={() => onNavigate("certificates")}>Ver certificados <ArrowRight /></button></section>
   </div>;
