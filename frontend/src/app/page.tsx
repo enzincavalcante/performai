@@ -15,7 +15,9 @@ import { NextGenCoach } from "@/components/NextGenCoach";
 import { CommercialStrategies } from "@/components/CommercialStrategies";
 import { CommercialCoach } from "@/components/CommercialCoach";
 import { LandingPage } from "@/components/LandingPage";
+import { InitialDiagnosis } from "@/components/InitialDiagnosis";
 import { EnterpriseModule, EnterpriseSidebar, type EnterpriseView } from "@/components/EnterprisePlatform";
+import { DIAGNOSIS_STORAGE_KEY, readCommercialDiagnosis, type CommercialDiagnosis } from "@/lib/commercial-diagnosis";
 
 const DEMO_USER = "Cavalcante";
 const DEMO_PASSWORD = "1234";
@@ -152,25 +154,6 @@ function Login({ onSuccess }: { onSuccess: () => void }) {
       <p className="security-note"><ShieldAlert size={15} /> Ambiente de demonstracao protegido.</p>
     </section>
   </main>;
-}
-
-function Onboarding({ initial, onComplete }: { initial: CompanyProfile; onComplete: (profile: CompanyProfile) => void }) {
-  const [step, setStep] = useState(0);
-  const [profile, setProfile] = useState(initial);
-  const update = (field: keyof CompanyProfile, value: string) => setProfile((current) => ({ ...current, [field]: value }));
-  const canContinue = step !== 1 || Boolean(profile.offer.trim() && profile.audience.trim());
-  return <div className="modal-backdrop"><motion.section className="onboarding-modal" initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }}>
-    <div className="step-track">{[0, 1, 2].map((item) => <i key={item} className={item <= step ? "active" : ""} />)}</div>
-    {step === 0 && <div className="onboarding-copy"><span className="feature-icon"><Sparkles /></span><p className="eyebrow">BEM-VINDO A PERFORMAI</p><h1>Vamos personalizar seu treinamento.</h1><p>Em dois minutos, a IA entende seu negocio e prepara simulacoes mais proximas das conversas do seu time.</p><div className="benefit-list"><span><Check /> Cenarios alinhados ao seu mercado</span><span><Check /> Feedback focado no seu objetivo</span><span><Check /> Evolucao visivel por competencia</span></div></div>}
-    {step === 1 && <div><p className="eyebrow">CONTEXTO COMERCIAL</p><h2>Conte um pouco sobre a operacao</h2><div className="form-grid">
-      <label>Segmento<select value={profile.segment} onChange={(e) => update("segment", e.target.value)}>{["SaaS / Tecnologia", "Servicos B2B", "Financeiro", "Varejo", "Industria", "Outro"].map((value) => <option key={value}>{value}</option>)}</select></label>
-      <label>Tamanho do time<select value={profile.teamSize} onChange={(e) => update("teamSize", e.target.value)}>{["Apenas eu", "2-10 pessoas", "11-50 pessoas", "Mais de 50"].map((value) => <option key={value}>{value}</option>)}</select></label>
-      <label className="wide">O que voce vende?<input value={profile.offer} onChange={(e) => update("offer", e.target.value)} placeholder="Ex.: plataforma de gestao para clinicas" /></label>
-      <label className="wide">Para quem voce vende?<input value={profile.audience} onChange={(e) => update("audience", e.target.value)} placeholder="Ex.: diretores de operacoes de empresas medias" /></label>
-    </div></div>}
-    {step === 2 && <div><p className="eyebrow">FOCO DO TREINAMENTO</p><h2>Onde seu time precisa evoluir?</h2><div className="choice-grid">{["Tratamento de objecoes", "Descoberta de necessidades", "Pitch de valor", "Negociacao e fechamento"].map((value) => <button key={value} className={profile.challenge === value ? "choice selected" : "choice"} onClick={() => update("challenge", value)}><Target size={19} /><span>{value}</span>{profile.challenge === value && <Check size={17} />}</button>)}</div><label className="standalone-label">Principal objetivo<select value={profile.goal} onChange={(e) => update("goal", e.target.value)}>{["Aumentar conversao", "Reduzir ciclo de vendas", "Melhorar consistencia do time", "Preparar novos vendedores"].map((value) => <option key={value}>{value}</option>)}</select></label></div>}
-    <footer className="modal-footer"><button className="text-button" disabled={step === 0} onClick={() => setStep(step - 1)}><ArrowLeft size={17} /> Voltar</button>{step < 2 ? <button className="primary-button compact" disabled={!canContinue} onClick={() => setStep(step + 1)}>Continuar <ArrowRight size={17} /></button> : <button className="primary-button compact" onClick={() => onComplete(profile)}>Ir para meu workspace <ArrowRight size={17} /></button>}</footer>
-  </motion.section></div>;
 }
 
 function Tutorial({ onClose }: { onClose: () => void }) {
@@ -353,16 +336,30 @@ function Training({ profile }: { profile: CompanyProfile }) {
 function Workspace({ onLogout }: { onLogout: () => void }) {
   const [view, setView] = useState<View>("dashboard");
   const [profile, setProfile] = useState<CompanyProfile | null>(null);
+  const [diagnosis, setDiagnosis] = useState<CommercialDiagnosis | null>(null);
+  const [diagnosisReady, setDiagnosisReady] = useState(false);
   const [editingProfile, setEditingProfile] = useState(false);
   const [showTutorial, setShowTutorial] = useState(false);
   useEffect(() => {
     queueMicrotask(() => {
       const saved = localStorage.getItem("performai_company_profile");
       if (saved) setProfile(JSON.parse(saved));
+      setDiagnosis(readCommercialDiagnosis());
+      setDiagnosisReady(true);
     });
   }, []);
-  const saveProfile = (next: CompanyProfile) => { localStorage.setItem("performai_company_profile", JSON.stringify(next)); setProfile(next); setEditingProfile(false); };
   const updateProfile = (next: CompanyProfile) => { localStorage.setItem("performai_company_profile", JSON.stringify(next)); setProfile(next); };
+  const saveDiagnosis = (nextDiagnosis: CommercialDiagnosis, nextProfile: CompanyProfile) => {
+    localStorage.setItem(DIAGNOSIS_STORAGE_KEY, JSON.stringify(nextDiagnosis));
+    localStorage.setItem("performai_company_profile", JSON.stringify(nextProfile));
+    localStorage.setItem("performai_coach_context", JSON.stringify({ ...nextProfile, diagnosis: nextDiagnosis }));
+    localStorage.setItem("performai_training_focus", JSON.stringify(nextDiagnosis.recommendedTraining));
+    localStorage.setItem("performai_simulation_recommendation", JSON.stringify(nextDiagnosis.recommendedSimulation));
+    setDiagnosis(nextDiagnosis);
+    setProfile(nextProfile);
+    setEditingProfile(false);
+    setView("dashboard");
+  };
   const closeTutorial = () => { localStorage.setItem("performai_tutorial_seen", "true"); setShowTutorial(false); };
   const navigate = (next: EnterpriseView) => {
     setView(next);
@@ -379,14 +376,14 @@ function Workspace({ onLogout }: { onLogout: () => void }) {
       </div>
     </header>
     <section className="workspace-content">
-      {profile && view === "simulation" && <NextGenCoach />}
-      {profile && view === "strategies" && <CommercialStrategies onOpenCoach={() => navigate("coach")} />}
-      {profile && view === "coach" && <CommercialCoach profile={profile} onProfileChange={(next) => updateProfile({ ...profile, ...next })} onOpenTraining={(moduleId, lesson) => { if (moduleId) localStorage.setItem("performai_training_focus", JSON.stringify({ moduleId, lesson })); navigate("learning"); }} />}
+      {profile && view === "simulation" && <NextGenCoach diagnosis={diagnosis} />}
+      {profile && view === "strategies" && <CommercialStrategies diagnosis={diagnosis} onOpenCoach={() => navigate("coach")} />}
+      {profile && view === "coach" && <CommercialCoach profile={profile} diagnosis={diagnosis} onProfileChange={(next) => updateProfile({ ...profile, ...next })} onOpenTraining={(moduleId, lesson) => { if (moduleId) localStorage.setItem("performai_training_focus", JSON.stringify({ moduleId, lesson })); navigate("learning"); }} />}
       {profile && view === "ai" && <FocusCoach profile={profile} />}
       {profile && view === "calls" && <CallReview />}
-      {profile && !["simulation", "strategies", "coach", "ai", "calls"].includes(view) && <EnterpriseModule view={view} onNavigate={navigate} />}
+      {profile && !["simulation", "strategies", "coach", "ai", "calls"].includes(view) && <EnterpriseModule view={view} diagnosis={diagnosis} onNavigate={navigate} />}
     </section>
-    {(!profile || editingProfile) && <Onboarding initial={profile ?? EMPTY_PROFILE} onComplete={saveProfile} />}
+    {diagnosisReady && (!diagnosis || editingProfile) && <InitialDiagnosis profile={profile ?? EMPTY_PROFILE} existing={editingProfile ? diagnosis : null} onComplete={saveDiagnosis} />}
     {showTutorial && profile && <Tutorial onClose={closeTutorial} />}
   </main>;
 }

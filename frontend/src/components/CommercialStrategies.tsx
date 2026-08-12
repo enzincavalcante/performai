@@ -1,17 +1,22 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ArrowLeft, ArrowRight, BriefcaseBusiness, Check, ChevronDown, Clipboard, MessageSquare, Mic, RefreshCw, Sparkles, Target } from "lucide-react";
 import { useSpeechToText } from "@/hooks/useSpeechToText";
 import "./commercial-strategies.css";
 import "./premium-module-readability.css";
 import "./strategy-intelligence.css";
+import { diagnosisContext, type CommercialDiagnosis } from "@/lib/commercial-diagnosis";
 
 type Answers = { offer: string; goal: string; problem: string; channel: string; context: string };
 type Priority = { title: string; what: string; why: string; how: string; resources: string; kpi: string; risk: string };
 type StrategyPriority = Priority & { owner: string; cadence: string; expectedImpact: string; review: string };
 type StrategyReport = {
   executiveSummary: string; currentState: string; desiredState: string; centralDiagnosis: string; bottlenecks: string[]; opportunities: string[]; strategicBridge: string; notNow: string; priorities: StrategyPriority[]; plan7: string; plan30: string; plan90: string;
+  dashboard?: Array<{ group: string; indicators: string[] }>;
+  governance?: Array<{ cadence: string; focus: string; owner: string; decision: string }>;
+  scaleCriteria?: string[];
+  conclusion?: string;
 };
 
 const QUESTIONS = [
@@ -84,10 +89,25 @@ function fallbackReport(answers: Answers, resolve: (key: keyof Answers) => strin
     plan7: `Extrair dados do funil, revisar oportunidades e calls, validar a causa de ${problem.toLowerCase()}, definir linha de base, dono e primeiro experimento. A entrega da semana e um diagnostico comprovavel, nao uma lista de ideias.`,
     plan30: `Executar as tres prioridades em um recorte controlado, treinar os comportamentos necessarios, realizar coaching semanal e comparar os indicadores com a linha de base. Interromper acoes sem evidencia e documentar aprendizados.`,
     plan90: `Padronizar mensagem, processo, criterios de etapa e rotina de gestao que apresentarem melhoria sustentada. Depois, ampliar volume ou investimento com capacidade operacional, governanca e meta vinculada a ${goal.toLowerCase()}.`,
+    dashboard: [
+      { group: "Aquisicao", indicators: ["Leads: A definir apos diagnostico", "Custo por lead: A definir apos diagnostico", "Origem e qualidade dos leads"] },
+      { group: "Funil", indicators: ["Conversao por etapa", "Tempo por etapa e aging", "Taxa e motivo de perda"] },
+      { group: "Vendas", indicators: ["Propostas e conversao proposta-venda", "Ticket e desconto medio", "Ciclo de vendas"] },
+      { group: "Gestao", indicators: ["Pipeline e cobertura", "Forecast", "Oportunidades sem proximo passo"] },
+      { group: "Economico", indicators: ["Receita e margem", "CAC e LTV: A definir apos diagnostico", "ROI: A definir apos diagnostico"] },
+    ],
+    governance: [
+      { cadence: "Diario", focus: "Excecoes operacionais, novos compromissos e oportunidades sem proximo passo.", owner: "Gestor comercial", decision: "Corrigir bloqueios e atribuir responsavel e data." },
+      { cadence: "Semanal", focus: "Funil, calls, conversao, perdas e coaching do gap prioritario.", owner: "Lider comercial e donos das etapas", decision: "Manter, ajustar ou corrigir a execucao da semana." },
+      { cadence: "Quinzenal", focus: "Hipoteses, experimentos e comparacao com a linha de base.", owner: "Direcao comercial e Revenue Operations", decision: "Manter, ajustar ou interromper o experimento." },
+      { cadence: "Mensal", focus: "Receita, margem, eficiencia, forecast e capacidade operacional.", owner: "CEO/Diretor comercial", decision: "Padronizar aprendizados ou impedir escala prematura." },
+    ],
+    scaleCriteria: ["Melhoria sustentada da conversao na etapa prioritaria", "Processo replicavel e documentado", "Pipeline limpo e forecast confiavel", "Proximos passos registrados", "Reducao de perdas evitaveis", "Equipe treinada e aderente ao padrao", "Capacidade operacional comprovada", "Margem protegida", "Indicadores acompanhados continuamente"],
+    conclusion: "O problema nao deve ser tratado aumentando esforco indiscriminadamente. Primeiro e necessario descobrir onde o sistema esta quebrando, corrigir o comportamento que provoca a perda, padronizar o que funciona e somente entao escalar. Nao estamos propondo simplesmente vender mais; estamos construindo uma maquina comercial capaz de vender melhor, com previsibilidade e margem.",
   };
 }
 
-export function CommercialStrategies({ onOpenCoach }: { onOpenCoach?: () => void }) {
+export function CommercialStrategies({ onOpenCoach, diagnosis }: { onOpenCoach?: () => void; diagnosis?: CommercialDiagnosis | null }) {
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<Answers>(EMPTY);
   const [custom, setCustom] = useState<Record<string, string>>({});
@@ -102,6 +122,21 @@ export function CommercialStrategies({ onOpenCoach }: { onOpenCoach?: () => void
   const resolved = (key: keyof Answers) => answers[key] === "Outro" ? custom[key]?.trim() || "Outro nao detalhado" : answers[key];
   const basePriorities = prioritySet(resolved("problem"), resolved("goal"));
   const speech = useSpeechToText((text) => { setAnswers((value) => ({ ...value, context: `${value.context} ${text}`.trim() })); setContextError(""); });
+
+  useEffect(() => {
+    if (!diagnosis) return;
+    queueMicrotask(() => {
+      setAnswers({
+        offer: "Outro",
+        goal: "Outro",
+        problem: "Outro",
+        channel: "Outro",
+        context: `${diagnosisContext(diagnosis)} Contexto livre informado: ${diagnosis.mainDifficulty || "nao detalhado"}. Oferta: ${diagnosis.offer}. Publico: ${diagnosis.audience}. O canal atual ainda precisa ser confirmado pelo usuario.`,
+      });
+      setCustom({ offer: diagnosis.offer, goal: diagnosis.objective, problem: diagnosis.primaryBottleneck, channel: "Canal a confirmar" });
+      setStep(4);
+    });
+  }, [diagnosis]);
 
   const generateStrategy = async () => {
     if (!meaningfulContext(answers.context)) { setContextError("Ainda nao tenho informacao suficiente. Conte como a empresa vende hoje, onde esta travando, o que ja tentou e qual resultado deseja alcancar."); return; }
@@ -119,7 +154,7 @@ export function CommercialStrategies({ onOpenCoach }: { onOpenCoach?: () => void
   const copy = async (content: string, label: string) => { await navigator.clipboard.writeText(content); setCopied(label); window.setTimeout(() => setCopied(""), 1800); };
   const leads = metric(answers.context, "leads?"); const meetings = metric(answers.context, "reunioes?|reuniao"); const sales = metric(answers.context, "vendas?"); const ticket = metric(answers.context, "ticket");
   const hasNumbers = leads > 0 && meetings > 0 && sales >= 0;
-  const strategyText = report ? `PLANO EXECUTIVO\n\n${report.executiveSummary}\n\nCENARIO ATUAL\n${report.currentState}\n\nCENARIO DESEJADO\n${report.desiredState}\n\nPONTE ESTRATEGICA\n${report.strategicBridge}\n\nPRIORIDADES\n${report.priorities.map((item, index) => `${index + 1}. ${item.title}\nO que: ${item.what}\nPor que: ${item.why}\nComo: ${item.how}\nResponsavel: ${item.owner}\nCadencia: ${item.cadence}\nKPI: ${item.kpi}\nImpacto: ${item.expectedImpact}\nRevisao: ${item.review}\nRisco: ${item.risk}`).join("\n\n")}\n\n7 DIAS\n${report.plan7}\n\n30 DIAS\n${report.plan30}\n\n90 DIAS\n${report.plan90}` : "";
+  const strategyText = report ? `PLANO EXECUTIVO\n\n${report.executiveSummary}\n\nCENARIO ATUAL\n${report.currentState}\n\nCENARIO DESEJADO\n${report.desiredState}\n\nDIAGNOSTICO E TESE\n${report.centralDiagnosis}\n\nPONTE ESTRATEGICA\n${report.strategicBridge}\n\nPRIORIDADES\n${report.priorities.map((item, index) => `${index + 1}. ${item.title}\nO que: ${item.what}\nPor que: ${item.why}\nComo: ${item.how}\nResponsavel: ${item.owner}\nCadencia: ${item.cadence}\nKPI: ${item.kpi}\nImpacto: ${item.expectedImpact}\nRevisao: ${item.review}\nRisco: ${item.risk}`).join("\n\n")}\n\n7 DIAS\n${report.plan7}\n\n30 DIAS\n${report.plan30}\n\n90 DIAS\n${report.plan90}\n\nDASHBOARD\n${report.dashboard?.map((item) => `${item.group}: ${item.indicators.join(", ")}`).join("\n") || "A definir apos diagnostico."}\n\nGOVERNANCA\n${report.governance?.map((item) => `${item.cadence}: ${item.focus} | Dono: ${item.owner} | Decisao: ${item.decision}`).join("\n") || "A definir apos diagnostico."}\n\nCRITERIOS PARA ESCALAR\n${report.scaleCriteria?.join("\n") || "Validar melhoria sustentada antes de escalar."}\n\nCONCLUSAO\n${report.conclusion || report.strategicBridge}` : "";
   const summarize = async () => {
     if (!report) return; setSummarizing(true);
     try {
@@ -133,7 +168,7 @@ export function CommercialStrategies({ onOpenCoach }: { onOpenCoach?: () => void
   const restart = () => { setReport(null); setStep(0); setAiSummary(""); setContextError(""); };
 
   return <div className="commercial-strategies strategy-premium">
-    <header><div><p>ESTRATEGIAS COMERCIAIS</p><h1>Diagnostico claro. Plano executavel.</h1><span>Responda cinco perguntas. A plataforma cruza o contexto, identifica o gargalo e constroi a ponte entre o cenario atual e o resultado desejado.</span></div><aside><BriefcaseBusiness /><span><strong>Consultor estrategico</strong><small>Contexto, criterio e execucao.</small></span></aside></header>
+    <header><div><p>ESTRATEGIAS COMERCIAIS</p><h1>Diagnostico claro. Plano executavel.</h1><span>{diagnosis ? `Seu diagnostico sobre ${diagnosis.primaryBottleneck.toLowerCase()} ja foi carregado. Confirme o contexto e complemente o que estiver faltando.` : "Responda cinco perguntas. A plataforma cruza o contexto, identifica o gargalo e constroi a ponte entre o cenario atual e o resultado desejado."}</span></div><aside><BriefcaseBusiness /><span><strong>Diretor comercial virtual</strong><small>Diagnostico, Revenue Operations e execucao.</small></span></aside></header>
     {!report ? <section className="strategy-wizard">
       <div className="strategy-progress"><span>{step + 1} de 5</span><div><i style={{ width: `${((step + 1) / 5) * 100}%` }} /></div></div>
       <article><small>PERGUNTA {String(step + 1).padStart(2, "0")}</small><h2>{step === 4 ? "Rapidamente, como esta sua empresa hoje?" : current.title}</h2>
@@ -147,11 +182,15 @@ export function CommercialStrategies({ onOpenCoach }: { onOpenCoach?: () => void
       <details open><summary>Ponte de transformacao <ChevronDown /></summary><div className="strategy-transformation"><article><small>ONDE ESTA</small><p>{report.currentState}</p></article><ArrowRight /><article className="bridge"><small>O QUE PRECISA ACONTECER</small><p>{report.strategicBridge}</p></article><ArrowRight /><article><small>ONDE PODE CHEGAR</small><p>{report.desiredState}</p></article></div></details>
       <details open><summary>Estrategia comercial recomendada <ChevronDown /></summary><div className="strategy-priorities">{report.priorities.map((item, index) => <article key={item.title}><header><span>PRIORIDADE #{index + 1}</span><h3>{item.title}</h3></header><dl><div><dt>O que fazer</dt><dd>{item.what}</dd></div><div><dt>Por que fazer</dt><dd>{item.why}</dd></div><div><dt>Como executar</dt><dd>{item.how}</dd></div><div><dt>Responsavel</dt><dd>{item.owner}</dd></div><div><dt>Cadencia</dt><dd>{item.cadence}</dd></div><div><dt>Recursos</dt><dd>{item.resources}</dd></div><div><dt>Indicador</dt><dd>{item.kpi}</dd></div><div><dt>Impacto esperado</dt><dd>{item.expectedImpact}</dd></div><div><dt>Quando revisar</dt><dd>{item.review}</dd></div><div><dt>Risco</dt><dd>{item.risk}</dd></div></dl></article>)}</div></details>
       <details open><summary>Plano de execucao: 7, 30 e 90 dias <ChevronDown /></summary><div className="strategy-timeline"><article><small>PROXIMOS 7 DIAS</small><b>Diagnosticar e preparar</b><p>{report.plan7}</p></article><article><small>PROXIMOS 30 DIAS</small><b>Executar e comparar</b><p>{report.plan30}</p></article><article><small>PROXIMOS 90 DIAS</small><b>Padronizar e escalar</b><p>{report.plan90}</p></article></div></details>
+      {report.dashboard && <details open><summary>Dashboard executivo <ChevronDown /></summary><div className="strategy-dashboard-groups">{report.dashboard.map((group) => <article key={group.group}><strong>{group.group}</strong>{group.indicators.map((indicator) => <span key={indicator}>{indicator}</span>)}</article>)}</div></details>}
+      {report.governance && <details open><summary>Governanca comercial <ChevronDown /></summary><div className="strategy-governance">{report.governance.map((item) => <article key={item.cadence}><b>{item.cadence}</b><p>{item.focus}</p><small>Dono: {item.owner}</small><strong>Criterio de decisao: {item.decision}</strong></article>)}</div></details>}
+      {report.scaleCriteria && <details><summary>Criterios objetivos para escalar <ChevronDown /></summary><div className="strategy-scale-criteria">{report.scaleCriteria.map((item) => <span key={item}><Check /> {item}</span>)}</div></details>}
       <details><summary>Metricas e projecoes <ChevronDown /></summary><div className="strategy-detail-body">{hasNumbers ? <><p>Funil informado: {leads} leads, {meetings} reunioes e {sales} vendas. Conversao lead-reuniao: {((meetings / leads) * 100).toFixed(1)}%. Conversao reuniao-venda: {((sales / meetings) * 100).toFixed(1)}%.</p>{ticket > 0 && <p>Receita base calculada: {sales} x R$ {ticket.toLocaleString("pt-BR")} = <b>R$ {(sales * ticket).toLocaleString("pt-BR")}</b>. Qualquer cenario futuro sera hipotese, nunca garantia.</p>}</> : <p>Nao ha numeros suficientes para uma projecao responsavel. Informe leads, reunioes, vendas e ticket para calcular a linha de base sem inventar dados.</p>}</div></details>
       <details><summary>Cenarios e riscos <ChevronDown /></summary><div className="strategy-scenarios"><article><b>Conservador</b><p>Executa a prioridade principal com recursos atuais. Menor risco e aprendizado mais lento.</p></article><article><b>Base</b><p>Executa as tres prioridades com dono, cadencia e revisao quinzenal.</p></article><article><b>Agressivo</b><p>Aumenta investimento somente quando o teste base comprovar conversao e capacidade.</p></article></div></details>
       {aiSummary && <article className="strategy-ai-summary"><Sparkles /><div><small>RESUMO EXECUTIVO COM IA</small>{aiSummary.split("\n").filter(Boolean).map((paragraph) => <p key={paragraph}>{paragraph}</p>)}</div></article>}
       <div className="strategy-actions"><button onClick={() => void copy(strategyText, "estrategia")}><Clipboard /> {copied === "estrategia" ? "Estrategia copiada" : "Copiar estrategia"}</button><button onClick={() => void summarize()} disabled={summarizing}><Sparkles /> {summarizing ? "Construindo resumo..." : "Gerar resumo executivo"}</button><button onClick={openCoach}><MessageSquare /> Conversar com IA sobre esta estrategia</button><button onClick={restart}><RefreshCw /> Refazer estrategia</button></div>
       <article className="strategy-executive-plan"><header><Check /><div><small>PLANO EXECUTIVO</small><h2>Decisao pronta para alinhar com o time</h2></div></header><p><b>Objetivo:</b> {resolved("goal")}</p><p><b>Diagnostico:</b> {report.centralDiagnosis}</p><p><b>Estrategia:</b> {report.strategicBridge}</p><p><b>KPIs:</b> {report.priorities.map((item) => item.kpi).join("; ")}</p><p><b>Responsaveis sugeridos:</b> {report.priorities.map((item) => item.owner).join("; ")}</p><p><b>Proxima acao:</b> {report.plan7}</p><button onClick={() => void copy(strategyText, "plano")}><Clipboard /> {copied === "plano" ? "Plano copiado" : "Copiar plano"}</button></article>
+      {report.conclusion && <article className="strategy-conclusion"><Sparkles /><div><small>CONCLUSAO EXECUTIVA</small><p>{report.conclusion}</p></div></article>}
     </section>}
   </div>;
 }

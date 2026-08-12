@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import "./call-review.css";
 import "./call-review-premium.css";
+import { diagnosisContext, readCommercialDiagnosis } from "@/lib/commercial-diagnosis";
 
 const ACCEPTED_AUDIO = ".mp3,.wav,.m4a,.mp4,.webm,.ogg,.aac";
 const MAX_FILE_SIZE = 100 * 1024 * 1024;
@@ -342,6 +343,7 @@ export function CallReview() {
         filename: selectedFile.name,
         seller_role: sellerRole,
         call_type: callType,
+        initial_diagnosis: diagnosisContext(readCommercialDiagnosis()),
       }));
       setProcessingStage("analyzing");
       setProcessingProgress((value) => Math.max(value, 68));

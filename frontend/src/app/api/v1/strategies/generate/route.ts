@@ -35,6 +35,10 @@ type StrategyReport = {
   plan7: string;
   plan30: string;
   plan90: string;
+  dashboard: Array<{ group: string; indicators: string[] }>;
+  governance: Array<{ cadence: string; focus: string; owner: string; decision: string }>;
+  scaleCriteria: string[];
+  conclusion: string;
 };
 
 type GatewayPayload = { choices?: Array<{ message?: { content?: string } }> };
@@ -67,6 +71,10 @@ function parseReport(raw: string): StrategyReport | null {
       plan7: value.plan7?.trim() || "Medir a linha de base e validar o gargalo em uma amostra real.",
       plan30: value.plan30?.trim() || "Executar o teste prioritario, treinar o time e comparar os indicadores.",
       plan90: value.plan90?.trim() || "Padronizar o que funcionou e escalar com governanca.",
+      dashboard: Array.isArray(value.dashboard) ? value.dashboard.filter((item) => item?.group && Array.isArray(item.indicators)).slice(0, 5) as StrategyReport["dashboard"] : [],
+      governance: Array.isArray(value.governance) ? value.governance.filter((item) => item?.cadence && item?.focus && item?.owner && item?.decision).slice(0, 4) as StrategyReport["governance"] : [],
+      scaleCriteria: Array.isArray(value.scaleCriteria) ? value.scaleCriteria.filter(Boolean).slice(0, 9) : [],
+      conclusion: value.conclusion?.trim() || "Primeiro diagnosticar onde o sistema quebra, corrigir o comportamento associado, padronizar o que funciona e somente entao escalar com previsibilidade e margem.",
     };
   } catch {
     return null;
@@ -83,12 +91,13 @@ export async function POST(request: Request) {
 
   const systemPrompt = `Voce e um consultor comercial senior. Produza uma estrategia especifica, executavel e fundamentada somente nos dados fornecidos. Nunca invente faturamento, equipe, conversao ou resultado.
 
-Raciocine nesta ordem: cenario atual -> diagnostico -> gargalos -> oportunidades -> cenario desejado -> ponte estrategica -> tres prioridades -> execucao 7/30/90 dias.
+Raciocine nesta ordem: diagnosticar -> corrigir -> padronizar -> escalar. Produza cenario atual, cenario desejado, diagnostico, tese, gargalos, oportunidades, ponte estrategica, exatamente tres prioridades, execucao 7/30/90 dias, dashboard executivo, governanca, criterios de escala e conclusao para o CEO.
 Cada prioridade deve explicar o que fazer, por que, como executar em detalhes, quem deve liderar, cadencia, recursos, KPI, impacto esperado sem prometer resultado, momento de revisao e risco.
+No dashboard, se nao houver dado ou meta, escreva "A definir apos diagnostico". Separe aquisicao, funil, vendas, gestao e economico. Na governanca, detalhe diario, semanal, quinzenal e mensal. Nunca trate hipotese como fato. Nao recomende simplesmente aumentar leads, investimento ou equipe antes de localizar a restricao comercial dominante.
 Use toda a descricao da empresa. Se uma recomendacao servir para qualquer empresa, torne-a mais especifica. Escreva em portugues brasileiro executivo, claro e profundo.
 
 Retorne SOMENTE JSON valido no formato:
-{"executiveSummary":"resumo profissional em 2 ou 3 paragrafos","currentState":"situacao atual detalhada","desiredState":"cenario desejado detalhado","centralDiagnosis":"diagnostico central","bottlenecks":["3 ou 4 gargalos"],"opportunities":["3 ou 4 oportunidades"],"strategicBridge":"ponte detalhada entre atual e desejado","notNow":"o que nao priorizar agora e por que","priorities":[{"title":"","what":"","why":"","how":"","owner":"","cadence":"","resources":"","kpi":"","expectedImpact":"","review":"","risk":""}],"plan7":"","plan30":"","plan90":""}`;
+{"executiveSummary":"resumo profissional em 2 ou 3 paragrafos","currentState":"situacao atual detalhada","desiredState":"cenario desejado detalhado","centralDiagnosis":"diagnostico central e tese estrategica","bottlenecks":["3 ou 4 gargalos"],"opportunities":["3 ou 4 oportunidades"],"strategicBridge":"ponte detalhada entre atual e desejado","notNow":"o que nao priorizar agora e por que","priorities":[{"title":"","what":"","why":"","how":"","owner":"","cadence":"","resources":"","kpi":"","expectedImpact":"","review":"","risk":""}],"plan7":"","plan30":"","plan90":"","dashboard":[{"group":"Aquisicao","indicators":["Leads: A definir apos diagnostico"]},{"group":"Funil","indicators":[]},{"group":"Vendas","indicators":[]},{"group":"Gestao","indicators":[]},{"group":"Economico","indicators":[]}],"governance":[{"cadence":"Diario","focus":"","owner":"","decision":""},{"cadence":"Semanal","focus":"","owner":"","decision":""},{"cadence":"Quinzenal","focus":"","owner":"","decision":""},{"cadence":"Mensal","focus":"","owner":"","decision":""}],"scaleCriteria":["criterios objetivos"],"conclusion":"conclusao executiva forte para o CEO"}`;
   const prompt = `OFERTA: ${body.offer}\nOBJETIVO: ${body.goal}\nPROBLEMA DECLARADO: ${body.problem}\nCANAL ATUAL: ${body.channel}\nDESCRICAO DA EMPRESA: ${context}`;
   const gatewayToken = process.env.AI_GATEWAY_API_KEY || process.env.VERCEL_OIDC_TOKEN || request.headers.get("x-vercel-oidc-token");
   const apiKey = process.env.GEMINI_API_KEY;
